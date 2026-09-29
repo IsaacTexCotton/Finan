@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Finan: controle seus gastos com o Método Finan (50/30/20, envelopes e revisão semanal). Seus dados ficam só no seu aparelho.">
+  <meta name="theme-color" content="#0f766e">
+  <title>Finan — controle de gastos</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">💰 <strong>Finan</strong></div>
+    <div class="month-picker" aria-label="Mês selecionado">
+      <button type="button" class="icon-btn" data-action="prev-month" aria-label="Mês anterior">‹</button>
+      <span id="month-label"></span>
+      <button type="button" class="icon-btn" data-action="next-month" aria-label="Próximo mês">›</button>
+    </div>
+    <button type="button" class="btn primary" data-action="quick-add">+ Lançar</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="painel">Painel</button>
+    <button type="button" role="tab" data-tab="lancamentos">Lançamentos</button>
+    <button type="button" role="tab" data-tab="orcamento">Orçamento</button>
+    <button type="button" role="tab" data-tab="metas">Metas</button>
+    <button type="button" role="tab" data-tab="metodo">Método</button>
+  </nav>
+
+  <main>
+    <!-- Painel -->
+    <section id="tab-painel" class="tab-panel" role="tabpanel">
+      <div id="onboarding"></div>
+      <div class="cards" id="summary-cards"></div>
+      <div id="allowance"></div>
+      <div class="grid-2">
+        <article class="panel">
+          <h2>Regra 50/30/20</h2>
+          <p class="muted">Como sua renda está sendo usada em cada balde.</p>
+          <div id="buckets"></div>
+        </article>
+        <article class="panel">
+          <h2>O que fazer agora</h2>
+          <ul id="insights" class="insights"></ul>
+        </article>
+      </div>
+      <article class="panel">
+        <h2>Para onde foi o dinheiro</h2>
+        <div id="top-categories"></div>
+      </article>
+    </section>
+
+    <!-- Lançamentos -->
+    <section id="tab-lancamentos" class="tab-panel" role="tabpanel" hidden>
+      <article class="panel">
+        <h2 id="form-title">Novo lançamento</h2>
+        <form id="tx-form" autocomplete="off">
+          <div class="segmented" role="radiogroup" aria-label="Tipo">
+            <label><input type="radio" name="type" value="expense" checked> Despesa</label>
+            <label><input type="radio" name="type" value="income"> Receita</label>
+          </div>
+          <div class="form-grid">
+            <label>Valor (R$)
+              <input name="amount" inputmode="decimal" placeholder="0,00" required>
+            </label>
+            <label>Categoria
+              <select name="categoryId" required></select>
+            </label>
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Descrição
+              <input name="description" maxlength="120" placeholder="Ex.: padaria, aluguel…">
+            </label>
+          </div>
+          <label class="check"><input type="checkbox" name="recurring"> Lançamento fixo (repete todo mês)</label>
+          <p class="form-error" id="tx-error" role="alert"></p>
+          <div class="actions">
+            <button type="submit" class="btn primary" id="tx-submit">Salvar</button>
+            <button type="button" class="btn" data-action="cancel-edit" hidden>Cancelar edição</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Lançamentos do mês</h2>
+          <div class="actions">
+            <button type="button" class="btn small" data-action="copy-recurring">Trazer fixos do mês anterior</button>
+            <button type="button" class="btn small" data-action="export-csv">Exportar CSV</button>
+          </div>
+        </div>
+        <div class="filters">
+          <input type="search" id="filter-text" placeholder="Buscar descrição…" aria-label="Buscar">
+          <select id="filter-category" aria-label="Filtrar por categoria"></select>
+        </div>
+        <div id="tx-list"></div>
+      </article>
+    </section>
+
+    <!-- Orçamento -->
+    <section id="tab-orcamento" class="tab-panel" role="tabpanel" hidden>
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Envelopes do mês</h2>
+          <button type="button" class="btn small" data-action="suggest-budget">Sugerir pelo 50/30/20</button>
+        </div>
+        <p class="muted">Defina um limite para cada categoria. Os limites valem para todos os meses. Orçamento base zero: cada real da renda deve ter uma função.</p>
+        <div id="zero-based"></div>
+        <div id="budget-table"></div>
+      </article>
+    </section>
+
+    <!-- Metas -->
+    <section id="tab-metas" class="tab-panel" role="tabpanel" hidden>
+      <div id="emergency"></div>
+      <article class="panel">
+        <h2>Suas metas</h2>
+        <div id="goal-list"></div>
+      </article>
+      <article class="panel">
+        <h2>Nova meta</h2>
+        <form id="goal-form" autocomplete="off">
+          <div class="form-grid">
+            <label>Nome <input name="name" maxlength="60" required placeholder="Ex.: Viagem, notebook…"></label>
+            <label>Valor total (R$) <input name="target" inputmode="decimal" required placeholder="0,00"></label>
+            <label>Já guardado (R$) <input name="saved" inputmode="decimal" placeholder="0,00"></label>
+            <label>Prazo <input name="deadline" type="month"></label>
+          </div>
+          <p class="form-error" id="goal-error" role="alert"></p>
+          <button type="submit" class="btn primary">Criar meta</button>
+        </form>
+      </article>
+    </section>
+
+    <!-- Método -->
+    <section id="tab-metodo" class="tab-panel" role="tabpanel" hidden>
+      <article class="panel method">
+        <h2>O Método Finan em 5 passos</h2>
+        <ol class="steps">
+          <li><strong>Registre tudo, na hora.</strong> Cada gasto, até o cafezinho. Leva 10 segundos e é o hábito que muda o jogo: você só controla o que enxerga.</li>
+          <li><strong>Pague-se primeiro.</strong> Quando a renda cair, transfira logo 20% para o balde <em>Futuro</em> (reserva, investimentos, dívidas). Viva com o que sobra, não guarde o que sobra.</li>
+          <li><strong>Divida em 3 baldes (50/30/20).</strong> Até 50% em Essenciais, até 30% em Estilo de vida e pelo menos 20% no Futuro. É o seu termômetro.</li>
+          <li><strong>Dê um envelope para cada categoria.</strong> Um limite mensal por categoria (orçamento base zero). O app mostra quanto você ainda pode gastar por dia sem estourar nada.</li>
+          <li><strong>Revise toda semana (15 minutos).</strong> Use o checklist abaixo. Ajuste a rota antes do mês acabar, não depois.</li>
+        </ol>
+        <p class="muted">Tem dívidas com juros altos (cartão, cheque especial)? Coloque quitação de dívidas como prioridade do balde Futuro antes de investir. Depois monte a reserva de emergência (6 meses de gastos essenciais) e só então invista para metas maiores.</p>
+      </article>
+
+      <article class="panel">
+        <h2>Revisão semanal <span class="muted" id="week-label"></span></h2>
+        <ul id="review-list" class="checklist"></ul>
+      </article>
+
+      <article class="panel">
+        <h2>Seus dados</h2>
+        <p class="muted">Tudo fica salvo apenas neste navegador — nada é enviado para servidores. Faça backups de vez em quando para não perder o histórico.</p>
+        <div class="actions">
+          <button type="button" class="btn" data-action="export-json">Baixar backup</button>
+          <label class="btn">Restaurar backup<input type="file" id="import-file" accept="application/json,.json" hidden></label>
+          <button type="button" class="btn" data-action="load-demo">Carregar exemplo</button>
+          <button type="button" class="btn danger" data-action="reset">Apagar tudo</button>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/core.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
