@@ -14,8 +14,9 @@ testes sempre, CI verde a cada commit.
    (escreva o teste que falha antes da correção).
 4. **Antes de todo commit rode `npm run check`** (lint + testes). Nada de commit vermelho.
 5. Ao terminar uma história, marque-a no `BACKLOG.md`.
-6. **Fluxo Git:** `main` é sempre estável. Trabalhe em um branch, abra um Pull Request
-   para `main` e só integre com a CI verde. Commits em português, no imperativo.
+6. **Fluxo Git:** commits pequenos direto no `main`, sempre com `npm run check` verde antes
+   do push; se a CI falhar no GitHub, corrigir é a prioridade. Commits em português, no
+   imperativo. PRs só para contribuições externas e do Dependabot.
 
 ## Arquitetura
 - `js/core.js` — regras de negócio **puras** (sem DOM, sem `localStorage`). Toda conta mora aqui.

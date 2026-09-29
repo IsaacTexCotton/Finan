@@ -11,7 +11,8 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] `CLAUDE.md` com as regras do projeto
 - [x] CI no GitHub Actions: ESLint, `npm audit`, testes
 - [x] Este backlog
-- [x] Fluxo GitHub: branch `main` + Pull Requests, Dependabot, modelo de PR, licença MIT
+- [x] Fluxo GitHub: commits direto no `main` com CI, Dependabot, modelo de PR, licença MIT
+- [x] Atualizações do Dependabot: ESLint 10, actions/checkout v7, actions/setup-node v7
 
 ## Parte 3 — Revisão do método financeiro
 - [ ] Revisar juntos as regras: 50/30/20, categorias padrão, fixa vs. variável, reserva de 6 meses
