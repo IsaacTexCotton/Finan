@@ -7,6 +7,7 @@
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.FinanCore = api;
+  // eslint-disable-next-line max-lines-per-function -- invólucro do módulo, não é uma função de negócio
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
