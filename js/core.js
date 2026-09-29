@@ -32,11 +32,14 @@
     { id: 'transporte', name: 'Transporte', type: 'expense', bucket: 'essencial', kind: 'variavel', icon: '🚌' },
     { id: 'saude', name: 'Saúde', type: 'expense', bucket: 'essencial', kind: 'variavel', icon: '🩺' },
     { id: 'educacao', name: 'Educação', type: 'expense', bucket: 'essencial', kind: 'fixa', icon: '📚' },
+    { id: 'impostos', name: 'Impostos e taxas', type: 'expense', bucket: 'essencial', kind: 'fixa', icon: '🧾' },
 
     { id: 'restaurantes', name: 'Restaurantes e delivery', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🍔' },
     { id: 'lazer', name: 'Lazer', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🎬' },
     { id: 'compras', name: 'Compras', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🛍️' },
     { id: 'assinaturas', name: 'Assinaturas', type: 'expense', bucket: 'estilo', kind: 'fixa', icon: '📺' },
+    { id: 'cuidados', name: 'Cuidados pessoais', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '💇' },
+    { id: 'presentes', name: 'Presentes e doações', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🎁' },
     { id: 'outros', name: 'Outros gastos', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '📦' },
 
     { id: 'reserva', name: 'Reserva de emergência', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '🛟' },
@@ -244,19 +247,34 @@
   function suggestBudgets(income, categories, history = {}) {
     const result = {};
     if (!(income > 0)) return result;
-    for (const bucketId of Object.keys(BUCKETS)) {
+    const bucketIds = Object.keys(BUCKETS);
+    const bucketTotals = allocate(roundTo(income), bucketIds.map((id) => BUCKETS[id].target));
+    bucketIds.forEach((bucketId, b) => {
       const cats = categories.filter((c) => c.type === 'expense' && c.bucket === bucketId);
-      if (!cats.length) continue;
-      const total = income * BUCKETS[bucketId].target;
+      if (!cats.length) return;
       const weights = cats.map((c) => history[c.id] || 0);
       const weightSum = weights.reduce((a, b) => a + b, 0);
+      const shares = cats.map((c, i) => (weightSum > 0 ? weights[i] / weightSum : 1 / cats.length));
+      const values = allocate(bucketTotals[b], shares);
       cats.forEach((c, i) => {
-        const share = weightSum > 0 ? weights[i] / weightSum : 1 / cats.length;
-        const value = roundTo(total * share);
-        if (value > 0) result[c.id] = value;
+        if (values[i] > 0) result[c.id] = values[i];
       });
-    }
+    });
     return result;
+  }
+
+  /**
+   * Divide um total (múltiplo de step) entre partes proporcionais, em múltiplos de step,
+   * garantindo que a soma bata exatamente com o total (método do maior resto).
+   */
+  function allocate(total, shares, step = 1000) {
+    const units = Math.round(total / step);
+    const raw = shares.map((s) => s * units);
+    const result = raw.map(Math.floor);
+    let left = units - result.reduce((a, b) => a + b, 0);
+    const order = raw.map((r, i) => [r - Math.floor(r), i]).sort((a, b) => b[0] - a[0]);
+    for (let k = 0; left > 0; k++, left--) result[order[k % order.length][1]] += 1;
+    return result.map((u) => u * step);
   }
 
   /** Média mensal de gastos essenciais nos últimos meses com registros (antes do mês informado). */
@@ -381,6 +399,9 @@
           icon: typeof c.icon === 'string' ? c.icon.slice(0, 4) : '•',
           ...(c.type === 'expense' ? { bucket: BUCKETS[c.bucket] ? c.bucket : 'estilo', kind: c.kind === 'fixa' ? 'fixa' : 'variavel' } : {}),
         }));
+      // Categorias padrão criadas depois do backup também passam a existir.
+      const known = new Set(data.categories.map((c) => c.id));
+      for (const c of DEFAULT_CATEGORIES) if (!known.has(c.id)) data.categories.push({ ...c });
     }
     const catIds = new Set(data.categories.map((c) => c.id));
     if (Array.isArray(raw.transactions)) {

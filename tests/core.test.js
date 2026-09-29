@@ -177,3 +177,25 @@ test('toCSV usa ponto e vírgula e neutraliza fórmulas', () => {
   assert.equal(header, 'Data;Tipo;Categoria;Balde;Descrição;Valor;Fixo');
   assert.equal(line, '2026-09-01;Despesa;Mercado;Essenciais;"\'=HYPERLINK(""x"")";-123,45;Não');
 });
+
+test('categorias padrão incluem as novas e chegam a quem já tem dados salvos', () => {
+  const ids = cats.map((c) => c.id);
+  for (const id of ['impostos', 'cuidados', 'presentes']) assert.ok(ids.includes(id), id);
+  const byId = F.indexCategories(cats);
+  assert.equal(byId.impostos.bucket, 'essencial');
+  assert.equal(byId.cuidados.bucket, 'estilo');
+  assert.equal(byId.presentes.bucket, 'estilo');
+
+  const antigo = F.normalizeData({ categories: [{ id: 'mercado', name: 'Supermercado', type: 'expense', bucket: 'essencial', kind: 'variavel' }] });
+  const nomes = F.indexCategories(antigo.categories);
+  assert.equal(nomes.mercado.name, 'Supermercado'); // personalização preservada
+  assert.ok(nomes.impostos && nomes.presentes && nomes.salario);
+});
+
+test('suggestBudgets: soma dos envelopes bate exatamente com a renda (sem sobra de arredondamento)', () => {
+  for (const income of [1000000, 333300, 517000]) {
+    const sug = F.suggestBudgets(income, cats);
+    const total = Object.values(sug).reduce((a, b) => a + b, 0);
+    assert.equal(total, Math.round(income / 1000) * 1000, `renda ${income}`);
+  }
+});
