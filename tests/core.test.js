@@ -117,6 +117,9 @@ test('reserva de emergência usa a média dos meses anteriores', () => {
   ];
   assert.equal(F.averageEssential(list, cats, '2026-09'), 150000);
   assert.equal(F.emergencyFundTarget(list, cats, '2026-09'), 900000);
+  assert.equal(F.emergencyFundTarget(list, cats, '2026-09', 'estavel'), 900000);
+  assert.equal(F.emergencyFundTarget(list, cats, '2026-09', 'variavel'), 1800000);
+  assert.equal(F.emergencyFundTarget(list, cats, '2026-09', 'invalido'), 900000);
 });
 
 test('goalProgress calcula aporte mensal', () => {
@@ -198,4 +201,10 @@ test('suggestBudgets: soma dos envelopes bate exatamente com a renda (sem sobra 
     const total = Object.values(sug).reduce((a, b) => a + b, 0);
     assert.equal(total, Math.round(income / 1000) * 1000, `renda ${income}`);
   }
+});
+
+test('perfil de renda é salvo e validado', () => {
+  assert.equal(F.emptyData().settings.incomeProfile, 'estavel');
+  assert.equal(F.normalizeData({ settings: { incomeProfile: 'variavel' } }).settings.incomeProfile, 'variavel');
+  assert.equal(F.normalizeData({ settings: { incomeProfile: 'hacker' } }).settings.incomeProfile, 'estavel');
 });

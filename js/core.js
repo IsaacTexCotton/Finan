@@ -47,6 +47,12 @@
     { id: 'dividas', name: 'Quitação de dívidas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '⛓️' },
   ];
 
+  // Meses de gastos essenciais que a reserva de emergência deve cobrir, por tipo de renda.
+  const INCOME_PROFILES = {
+    estavel: { label: 'Renda estável (CLT, servidor público, aposentadoria)', months: 6 },
+    variavel: { label: 'Renda variável (autônomo, freelancer, empresário)', months: 12 },
+  };
+
   const MONTH_NAMES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
   // ---------- Dinheiro ----------
@@ -292,9 +298,10 @@
     return Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
   }
 
-  /** Reserva de emergência recomendada: 6 meses de custos essenciais. */
-  function emergencyFundTarget(transactions, categories, key, multiplier = 6) {
-    return averageEssential(transactions, categories, key) * multiplier;
+  /** Reserva de emergência recomendada: 6 (renda estável) ou 12 (renda variável) meses de custos essenciais. */
+  function emergencyFundTarget(transactions, categories, key, incomeProfile = 'estavel') {
+    const profile = INCOME_PROFILES[incomeProfile] || INCOME_PROFILES.estavel;
+    return averageEssential(transactions, categories, key) * profile.months;
   }
 
   function monthsBetween(fromISO, toISO) {
@@ -378,7 +385,7 @@
   // ---------- Importação / exportação ----------
 
   function emptyData() {
-    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {} };
+    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel' } };
   }
 
   function isISODate(s) {
@@ -439,6 +446,7 @@
         if (/^\d{4}-W\d{2}$/.test(week) && Array.isArray(items)) data.reviews[week] = items.filter((i) => typeof i === 'string');
       }
     }
+    if (raw.settings && INCOME_PROFILES[raw.settings.incomeProfile]) data.settings.incomeProfile = raw.settings.incomeProfile;
     return data;
   }
 
@@ -471,6 +479,7 @@
   return {
     DATA_VERSION,
     BUCKETS,
+    INCOME_PROFILES,
     DEFAULT_CATEGORIES,
     parseAmount,
     formatBRL,

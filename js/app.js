@@ -329,15 +329,25 @@
   }
 
   function renderGoals(ctx) {
-    const target = F.emergencyFundTarget(state.data.transactions, state.data.categories, state.month);
+    const profileId = state.data.settings.incomeProfile;
+    const months = F.INCOME_PROFILES[profileId].months;
+    const target = F.emergencyFundTarget(state.data.transactions, state.data.categories, state.month, profileId);
     const saved = state.data.goals.find((g) => /reserva/i.test(g.name));
+    let goalAction = '';
+    if (target > 0 && !saved) goalAction = `<button type="button" class="btn primary" data-action="create-emergency" data-target="${target}">Criar meta de reserva</button>`;
+    else if (target > 0 && saved.target !== target) goalAction = `<button type="button" class="btn" data-action="update-emergency" data-id="${esc(saved.id)}" data-target="${target}">Atualizar minha meta para ${money(target)}</button>`;
     $('#emergency').innerHTML = `
       <article class="panel emergency">
         <h2>🛟 Reserva de emergência</h2>
+        <label>Seu tipo de renda
+          <select id="income-profile">
+            ${Object.entries(F.INCOME_PROFILES).map(([id, p]) => `<option value="${esc(id)}" ${id === profileId ? 'selected' : ''}>${esc(p.label)} — ${p.months} meses</option>`).join('')}
+          </select>
+        </label>
         ${target > 0 ? `
-          <p>Com base nos seus gastos essenciais, sua reserva ideal é de <strong>${money(target)}</strong> (6 meses de custo de vida).</p>
-          ${saved ? '' : `<button type="button" class="btn primary" data-action="create-emergency" data-target="${target}">Criar meta de reserva</button>`}`
-        : '<p class="muted">Registre seus gastos essenciais (moradia, mercado, contas…) para calcularmos o valor ideal da sua reserva: 6 meses de custo de vida.</p>'}
+          <p>Com base nos seus gastos essenciais, sua reserva ideal é de <strong>${money(target)}</strong> (${months} meses de custo de vida).</p>
+          ${goalAction}`
+        : `<p class="muted">Registre seus gastos essenciais (moradia, mercado, contas…) para calcularmos o valor ideal da sua reserva: ${months} meses de custo de vida.</p>`}
         <p class="muted small">Deixe a reserva em um investimento seguro e com resgate imediato. Ela é o que impede um imprevisto de virar dívida.</p>
       </article>`;
 
@@ -626,6 +636,12 @@
         state.data.goals.unshift({ id: newId(), name: 'Reserva de emergência', target: Number(el.dataset.target), saved: 0, deadline: '' });
         commit('Meta de reserva criada.');
         break;
+      case 'update-emergency': {
+        const goal = state.data.goals.find((g) => g.id === el.dataset.id);
+        if (goal) goal.target = Number(el.dataset.target);
+        commit('Meta de reserva atualizada.');
+        break;
+      }
       case 'deposit-goal':
         depositGoal(el.dataset.id);
         break;
@@ -676,6 +692,11 @@
     if (event.target.name === 'type') renderCategoryOptions();
   });
   $('#goal-form').addEventListener('submit', submitGoal);
+  $('#emergency').addEventListener('change', (event) => {
+    if (event.target.id !== 'income-profile') return;
+    state.data.settings.incomeProfile = event.target.value;
+    commit('Tipo de renda atualizado.');
+  });
 
   $('#filter-text').addEventListener('input', (event) => {
     state.filterText = event.target.value;
