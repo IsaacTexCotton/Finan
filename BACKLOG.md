@@ -14,9 +14,13 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Fluxo GitHub: commits direto no `main` com CI, Dependabot, modelo de PR, licença MIT
 - [x] Atualizações do Dependabot: ESLint 10, actions/checkout v7, actions/setup-node v7
 
-## Parte 3 — Revisão do método financeiro
-- [ ] Revisar juntos as regras: 50/30/20, categorias padrão, fixa vs. variável, reserva de 6 meses
-- [ ] Ajustar `core.js` e testes conforme as decisões
+## Parte 3 — Revisão do método financeiro ✅
+- [x] Baldes adaptativos: 50/30/20 quando cabe; acima de 50% em essenciais o plano se adapta
+      (ex.: 60/25/15) e volta ao 50/30/20 sozinho; acima de 80% vira alerta de custo fixo
+- [x] Reserva de emergência pelo tipo de renda: 6 meses (estável) ou 12 meses (variável)
+- [x] Novas categorias: Impostos e taxas, Cuidados pessoais, Presentes e doações
+- [x] Compras parceladas: entram no mês da compra, uma parcela por mês, com aviso do
+      quanto do futuro já está comprometido
 
 ## Parte 4 — Visual e primeira versão utilizável
 - [ ] `css/styles.css`: layout responsivo (celular primeiro), tema claro/escuro
@@ -28,13 +32,14 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [ ] Publicar no GitHub Pages (deploy automático pela CI)
 
 ## Refatorações (avisos do ESLint)
-- [ ] `insights` (complexidade 29): quebrar em uma função por tipo de alerta
-- [ ] `handleAction` (complexidade 24, 70 linhas): trocar `switch` por mapa de ações
+- [ ] `insights` (complexidade 34): quebrar em uma função por tipo de alerta
+- [ ] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações
 - [ ] `parseAmount` (complexidade 19): separar detecção de separador decimal
-- [ ] `normalizeData` (complexidade 18): um normalizador por coleção
+- [ ] `normalizeData` (complexidade 22): um normalizador por coleção
 
 ## Ideias futuras (não priorizadas)
 - Importar extrato do banco (OFX/CSV)
-- Parcelamentos no cartão de crédito
+- Controle por cartão de crédito (fatura, limite, dia de fechamento)
+- Plano adaptativo editável manualmente
 - Categorias personalizadas pela interface
 - Funcionar offline como app instalável (PWA)

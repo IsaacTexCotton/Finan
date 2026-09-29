@@ -246,3 +246,62 @@ test('normalizeData preserva parcelas válidas e descarta inválidas', () => {
   assert.deepEqual(data.transactions[0].installment, { group: 'g', n: 2, of: 5 });
   assert.equal(data.transactions[1].installment, undefined);
 });
+
+test('adaptivePlan segue a regra aprovada (exemplos da Parte 3)', () => {
+  const split = (p) => `${p.essencial}/${p.estilo}/${p.futuro}`;
+  assert.equal(split(F.adaptivePlan(null)), '50/30/20');
+  assert.equal(F.adaptivePlan(null).profile, 'sem-historico');
+  assert.equal(split(F.adaptivePlan(0.45)), '50/30/20');
+  assert.equal(F.adaptivePlan(0.45).profile, 'confortavel');
+  assert.equal(split(F.adaptivePlan(0.50)), '50/30/20');
+  assert.equal(split(F.adaptivePlan(0.55)), '55/30/15');
+  assert.equal(split(F.adaptivePlan(0.6)), '60/25/15'); // 0.6 * 100 não pode virar 65 por erro de ponto flutuante
+  assert.equal(split(F.adaptivePlan(0.57)), '60/25/15');
+  assert.equal(split(F.adaptivePlan(0.70)), '70/20/10');
+  assert.equal(split(F.adaptivePlan(0.80)), '80/15/5');
+  assert.equal(F.adaptivePlan(0.80).profile, 'ajustando');
+  assert.equal(split(F.adaptivePlan(0.85)), '85/10/5');
+  assert.equal(F.adaptivePlan(0.85).profile, 'critico');
+  assert.equal(split(F.adaptivePlan(0.97)), '100/0/0');
+  assert.equal(split(F.adaptivePlan(1.3)), '100/0/0');
+  for (let s = 0; s <= 1.2; s += 0.01) {
+    const p = F.adaptivePlan(s);
+    assert.equal(p.essencial + p.estilo + p.futuro, 100, `share ${s}`);
+  }
+});
+
+test('essentialShare usa os 3 meses anteriores com renda, sem o mês corrente', () => {
+  const list = [
+    tx('income', 'salario', 100000, '2026-05-01'),
+    tx('expense', 'moradia', 90000, '2026-05-02'), // 4 meses atrás: fora da janela
+    tx('income', 'salario', 100000, '2026-07-01'),
+    tx('expense', 'moradia', 60000, '2026-07-02'),
+    tx('income', 'salario', 100000, '2026-08-01'),
+    tx('expense', 'moradia', 70000, '2026-08-02'),
+    tx('expense', 'lazer', 20000, '2026-08-03'),
+    tx('expense', 'moradia', 100000, '2026-09-02'), // mês corrente: ignorado
+  ];
+  assert.equal(F.essentialShare(list, cats, '2026-09'), 0.65);
+  assert.equal(F.essentialShare([], cats, '2026-09'), null);
+});
+
+test('plano adaptativo muda as metas dos baldes, os envelopes sugeridos e as mensagens', () => {
+  const plan = F.adaptivePlan(0.6);
+  const s = F.summarize([tx('income', 'salario', 100000, '2026-09-01'), tx('expense', 'moradia', 58000, '2026-09-02'), tx('expense', 'investimentos', 15000, '2026-09-02')], cats);
+  const byId = Object.fromEntries(F.bucketAnalysis(s, plan).map((b) => [b.id, b]));
+  assert.equal(byId.essencial.target, 60000);
+  assert.equal(byId.essencial.status, 'ok'); // acima de 50%, mas dentro do plano adaptado
+  assert.equal(byId.futuro.target, 15000);
+  assert.equal(byId.futuro.status, 'ok');
+
+  const sug = F.suggestBudgets(100000, cats, {}, plan);
+  const futuro = cats.filter((c) => c.bucket === 'futuro').reduce((a, c) => a + (sug[c.id] || 0), 0);
+  assert.equal(futuro, 15000);
+
+  const msgs = F.insights({ summary: s, buckets: F.bucketAnalysis(s, plan), budgetRows: [], previousSummary: null, categories: cats, plan });
+  assert.ok(msgs.some((m) => m.text.includes('60/25/15')));
+  assert.ok(msgs.some((m) => m.level === 'bom')); // poupou 42% ≥ meta de 15%
+
+  const critico = F.insights({ summary: s, buckets: [], budgetRows: [], previousSummary: null, categories: cats, plan: F.adaptivePlan(0.9) });
+  assert.ok(critico.some((m) => m.level === 'alerta' && m.text.includes('reduzir custos fixos')));
+});

@@ -135,10 +135,11 @@
     const summary = F.summarize(txs, cats);
     const previousTx = F.transactionsOfMonth(state.data.transactions, F.shiftMonth(state.month, -1));
     const previousSummary = previousTx.length ? F.summarize(previousTx, cats) : null;
-    const buckets = F.bucketAnalysis(summary);
+    const plan = F.adaptivePlan(F.essentialShare(state.data.transactions, cats, state.month));
+    const buckets = F.bucketAnalysis(summary, plan);
     const budgetRows = F.budgetStatus(state.data.budgets, summary, cats, state.month, today);
     const commitments = F.installmentCommitments(state.data.transactions, state.month);
-    return { today, txs, summary, previousSummary, buckets, budgetRows, commitments };
+    return { today, txs, summary, previousSummary, plan, buckets, budgetRows, commitments };
   }
 
   // ---------- Renderização ----------
@@ -161,7 +162,7 @@
   }
 
   function renderDashboard(ctx) {
-    const { summary, buckets, budgetRows, previousSummary, commitments } = ctx;
+    const { summary, buckets, budgetRows, previousSummary, commitments, plan } = ctx;
     const hasData = state.data.transactions.length > 0;
 
     $('#onboarding').innerHTML = hasData ? '' : `
@@ -170,7 +171,7 @@
         <p>Comece em 3 minutos:</p>
         <ol>
           <li>Lance sua <strong>renda do mês</strong> (salário, extras).</li>
-          <li>Na aba <strong>Orçamento</strong>, clique em <em>Sugerir pelo 50/30/20</em> e ajuste os limites.</li>
+          <li>Na aba <strong>Orçamento</strong>, clique em <em>Sugerir pelo meu plano</em> e ajuste os limites.</li>
           <li>Registre cada gasto no momento em que ele acontece.</li>
         </ol>
         <div class="actions">
@@ -185,7 +186,7 @@
       <div class="card"><span class="card-label">Receitas</span><span class="card-value">${money(summary.income)}</span></div>
       <div class="card"><span class="card-label">Despesas</span><span class="card-value">${money(summary.expense)}</span></div>
       <div class="card"><span class="card-label">Saldo</span><span class="card-value ${balanceClass}">${money(summary.balance)}</span></div>
-      <div class="card"><span class="card-label">Taxa de poupança</span><span class="card-value ${savingsClass}">${summary.income > 0 ? esc(F.formatPercent(summary.savingsRate)) : '—'}</span><span class="card-hint">meta: 20% ou mais</span></div>`;
+      <div class="card"><span class="card-label">Taxa de poupança</span><span class="card-value ${savingsClass}">${summary.income > 0 ? esc(F.formatPercent(summary.savingsRate)) : '—'}</span><span class="card-hint">meta: ${plan.futuro}% ou mais</span></div>`;
 
     const allowance = F.dailyAllowance(budgetRows, state.month, ctx.today);
     $('#allowance').innerHTML = allowance ? `
@@ -197,20 +198,9 @@
         <p>${money(allowance.remaining)} livres nos envelopes variáveis para os próximos ${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}.</p>
       </div>` : '';
 
-    $('#buckets').innerHTML = buckets.map((b) => `
-      <div class="bucket">
-        <div class="bucket-head">
-          <strong>${esc(b.label)}</strong>
-          <span class="badge status-${esc(b.status)}">${esc(STATUS_LABEL[b.status])}</span>
-        </div>
-        ${bar(summary.income > 0 ? b.share : 0, b.status, b.targetRatio)}
-        <div class="bucket-foot muted">
-          <span>${money(b.actual)} · ${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda</span>
-          <span>${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}${summary.income > 0 ? ` (${money(b.target)})` : ''}</span>
-        </div>
-      </div>`).join('');
+    renderBuckets(summary, buckets, plan);
 
-    const list = F.insights({ summary, buckets, budgetRows, previousSummary, commitments, categories: state.data.categories });
+    const list = F.insights({ summary, buckets, budgetRows, previousSummary, commitments, plan, categories: state.data.categories });
     $('#insights').innerHTML = list.map((i) => `<li class="insight level-${esc(i.level)}">${esc(i.text)}</li>`).join('');
 
     const cats = F.indexCategories(state.data.categories);
@@ -225,6 +215,26 @@
           <span class="cat-value">${money(value)}</span>
         </div>`;
     }).join('') : '<p class="muted">Nenhuma despesa neste mês ainda.</p>';
+  }
+
+  function renderBuckets(summary, buckets, plan) {
+    const profile = F.PLAN_PROFILES[plan.profile];
+    $('#plan-info').innerHTML = `
+      <span class="badge plan-${esc(plan.profile)}">${esc(profile.label)}</span>
+      <strong>${plan.essencial}/${plan.estilo}/${plan.futuro}</strong>
+      <span class="muted">${esc(profile.description)}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${esc(F.formatPercent(plan.essentialShare))} da renda.` : ''}</span>`;
+    $('#buckets').innerHTML = buckets.map((b) => `
+      <div class="bucket">
+        <div class="bucket-head">
+          <strong>${esc(b.label)}</strong>
+          <span class="badge status-${esc(b.status)}">${esc(STATUS_LABEL[b.status])}</span>
+        </div>
+        ${bar(summary.income > 0 ? b.share : 0, b.status, b.targetRatio)}
+        <div class="bucket-foot muted">
+          <span>${money(b.actual)} · ${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda</span>
+          <span>${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}${summary.income > 0 ? ` (${money(b.target)})` : ''}</span>
+        </div>
+      </div>`).join('');
   }
 
   function renderCategoryOptions() {
@@ -288,7 +298,7 @@
   }
 
   function renderBudget(ctx) {
-    const { summary, budgetRows } = ctx;
+    const { summary, budgetRows, plan } = ctx;
     const rows = Object.fromEntries(budgetRows.map((r) => [r.categoryId, r]));
     const totalBudget = expenseCategories().reduce((sum, c) => sum + (state.data.budgets[c.id] || 0), 0);
     const unassigned = summary.income - totalBudget;
@@ -306,7 +316,7 @@
       const share = summary.income > 0 ? ` · ${F.formatPercent(bucketBudget / summary.income)} da renda` : '';
       return `
         <div class="budget-group">
-          <h3>${esc(F.BUCKETS[bucketId].label)} <span class="muted">${money(bucketBudget)}${esc(share)} (meta ${esc(F.formatPercent(F.BUCKETS[bucketId].target))})</span></h3>
+          <h3>${esc(F.BUCKETS[bucketId].label)} <span class="muted">${money(bucketBudget)}${esc(share)} (meta ${plan[bucketId]}%)</span></h3>
           ${cats.map((c) => {
             const r = rows[c.id];
             const limit = state.data.budgets[c.id] || 0;
@@ -518,8 +528,9 @@
       return;
     }
     const hasBudget = Object.keys(state.data.budgets).length > 0;
-    if (hasBudget && !confirm('Substituir os limites atuais pela sugestão 50/30/20?')) return;
-    state.data.budgets = F.suggestBudgets(income, state.data.categories, history);
+    const { plan } = monthContext();
+    if (hasBudget && !confirm(`Substituir os limites atuais pela sugestão do seu plano (${plan.essencial}/${plan.estilo}/${plan.futuro})?`)) return;
+    state.data.budgets = F.suggestBudgets(income, state.data.categories, history, plan);
     commit('Orçamento sugerido. Ajuste os valores à sua realidade.');
   }
 

@@ -20,6 +20,16 @@
     futuro: { label: 'Futuro', target: 0.2, description: 'Pague-se primeiro: reserva de emergência, investimentos e quitação de dívidas.' },
   };
 
+  // Metas padrão dos baldes, em pontos percentuais da renda.
+  const DEFAULT_TARGETS = { essencial: 50, estilo: 30, futuro: 20 };
+
+  const PLAN_PROFILES = {
+    'sem-historico': { label: 'Começando', description: 'Ainda sem histórico: o plano começa no clássico 50/30/20.' },
+    confortavel: { label: 'Confortável', description: 'Os essenciais cabem em até 50% da renda: siga o 50/30/20.' },
+    ajustando: { label: 'Ajustando', description: 'Os essenciais passam de 50% da renda: o plano se adapta e volta ao 50/30/20 conforme eles caem.' },
+    critico: { label: 'Crítico', description: 'Os essenciais passam de 80% da renda: o foco é cortar custos fixos ou aumentar a renda.' },
+  };
+
   // kind: 'fixa' (valor previsível, pago de uma vez) ou 'variavel' (gasto ao longo do mês).
   const DEFAULT_CATEGORIES = [
     { id: 'salario', name: 'Salário', type: 'income', icon: '💼' },
@@ -189,10 +199,46 @@
     return { income, expense, balance, consumption, savingsRate, byCategory, byBucket };
   }
 
-  /** Compara o realizado de cada balde com a meta 50/30/20. */
-  function bucketAnalysis(summary, buckets = BUCKETS) {
-    return Object.keys(buckets).map((id) => {
-      const b = buckets[id];
+  /**
+   * Parcela da renda gasta com essenciais nos meses anteriores (padrão: 3), sem contar o mês
+   * corrente, que ainda está incompleto. Retorna null quando não há renda registrada.
+   */
+  function essentialShare(transactions, categories, key, months = 3) {
+    let income = 0;
+    let essential = 0;
+    for (let i = 1; i <= months; i++) {
+      const s = summarize(transactionsOfMonth(transactions, shiftMonth(key, -i)), categories);
+      if (s.income <= 0) continue;
+      income += s.income;
+      essential += s.byBucket.essencial;
+    }
+    return income > 0 ? essential / income : null;
+  }
+
+  /**
+   * Plano adaptativo dos baldes, conforme a situação da pessoa:
+   *  - até 50% em essenciais → 50/30/20;
+   *  - de 50% a 80% → essenciais reais (arredondados para cima de 5 em 5), e do resto
+   *    40% vai para o Futuro (mínimo 5%) e 60% para o Estilo de vida;
+   *  - acima de 80% → Futuro de 5% e foco em reduzir custos.
+   */
+  function adaptivePlan(share) {
+    if (share == null) return { profile: 'sem-historico', essentialShare: null, ...DEFAULT_TARGETS };
+    const essencial = Math.min(Math.ceil((share * 100) / 5 - 1e-9) * 5, 100);
+    if (essencial <= 50) return { profile: 'confortavel', essentialShare: share, ...DEFAULT_TARGETS };
+    const rest = 100 - essencial;
+    if (essencial <= 80) {
+      const futuro = Math.max(5, Math.floor((rest * 2) / 25) * 5);
+      return { profile: 'ajustando', essentialShare: share, essencial, estilo: rest - futuro, futuro };
+    }
+    const futuro = Math.min(5, rest);
+    return { profile: 'critico', essentialShare: share, essencial, estilo: rest - futuro, futuro };
+  }
+
+  /** Compara o realizado de cada balde com a meta do plano (padrão 50/30/20). */
+  function bucketAnalysis(summary, targets = DEFAULT_TARGETS) {
+    return Object.keys(BUCKETS).map((id) => {
+      const b = { label: BUCKETS[id].label, target: targets[id] / 100 };
       const actual = summary.byBucket[id] || 0;
       const target = Math.round(summary.income * b.target);
       const share = summary.income > 0 ? actual / summary.income : 0;
@@ -250,11 +296,11 @@
    * Sugere limites por categoria distribuindo a renda pelo 50/30/20.
    * Dentro de cada balde, o peso de cada categoria segue o histórico (ou divide igualmente).
    */
-  function suggestBudgets(income, categories, history = {}) {
+  function suggestBudgets(income, categories, history = {}, targets = DEFAULT_TARGETS) {
     const result = {};
     if (!(income > 0)) return result;
     const bucketIds = Object.keys(BUCKETS);
-    const bucketTotals = allocate(roundTo(income), bucketIds.map((id) => BUCKETS[id].target));
+    const bucketTotals = allocate(roundTo(income), bucketIds.map((id) => targets[id] / 100));
     bucketIds.forEach((bucketId, b) => {
       const cats = categories.filter((c) => c.type === 'expense' && c.bucket === bucketId);
       if (!cats.length) return;
@@ -388,11 +434,22 @@
   }
 
   /** Mensagens práticas sobre o mês, da mais urgente para a mais positiva. */
-  function insights({ summary, buckets, budgetRows, previousSummary, categories, commitments }) {
+  /** Explica por que o plano não está no 50/30/20 (só quando ele se adaptou). */
+  function planInsight(plan) {
+    if (!plan || (plan.profile !== 'ajustando' && plan.profile !== 'critico')) return null;
+    const pct = formatPercent(plan.essentialShare);
+    const split = `${plan.essencial}/${plan.estilo}/${plan.futuro}`;
+    if (plan.profile === 'critico') {
+      return { level: 'alerta', text: `Os essenciais consomem ${pct} da sua renda. Prioridade: reduzir custos fixos (moradia, contas, transporte) ou aumentar a renda. Seu plano agora é ${split}.` };
+    }
+    return { level: 'info', text: `Seu plano está em ${split} porque os essenciais somaram ${pct} da renda nos últimos meses. Conforme eles caírem, o plano volta sozinho para 50/30/20.` };
+  }
+
+  function insights({ summary, buckets, budgetRows, previousSummary, categories, commitments, plan }) {
     const list = [];
     const cats = indexCategories(categories);
     if (summary.income <= 0) {
-      list.push({ level: 'info', text: 'Registre sua renda do mês para ativar a análise 50/30/20.' });
+      list.push({ level: 'info', text: 'Registre sua renda do mês para ativar a análise dos baldes.' });
     }
     if (summary.income > 0 && summary.balance < 0) {
       list.push({ level: 'perigo', text: `Você gastou ${formatBRL(-summary.balance)} a mais do que ganhou este mês. Corte primeiro no balde Estilo de vida.` });
@@ -423,7 +480,10 @@
     if (commitments && commitments.total > 0) {
       list.push({ level: 'info', text: `Você já tem ${formatBRL(commitments.total)} em parcelas nos próximos ${commitments.months} ${commitments.months === 1 ? 'mês' : 'meses'} (até ${monthLabel(commitments.lastMonth)}).` });
     }
-    if (summary.income > 0 && summary.savingsRate >= 0.2) {
+    const planMessage = planInsight(plan);
+    if (planMessage) list.push(planMessage);
+    const savingsGoal = (plan ? plan.futuro : DEFAULT_TARGETS.futuro) / 100;
+    if (summary.income > 0 && summary.savingsRate >= savingsGoal) {
       list.push({ level: 'bom', text: `Excelente! Sua taxa de poupança está em ${formatPercent(summary.savingsRate)}.` });
     }
     if (!list.length) list.push({ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' });
@@ -532,6 +592,10 @@
   return {
     DATA_VERSION,
     BUCKETS,
+    DEFAULT_TARGETS,
+    PLAN_PROFILES,
+    essentialShare,
+    adaptivePlan,
     INCOME_PROFILES,
     DEFAULT_CATEGORIES,
     parseAmount,
