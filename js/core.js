@@ -342,8 +342,53 @@
       }));
   }
 
+  const MAX_INSTALLMENTS = 48;
+
+  /**
+   * Divide uma compra parcelada em um lançamento por mês, começando no mês da compra.
+   * Centavos que sobram da divisão vão para as primeiras parcelas (a soma bate com o total).
+   */
+  function createInstallments(entry, count, makeId) {
+    const n = Math.max(1, Math.min(Math.floor(count) || 1, MAX_INSTALLMENTS));
+    const base = Math.floor(entry.amount / n);
+    const remainder = entry.amount - base * n;
+    const group = makeId();
+    const day = Number(entry.date.slice(8, 10));
+    const firstMonth = monthKey(entry.date);
+    return Array.from({ length: n }, (_, i) => {
+      const key = shiftMonth(firstMonth, i);
+      return {
+        ...entry,
+        id: makeId(),
+        amount: base + (i < remainder ? 1 : 0),
+        date: `${key}-${pad(Math.min(day, daysInMonth(key)))}`,
+        recurring: false,
+        installment: { group, n: i + 1, of: n },
+        createdAt: Date.now(),
+      };
+    });
+  }
+
+  /** Parcelas já assumidas para depois do mês informado: o futuro que já está comprometido. */
+  function installmentCommitments(transactions, key) {
+    const byMonth = {};
+    let total = 0;
+    for (const t of transactions) {
+      if (!t.installment || t.type !== 'expense' || monthKey(t.date) <= key) continue;
+      const m = monthKey(t.date);
+      byMonth[m] = (byMonth[m] || 0) + t.amount;
+      total += t.amount;
+    }
+    const months = Object.keys(byMonth).sort();
+    return { total, byMonth, months: months.length, lastMonth: months[months.length - 1] || null };
+  }
+
+  function installmentLabel(t) {
+    return t.installment ? `${t.installment.n}/${t.installment.of}` : '';
+  }
+
   /** Mensagens práticas sobre o mês, da mais urgente para a mais positiva. */
-  function insights({ summary, buckets, budgetRows, previousSummary, categories }) {
+  function insights({ summary, buckets, budgetRows, previousSummary, categories, commitments }) {
     const list = [];
     const cats = indexCategories(categories);
     if (summary.income <= 0) {
@@ -374,6 +419,9 @@
         if (diff > 5000 && (base === 0 || diff / base > 0.2) && (!worst || diff > worst.diff)) worst = { id, diff };
       }
       if (worst) list.push({ level: 'info', text: `${cats[worst.id].name} subiu ${formatBRL(worst.diff)} em relação ao mês passado.` });
+    }
+    if (commitments && commitments.total > 0) {
+      list.push({ level: 'info', text: `Você já tem ${formatBRL(commitments.total)} em parcelas nos próximos ${commitments.months} ${commitments.months === 1 ? 'mês' : 'meses'} (até ${monthLabel(commitments.lastMonth)}).` });
     }
     if (summary.income > 0 && summary.savingsRate >= 0.2) {
       list.push({ level: 'bom', text: `Excelente! Sua taxa de poupança está em ${formatPercent(summary.savingsRate)}.` });
@@ -423,6 +471,7 @@
           description: typeof t.description === 'string' ? t.description.slice(0, 120) : '',
           recurring: Boolean(t.recurring),
           createdAt: Number.isFinite(t.createdAt) ? t.createdAt : 0,
+          ...(validInstallment(t.installment) ? { installment: { group: t.installment.group, n: t.installment.n, of: t.installment.of } } : {}),
         }));
     }
     if (raw.budgets && typeof raw.budgets === 'object') {
@@ -450,6 +499,10 @@
     return data;
   }
 
+  function validInstallment(i) {
+    return Boolean(i) && typeof i.group === 'string' && Number.isInteger(i.of) && i.of >= 2 && i.of <= MAX_INSTALLMENTS && Number.isInteger(i.n) && i.n >= 1 && i.n <= i.of;
+  }
+
   function csvCell(value) {
     let s = String(value == null ? '' : value);
     // Evita injeção de fórmulas ao abrir no Excel/Planilhas.
@@ -468,7 +521,7 @@
         t.type === 'income' ? 'Receita' : 'Despesa',
         cat.name || t.categoryId,
         cat.bucket ? BUCKETS[cat.bucket].label : '',
-        t.description,
+        t.installment ? `${t.description} (${installmentLabel(t)})`.trim() : t.description,
         ((t.type === 'income' ? 1 : -1) * t.amount / 100).toFixed(2).replace('.', ','),
         t.recurring ? 'Sim' : 'Não',
       ]);
@@ -503,6 +556,10 @@
     emergencyFundTarget,
     goalProgress,
     recurringForMonth,
+    MAX_INSTALLMENTS,
+    createInstallments,
+    installmentCommitments,
+    installmentLabel,
     insights,
     emptyData,
     normalizeData,

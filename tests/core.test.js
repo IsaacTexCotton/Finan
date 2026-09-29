@@ -208,3 +208,41 @@ test('perfil de renda é salvo e validado', () => {
   assert.equal(F.normalizeData({ settings: { incomeProfile: 'variavel' } }).settings.incomeProfile, 'variavel');
   assert.equal(F.normalizeData({ settings: { incomeProfile: 'hacker' } }).settings.incomeProfile, 'estavel');
 });
+
+test('createInstallments divide a compra mês a mês, somando o total exato', () => {
+  let n = 0;
+  const parcelas = F.createInstallments({ type: 'expense', categoryId: 'compras', amount: 100000, date: '2026-01-31', description: 'Notebook' }, 3, () => `id${++n}`);
+  assert.equal(parcelas.length, 3);
+  assert.deepEqual(parcelas.map((p) => p.amount), [33334, 33333, 33333]);
+  assert.equal(parcelas.reduce((a, p) => a + p.amount, 0), 100000);
+  assert.deepEqual(parcelas.map((p) => p.date), ['2026-01-31', '2026-02-28', '2026-03-31']);
+  assert.deepEqual(parcelas.map((p) => F.installmentLabel(p)), ['1/3', '2/3', '3/3']);
+  assert.ok(parcelas.every((p) => p.installment.group === parcelas[0].installment.group && !p.recurring));
+  assert.equal(new Set(parcelas.map((p) => p.id)).size, 3);
+  assert.equal(F.createInstallments({ amount: 100, date: '2026-01-01' }, 999, () => 'x').length, F.MAX_INSTALLMENTS);
+});
+
+test('installmentCommitments soma só parcelas dos meses seguintes', () => {
+  let n = 0;
+  const parcelas = F.createInstallments({ type: 'expense', categoryId: 'compras', amount: 120000, date: '2026-09-10', description: 'TV' }, 4, () => `p${++n}`);
+  const list = [...parcelas, tx('expense', 'mercado', 5000, '2026-10-01')];
+  const c = F.installmentCommitments(list, '2026-09');
+  assert.equal(c.total, 90000);
+  assert.equal(c.months, 3);
+  assert.equal(c.lastMonth, '2026-12');
+  assert.equal(F.installmentCommitments(list, '2026-12').total, 0);
+
+  const s = F.summarize([], cats);
+  const msgs = F.insights({ summary: s, buckets: F.bucketAnalysis(s), budgetRows: [], previousSummary: null, categories: cats, commitments: c });
+  assert.ok(msgs.some((m) => m.text.includes('parcelas') && m.text.includes('dezembro de 2026')));
+});
+
+test('normalizeData preserva parcelas válidas e descarta inválidas', () => {
+  const base = tx('expense', 'compras', 1000, '2026-09-01');
+  const data = F.normalizeData({ transactions: [
+    { ...base, id: 'a', installment: { group: 'g', n: 2, of: 5 } },
+    { ...base, id: 'b', installment: { group: 'g', n: 6, of: 5 } },
+  ] });
+  assert.deepEqual(data.transactions[0].installment, { group: 'g', n: 2, of: 5 });
+  assert.equal(data.transactions[1].installment, undefined);
+});

@@ -137,7 +137,8 @@
     const previousSummary = previousTx.length ? F.summarize(previousTx, cats) : null;
     const buckets = F.bucketAnalysis(summary);
     const budgetRows = F.budgetStatus(state.data.budgets, summary, cats, state.month, today);
-    return { today, txs, summary, previousSummary, buckets, budgetRows };
+    const commitments = F.installmentCommitments(state.data.transactions, state.month);
+    return { today, txs, summary, previousSummary, buckets, budgetRows, commitments };
   }
 
   // ---------- Renderização ----------
@@ -160,7 +161,7 @@
   }
 
   function renderDashboard(ctx) {
-    const { summary, buckets, budgetRows, previousSummary } = ctx;
+    const { summary, buckets, budgetRows, previousSummary, commitments } = ctx;
     const hasData = state.data.transactions.length > 0;
 
     $('#onboarding').innerHTML = hasData ? '' : `
@@ -209,7 +210,7 @@
         </div>
       </div>`).join('');
 
-    const list = F.insights({ summary, buckets, budgetRows, previousSummary, categories: state.data.categories });
+    const list = F.insights({ summary, buckets, budgetRows, previousSummary, commitments, categories: state.data.categories });
     $('#insights').innerHTML = list.map((i) => `<li class="insight level-${esc(i.level)}">${esc(i.text)}</li>`).join('');
 
     const cats = F.indexCategories(state.data.categories);
@@ -237,6 +238,8 @@
       : Object.keys(F.BUCKETS).map((b) => [F.BUCKETS[b].label, cats.filter((c) => c.bucket === b)]);
     select.innerHTML = groups.map(([label, list]) => `<optgroup label="${esc(label)}">${list.map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join('')}</optgroup>`).join('');
     if (cats.some((c) => c.id === current)) select.value = current;
+    // Parcelamento só para despesas novas; editar muda apenas a parcela escolhida.
+    $('#installments-field').hidden = type !== 'expense' || Boolean(state.editingId);
   }
 
   function renderTransactions(ctx) {
@@ -271,7 +274,7 @@
         <li class="tx">
           <span class="tx-icon" aria-hidden="true">${esc(cat.icon)}</span>
           <span class="tx-main">
-            <span class="tx-desc">${esc(t.description || cat.name)}${t.recurring ? ' <span class="tag">fixo</span>' : ''}</span>
+            <span class="tx-desc">${esc(t.description || cat.name)}${t.recurring ? ' <span class="tag">fixo</span>' : ''}${t.installment ? ` <span class="tag">${esc(F.installmentLabel(t))}</span>` : ''}</span>
             <span class="tx-cat muted">${esc(cat.name)}</span>
           </span>
           <span class="tx-amount ${t.type === 'income' ? 'positive' : ''}">${t.type === 'income' ? '+' : '−'} ${money(t.amount)}</span>
@@ -445,11 +448,19 @@
       description: form.elements.description.value.trim().slice(0, 120),
       recurring: form.elements.recurring.checked,
     };
+    const installments = entry.type === 'expense' ? Number(form.elements.installments.value) || 1 : 1;
     let message;
     if (state.editingId) {
       const idx = state.data.transactions.findIndex((t) => t.id === state.editingId);
-      if (idx > -1) state.data.transactions[idx] = { ...state.data.transactions[idx], ...entry };
+      if (idx > -1) {
+        const current = state.data.transactions[idx];
+        state.data.transactions[idx] = { ...current, ...entry, recurring: current.installment ? false : entry.recurring };
+      }
       message = 'Lançamento atualizado.';
+    } else if (installments > 1) {
+      const parcels = F.createInstallments(entry, installments, newId);
+      state.data.transactions.push(...parcels);
+      message = `Compra de ${F.formatBRL(amount)} em ${parcels.length}x de ${F.formatBRL(parcels[0].amount)} lançada.`;
     } else {
       state.data.transactions.push({ id: newId(), createdAt: Date.now(), ...entry });
       message = `${entry.type === 'income' ? 'Receita' : 'Despesa'} de ${F.formatBRL(amount)} lançada.`;
@@ -466,6 +477,21 @@
   }
 
   // ---------- Ações ----------
+
+  function deleteTransaction(id) {
+    const t = state.data.transactions.find((x) => x.id === id);
+    if (!t) return;
+    let ids = [id];
+    if (t.installment && confirm(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`)) {
+      ids = state.data.transactions.filter((x) => x.installment && x.installment.group === t.installment.group).map((x) => x.id);
+    } else if (!confirm(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) {
+      return;
+    }
+    const remove = new Set(ids);
+    state.data.transactions = state.data.transactions.filter((x) => !remove.has(x.id));
+    if (remove.has(state.editingId)) resetTxForm();
+    commit(ids.length > 1 ? `${ids.length} parcelas excluídas.` : 'Lançamento excluído.');
+  }
 
   function copyRecurring() {
     const from = F.shiftMonth(state.month, -1);
@@ -617,11 +643,7 @@
         startEdit(el.dataset.id);
         break;
       case 'delete-tx':
-        if (confirm('Excluir este lançamento?')) {
-          state.data.transactions = state.data.transactions.filter((t) => t.id !== el.dataset.id);
-          if (state.editingId === el.dataset.id) resetTxForm();
-          commit('Lançamento excluído.');
-        }
+        deleteTransaction(el.dataset.id);
         break;
       case 'copy-recurring':
         copyRecurring();
