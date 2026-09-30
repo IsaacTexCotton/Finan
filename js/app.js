@@ -294,7 +294,7 @@
     const groups = type === 'income'
       ? [['Receitas', cats]]
       : Object.keys(F.BUCKETS).map((b) => [F.BUCKETS[b].label, cats.filter((c) => c.bucket === b)]);
-    select.innerHTML = groups.map(([label, list]) => `<optgroup label="${esc(label)}">${list.map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join('')}</optgroup>`).join('');
+    select.innerHTML = groups.map(([label, list]) => `<optgroup label="${esc(label)}">${list.map((c) => `<option value="${esc(c.id)}">${esc(c.name)} ${esc(c.icon)}</option>`).join('')}</optgroup>`).join('');
     if (cats.some((c) => c.id === current)) select.value = current;
     // Parcelamento só para despesas novas; editar muda apenas a parcela escolhida.
     $('#installments-field').hidden = type !== 'expense' || Boolean(state.editingId);
@@ -305,7 +305,7 @@
     const filterSelect = $('#filter-category');
     const selected = state.filterCategory;
     filterSelect.innerHTML = `<option value="">Todas as categorias</option>` +
-      state.data.categories.map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join('');
+      state.data.categories.map((c) => `<option value="${esc(c.id)}">${esc(c.name)} ${esc(c.icon)}</option>`).join('');
     filterSelect.value = selected;
 
     const cats = F.indexCategories(state.data.categories);

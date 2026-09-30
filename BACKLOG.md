@@ -78,8 +78,8 @@ Prioridade média
 - [ ] Abas: setas do teclado não trocam de aba, as 5 são paradas de Tab, sem `aria-controls`
       e painéis sem nome; sem link "pular para o conteúdo" (8 paradas até o primeiro campo);
       página sem título principal (h1); abas fora de uma região identificada (axe)
-- [ ] Lista de categorias: cada opção começa com emoji, então digitar "Mer" não escolhe
-      "Mercado" (provado: sem emoji funciona)
+- [x] Lista de categorias: cada opção começava com emoji, então digitar "Mer" não escolhia
+      "Mercado". Agora o nome vem primeiro e o emoji depois ("Mercado 🛒")
 - [ ] Limite do Orçamento salva sem nenhum aviso de "salvo"
 - [ ] Palavras de finanças sem explicação no Painel e no Orçamento: baldes, envelopes, taxa de
       poupança, "orçamento base zero", fixa/variável. Explicar em linguagem simples
