@@ -9,6 +9,7 @@ chamada de rede ou hook.
 | `playwright-best-practices` | currents-dev/playwright-best-practices-skill | 283d5cb | MIT |
 | `verification-before-completion` | obra/superpowers | 8ca22db | MIT |
 | `systematic-debugging` | obra/superpowers | 8ca22db | MIT |
+| `prompt-optimizer` | getsentry/skills | d18b7aa | Apache-2.0 |
 
 Em `systematic-debugging` ficaram só o `SKILL.md` e os três guias; os scripts e arquivos de
 teste da skill original foram deixados de fora. Referências a eles no texto (ex.:
