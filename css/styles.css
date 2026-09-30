@@ -228,28 +228,35 @@ main:focus-visible {
   scrollbar-width: thin;
 }
 
+/* Celular: as 5 abas ficam todas à vista, em duas linhas (3 + 2), sem precisar deslizar. */
 .tablist {
-  display: flex;
-  flex: 1 0 auto;
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(6, 1fr);
 }
 
 .tabs button {
-  flex: 1 0 auto;
+  grid-column: span 2;
+  min-width: 0;
   min-height: var(--tap);
-  padding: 0 1rem;
+  padding: 0 0.125rem;
   border: 0;
   border-bottom: 4px solid transparent;
   background: none;
   color: var(--muted);
   font: inherit;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 700;
   cursor: pointer;
+}
+
+.tabs button:nth-child(n + 4) {
+  grid-column: span 3;
 }
 
 .tabs button.active {
   border-bottom-color: var(--primary);
   color: var(--primary-strong);
-  font-weight: 800;
 }
 
 main {
@@ -297,6 +304,19 @@ main {
 }
 
 @media (min-width: 30rem) {
+  .tablist {
+    display: flex;
+    flex: 1 0 auto;
+  }
+
+  .tabs button,
+  .tabs button:nth-child(n + 4) {
+    flex: 1 0 auto;
+    grid-column: auto;
+    padding: 0 1rem;
+    font-size: 1rem;
+  }
+
   .brand {
     position: static;
     width: auto;

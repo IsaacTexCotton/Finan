@@ -31,8 +31,8 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Visual da tela Lançamentos: formulário para o polegar e lista por dia
 - [ ] Visual das telas Orçamento (envelopes), Metas e Método
 - [ ] Tema escuro (segue a configuração do celular)
-- [ ] Sugestão: barra de navegação fixa embaixo no celular. As 5 abas não cabem na largura de
-      390px (Metas e Método ficam escondidas à direita) e o polegar alcança melhor o rodapé
+- [ ] Sugestão (opcional): barra de navegação fixa embaixo no celular, que o polegar alcança
+      melhor. As abas em duas linhas já resolvem o problema de ficarem escondidas
 - [ ] Sugestão: `scrollIntoView` em `app.js` ignora "reduzir movimento"; trocar por `behavior: auto`
       quando `prefers-reduced-motion: reduce`
 - [ ] Teste manual no navegador de cada tela (Painel, Lançamentos, Orçamento, Metas, Método)
@@ -85,7 +85,9 @@ Prioridade média
 - [x] Palavras de finanças sem explicação no Painel e no Orçamento: baldes, 50/30/20,
       envelopes, fixa/variável e "orçamento base zero" (agora "dar um destino a cada real").
       Falta só "taxa de poupança", que depende da decisão sobre o que conta como poupança
-- [ ] Metas e Método escondidas à direita no celular (ver barra de navegação fixa abaixo)
+- [x] Metas e Método escondidas à direita no celular. Agora as 5 abas aparecem inteiras: duas
+      linhas (3 + 2) no celular e uma linha a partir de 480px; `abas-visiveis.spec.js` confere
+      de 320 a 1280px. Uma barra fixa embaixo não coube em 320px ("Lançamentos")
 
 Prioridade baixa
 - [x] Etiqueta "variavel" sem acento (aparece na tela do Orçamento)

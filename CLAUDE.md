@@ -81,6 +81,9 @@ Só faça o commit quando todas as respostas forem "sim":
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
 - Linguagem simples: palavra do método (balde, envelope, fixa, variável, 50/30/20) é explicada
   no lugar em que aparece. `tests/e2e/explicacoes.spec.js` protege os textos.
+- Nenhuma aba pode ficar escondida: no celular as 5 aparecem em duas linhas (3 + 2), sem
+  deslizar, e o tamanho delas não muda ao trocar de aba (`tests/e2e/abas-visiveis.spec.js`,
+  de 320 a 1280px).
 - As abas seguem o padrão ARIA (setas trocam de aba, só a atual é parada do Tab, cada aba
   controla um painel com nome). A página tem um título principal (h1) e o atalho "Pular para
   o conteúdo". `tests/e2e/acessibilidade.spec.js` (axe-core) precisa continuar com zero
