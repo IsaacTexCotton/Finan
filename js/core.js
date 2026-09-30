@@ -195,7 +195,6 @@
     const consumption = byBucket.essencial + byBucket.estilo; // Gastos: o que foi consumido
     const saved = byBucket.futuro; // Guardado: reserva, investimentos e dívidas
     const balance = income - expense;
-    // Taxa de poupança: tudo o que não foi consumido (aportes no "Futuro" + sobra).
     // Taxa de poupança: só o que foi guardado (Futuro) sobre a renda. A sobra do mês não conta:
     // dinheiro parado na conta ainda não foi guardado.
     const savingsRate = income > 0 ? saved / income : 0;
