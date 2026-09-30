@@ -116,7 +116,7 @@
     <section id="tab-orcamento" class="tab-panel" role="tabpanel" aria-labelledby="aba-orcamento" hidden>
       <article class="panel">
         <div class="panel-head">
-          <h2>Envelopes do mês</h2>
+          <h2 id="budget-title" tabindex="-1">Envelopes do mês</h2>
           <button type="button" class="btn small" data-action="suggest-budget">Sugerir pelos meus gastos</button>
         </div>
         <p class="muted">Cada categoria pode ter um <strong>envelope</strong>: o limite de quanto você quer gastar nela por mês (por exemplo, R$ 500 para Mercado).</p>
@@ -125,8 +125,18 @@
           <summary>Como funciona</summary>
           <p class="muted">Os limites valem para todos os meses. A ideia é dar um destino a cada real da sua renda: gastar, guardar ou investir.</p>
           <p class="muted small">Cada balde tem um <strong>teto</strong>: a parte da sua renda que o plano reserva para ele. Você não precisa dar limite a todas as categorias: as que ficam sem limite gastam do que sobra do teto.</p>
-          <p class="muted small">O botão <strong>Sugerir pelos meus gastos</strong> usa a média dos seus últimos 3 meses (nas categorias fixas, o valor que você pagou) e só sugere limite para o que você já gastou. Para o Futuro, usa a parte do plano. Ele não inventa números: sem gastos de meses anteriores, não sugere nada.</p>
+          <p class="muted small">O botão <strong>Sugerir pelos meus gastos</strong> usa a média dos seus últimos 3 meses (nas categorias fixas, o valor que você pagou) e só sugere limite para o que você já gastou. Para o Futuro, usa a parte do plano. Ele não inventa números: se você ainda não tem gastos de meses anteriores, faz algumas perguntas e monta os limites com o que você responder.</p>
         </details>
+        <form id="budget-quiz" class="quiz" hidden>
+          <h3 id="quiz-title" tabindex="-1">Conte quanto você gasta por mês</h3>
+          <p class="muted">Você ainda não tem gastos de meses anteriores, então o app não tem como sugerir números reais. Informe valores aproximados por mês. <strong>Deixe em branco o que você não gasta.</strong> Você pode mudar tudo depois.</p>
+          <div id="quiz-fields"></div>
+          <p class="form-error" id="quiz-error" role="alert"></p>
+          <div class="actions">
+            <button type="submit" class="btn primary">Criar meu orçamento</button>
+            <button type="button" class="btn" data-action="cancel-quiz">Agora não</button>
+          </div>
+        </form>
         <div id="zero-based"></div>
         <div id="budget-table"></div>
       </article>

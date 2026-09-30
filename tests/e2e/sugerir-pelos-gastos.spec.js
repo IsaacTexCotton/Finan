@@ -44,14 +44,14 @@ test('com limites já definidos, pergunta antes de substituir', async ({ page })
   await expect(page.getByLabel('Limite para Mercado')).toHaveValue('990,00'); // recusou: nada mudou
 });
 
-test('sem gastos de meses anteriores, explica em vez de inventar números', async ({ page }) => {
+test('sem gastos de meses anteriores, pergunta em vez de inventar números', async ({ page }) => {
   await abrir(page, { version: 1, transactions: [
     { id: 'r1', type: 'income', categoryId: 'salario', amount: 300000, date: '2026-09-07', description: '' },
     { id: 'a1', type: 'expense', categoryId: 'mercado', amount: 50000, date: '2026-09-08', description: '' },
   ] });
   await page.getByRole('button', { name: 'Sugerir pelos meus gastos' }).click();
-  await expect(page.getByRole('status')).toContainText('Ainda não há gastos de meses anteriores');
-  await expect(page.getByLabel('Limite para Mercado')).toHaveValue('');
+  await expect(page.getByRole('heading', { name: 'Conte quanto você gasta por mês' })).toBeVisible();
+  await expect(page.getByLabel('Limite para Mercado')).toHaveValue(''); // nenhum número foi inventado
 });
 
 test('sem renda, pede a renda primeiro', async ({ page }) => {

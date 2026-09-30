@@ -460,8 +460,7 @@
    * Devolve { status: 'ok' | 'sem-renda' | 'sem-historico', budgets, months, income }.
    */
   function suggestFromHistory(transactions, categories, key, plan) {
-    const monthIncome = summarize(transactionsOfMonth(transactions, key), categories).income;
-    const income = monthIncome > 0 ? monthIncome : summarize(transactionsOfMonth(transactions, shiftMonth(key, -1)), categories).income;
+    const income = referenceIncome(transactions, categories, key);
     if (!(income > 0)) return { status: 'sem-renda', budgets: {} };
     const months = historyMonths(transactions, key);
     if (!months.length) return { status: 'sem-historico', budgets: {} };
@@ -475,9 +474,37 @@
       if (c.bucket === 'futuro') futureHistory[c.id] = values.reduce((a, b) => a + b, 0) / values.length;
       else if (values.some((v) => v > 0)) budgets[c.id] = realSpending(c, values);
     }
-    const futuro = suggestBudgets(income, categories, futureHistory, plan);
-    for (const c of expenses) if (c.bucket === 'futuro' && futuro[c.id]) budgets[c.id] = futuro[c.id];
+    Object.assign(budgets, futureBudgets(income, categories, futureHistory, plan));
     return { status: 'ok', budgets, months: months.length, income };
+  }
+
+  /** Renda de referência do mês: a do próprio mês ou, sem ela, a do mês anterior (0 se não houver). */
+  function referenceIncome(transactions, categories, key) {
+    const monthIncome = summarize(transactionsOfMonth(transactions, key), categories).income;
+    if (monthIncome > 0) return monthIncome;
+    return summarize(transactionsOfMonth(transactions, shiftMonth(key, -1)), categories).income;
+  }
+
+  /** Limites do balde Futuro: a parte do plano sobre a renda, repartida pelo histórico (igual se não houver). */
+  function futureBudgets(income, categories, history, plan) {
+    const all = suggestBudgets(income, categories, history, plan);
+    const result = {};
+    for (const c of categories) if (c.type === 'expense' && c.bucket === 'futuro' && all[c.id]) result[c.id] = all[c.id];
+    return result;
+  }
+
+  /**
+   * Limites a partir das respostas do questionário (para quem ainda não tem histórico): o valor que a
+   * pessoa informou (centavos inteiros positivos) em Essenciais e Estilo de vida, e o Futuro pelo plano.
+   * Respostas inválidas, em branco ou de categorias desconhecidas são ignoradas.
+   */
+  function budgetsFromAnswers(answers, categories, income, plan) {
+    const budgets = {};
+    for (const c of categories) {
+      const value = answers[c.id];
+      if (c.type === 'expense' && c.bucket !== 'futuro' && Number.isInteger(value) && value > 0) budgets[c.id] = value;
+    }
+    return { ...budgets, ...futureBudgets(income, categories, {}, plan) };
   }
 
   /**
@@ -822,6 +849,8 @@
     bucketCeilings,
     bucketBudgetStatus,
     suggestFromHistory,
+    referenceIncome,
+    budgetsFromAnswers,
     averageEssential,
     emergencyFundTarget,
     goalSaved,

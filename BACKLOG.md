@@ -147,5 +147,5 @@ do balde e comparação. Uma parte por vez:
       balde Futuro vem do percentual do plano (`suggestFromHistory`)
 - [ ] Sugestão: retirar `suggestBudgets` do núcleo quando os testes antigos dele puderem ser
       trocados (hoje ele só divide o balde Futuro por dentro de `suggestFromHistory`)
-- [ ] Parte 3: questionário simples (aluguel, mercado, transporte…) para quem não tem histórico
+- [x] Parte 3: questionário simples (aluguel, mercado, transporte…) para quem não tem histórico
 - [ ] Sugestão: cada valor sugerido mostra o motivo ("média dos últimos 3 meses: R$ 290")

@@ -703,3 +703,39 @@ test('suggestFromHistory: o Futuro segue o plano adaptado e a soma bate com o te
     assert.equal(futuro, F.bucketCeilings(333300, plano).futuro);
   }
 });
+
+// ---- Questionário para quem ainda não tem histórico (Parte 3 da reformulação) ----
+
+test('referenceIncome usa a renda do mês ou, sem ela, a do mês anterior', () => {
+  const list = [tx('income', 'salario', 300000, '2026-09-07'), tx('income', 'salario', 250000, '2026-08-07')];
+  assert.equal(F.referenceIncome(list, cats, '2026-09'), 300000);
+  assert.equal(F.referenceIncome(list, cats, '2026-10'), 300000); // outubro sem renda: vale a de setembro
+  assert.equal(F.referenceIncome(list, cats, '2026-12'), 0); // sem renda no mês nem no anterior
+  assert.equal(F.referenceIncome([], cats, '2026-09'), 0);
+});
+
+test('budgetsFromAnswers monta os limites com o que a pessoa informou e o Futuro pelo plano', () => {
+  const answers = {
+    moradia: 120000,
+    mercado: 60000,
+    lazer: 0, // em branco ou zero: sem limite
+    compras: -500, // inválido: ignorado
+    educacao: 1000.5, // centavos quebrados: ignorado
+    reserva: 99999, // o Futuro não é perguntado: vem do plano
+    categoriaQueNaoExiste: 5000,
+  };
+  const r = F.budgetsFromAnswers(answers, cats, 300000, PLANO);
+  assert.equal(r.moradia, 120000);
+  assert.equal(r.mercado, 60000);
+  for (const id of ['lazer', 'compras', 'educacao', 'categoriaQueNaoExiste']) assert.equal(r[id], undefined, id);
+  const futuras = cats.filter((c) => c.type === 'expense' && c.bucket === 'futuro');
+  assert.equal(futuras.reduce((sum, c) => sum + (r[c.id] || 0), 0), 60000); // 20% de R$ 3.000
+  assert.equal(r.reserva, 15000); // dividido igualmente entre as 4 categorias do Futuro
+});
+
+test('budgetsFromAnswers sem nenhuma resposta ainda devolve só o Futuro, e sem renda devolve nada do Futuro', () => {
+  const soFuturo = F.budgetsFromAnswers({}, cats, 300000, PLANO);
+  assert.ok(Object.keys(soFuturo).length > 0);
+  assert.ok(Object.keys(soFuturo).every((id) => cats.find((c) => c.id === id).bucket === 'futuro'));
+  assert.deepEqual(F.budgetsFromAnswers({ mercado: 60000 }, cats, 0, PLANO), { mercado: 60000 });
+});

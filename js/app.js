@@ -672,13 +672,68 @@
       return;
     }
     if (result.status === 'sem-historico') {
-      toast('Ainda não há gastos de meses anteriores para basear a sugestão. Registre seus gastos e volte no próximo mês.');
+      openQuiz();
       return;
     }
     const hasBudget = Object.keys(state.data.budgets).length > 0;
     if (hasBudget && !confirm('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
     state.data.budgets = result.budgets;
     commit(`Orçamento sugerido pela média dos últimos ${result.months} ${result.months === 1 ? 'mês' : 'meses'}. Ajuste os valores à sua realidade.`);
+  }
+
+  // ---------- Questionário do orçamento (quem ainda não tem histórico) ----------
+
+  /** Abre o questionário: um campo por categoria de Essenciais e Estilo de vida, todos opcionais. */
+  function openQuiz() {
+    const grupos = ['essencial', 'estilo'].map((bucketId) => {
+      const campos = expenseCategories().filter((c) => c.bucket === bucketId).map((c) => `
+        <label>${esc(c.name)}
+          <input data-category="${esc(c.id)}" data-name="${esc(c.name)}" inputmode="decimal" placeholder="0,00" autocomplete="off">
+        </label>`).join('');
+      return `<fieldset class="quiz-group"><legend>${esc(F.BUCKETS[bucketId].label)} (R$ por mês)</legend>${campos}</fieldset>`;
+    }).join('');
+    $('#quiz-fields').innerHTML = grupos;
+    $('#quiz-error').textContent = '';
+    $('#budget-quiz').hidden = false;
+    $('#quiz-title').focus();
+  }
+
+  function closeQuiz() {
+    $('#budget-quiz').hidden = true;
+  }
+
+  /** Lê as respostas do questionário. Devolve null (com o erro na tela) se alguma for inválida ou se não houver nenhuma. */
+  function readQuizAnswers() {
+    const answers = {};
+    for (const input of $$('#quiz-fields input')) {
+      const raw = input.value.trim();
+      if (!raw) continue;
+      const cents = F.parseAmount(raw);
+      if (!(cents > 0)) {
+        $('#quiz-error').textContent = `Valor inválido em ${input.dataset.name}: informe um número como 600 ou 1.250,50.`;
+        input.focus();
+        return null;
+      }
+      answers[input.dataset.category] = cents;
+    }
+    if (!Object.keys(answers).length) {
+      $('#quiz-error').textContent = 'Informe o valor de pelo menos uma categoria, ou toque em "Agora não".';
+      return null;
+    }
+    return answers;
+  }
+
+  function submitQuiz(event) {
+    event.preventDefault();
+    $('#quiz-error').textContent = '';
+    const answers = readQuizAnswers();
+    if (!answers) return;
+    if (Object.keys(state.data.budgets).length > 0 && !confirm('Substituir os limites atuais pelos valores que você informou?')) return;
+    const income = F.referenceIncome(state.data.transactions, state.data.categories, state.month);
+    state.data.budgets = F.budgetsFromAnswers(answers, state.data.categories, income, monthContext().plan);
+    closeQuiz();
+    commit('Orçamento criado com os valores que você informou. Ajuste quando quiser.');
+    $('#budget-title').focus();
   }
 
   /** Avisa antes de guardar mais do que sobrou no mês. Devolve false se a pessoa desistir. */
@@ -828,6 +883,10 @@
       case 'suggest-budget':
         suggestBudget();
         break;
+      case 'cancel-quiz':
+        closeQuiz();
+        $('[data-action="suggest-budget"]').focus();
+        break;
       case 'create-emergency':
         state.data.goals.unshift({ id: newId(), name: 'Reserva de emergência', target: Number(el.dataset.target), saved: 0, deadline: '' });
         commit('Meta de reserva criada.');
@@ -941,6 +1000,8 @@
     // Adia o redesenho: com Tab, o foco ainda está chegando ao campo seguinte quando o "change" dispara.
     setTimeout(redesenhar, 0);
   });
+
+  $('#budget-quiz').addEventListener('submit', submitQuiz);
 
   $('#review-day').addEventListener('change', (event) => {
     state.data.settings.reviewDay = Number(event.target.value);

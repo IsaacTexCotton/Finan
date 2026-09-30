@@ -1104,3 +1104,39 @@ input[name="amount"] {
   margin: 0;
   padding: 0.6rem 1rem;
 }
+
+/* Questionário do orçamento (quem ainda não tem histórico). */
+.quiz {
+  margin: 0.75rem 0;
+  padding: 1rem;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+#quiz-fields {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.quiz-group {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.quiz-group legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+@media (min-width: 48rem) {
+  #quiz-fields {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}

@@ -106,10 +106,12 @@ Só faça o commit quando todas as respostas forem "sim":
   tiveram gasto. O Futuro vem da parte do plano sobre a renda, repartida pelo histórico do
   próprio Futuro (igual entre as categorias se não houver). O mês corrente não entra no
   histórico; a renda é a do mês ou, sem ela, a do mês anterior. Sem renda ou sem meses
-  anteriores com gastos, não sugere nada e explica. A sugestão substitui os limites atuais
-  (com confirmação) e **não força a soma a bater com a renda**: a tela mostra o que falta ou
-  passa ("Faltam R$ X sem destino", teto do balde). Falta ainda o questionário para quem não
-  tem histórico (`BACKLOG.md`).
+  anteriores com gastos, não sugere números: abre um **questionário** (`#budget-quiz`) com um
+  campo por categoria de Essenciais e Estilo de vida ("Deixe em branco o que você não gasta"),
+  e os limites saem do que a pessoa informou (`budgetsFromAnswers`), com o Futuro pelo plano.
+  Valor inválido mostra o erro no lugar; "Agora não" fecha sem mudar nada. A sugestão substitui os
+  limites atuais (com confirmação) e **não força a soma a bater com a renda**: a tela mostra o
+  que falta ou passa ("Faltam R$ X sem destino", teto do balde). Sem renda, pede a renda antes.
 - **Orçamento base zero (na tela):** a tela compara a soma dos limites com a renda e mostra o
   que falta ou passa. A sugestão não força essa soma (ver acima).
 - **Reserva de emergência:** média dos gastos essenciais × 6 meses (renda estável: CLT,

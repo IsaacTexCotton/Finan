@@ -54,3 +54,15 @@ test('o "Como funciona" do Orçamento, fechado e aberto, não tem violações do
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), aberto ? 'aberto' : 'fechado').toEqual([]);
   }
 });
+
+test('o questionário do Orçamento aberto não tem violações do axe', async ({ page }) => {
+  await page.goto(APP);
+  await page.clock.setFixedTime(new Date('2026-09-20T12:00:00'));
+  await page.evaluate(() => localStorage.setItem('finan:data', JSON.stringify({ version: 1, transactions: [{ id: 'r1', type: 'income', categoryId: 'salario', amount: 300000, date: '2026-09-07', description: '' }] })));
+  await page.reload();
+  await page.getByRole('tab', { name: 'Orçamento' }).click();
+  await page.getByRole('button', { name: 'Sugerir pelos meus gastos' }).click();
+  await expect(page.locator('#budget-quiz')).toBeVisible();
+  const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+  expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`)).toEqual([]);
+});
