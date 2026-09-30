@@ -149,6 +149,12 @@
     return Number(today.slice(8, 10));
   }
 
+  /** Dia da semana ISO: segunda = 1 … domingo = 7. */
+  function isoWeekday(isoDate) {
+    const [y, m, d] = isoDate.split('-').map(Number);
+    return new Date(y, m - 1, d).getDay() || 7;
+  }
+
   /** Chave da semana ISO 8601, ex.: "2026-W40". */
   function weekKey(isoDate) {
     const [y, m, d] = isoDate.split('-').map(Number);
@@ -300,9 +306,7 @@
   /** Quanto sobra nos envelopes variáveis, por dia e até domingo (nunca além de `daysLeft`). */
   function spendingPace(variableRows, daysLeft, today) {
     const remaining = variableRows.reduce((sum, r) => sum + Math.max(r.remaining, 0), 0);
-    const [y, m, d] = today.split('-').map(Number);
-    const weekday = new Date(y, m - 1, d).getDay() || 7; // segunda = 1 … domingo = 7
-    const weekDays = Math.min(8 - weekday, daysLeft);
+    const weekDays = Math.min(8 - isoWeekday(today), daysLeft);
     return { perDay: Math.floor(remaining / daysLeft), perWeek: Math.floor((remaining * weekDays) / daysLeft), weekDays, remaining, daysLeft };
   }
 
@@ -347,6 +351,17 @@
     const variable = rows.filter((r) => r.kind === 'variavel');
     if (!variable.length) return null;
     return { ...spendingPace(variable, daysLeft, today), nextPayday: end };
+  }
+
+  /**
+   * Lembrete da revisão semanal: 'hoje' no dia escolhido, 'atrasada' nos dias seguintes da semana
+   * e null antes do dia ou quando a revisão da semana já está completa.
+   */
+  function reviewReminder(today, reviewDay, doneCount, total) {
+    if (doneCount >= total) return null;
+    const weekday = isoWeekday(today);
+    if (weekday === reviewDay) return 'hoje';
+    return weekday > reviewDay ? 'atrasada' : null;
   }
 
   /** Arredonda centavos para múltiplos de R$ step (padrão R$ 10). */
@@ -582,7 +597,7 @@
   // ---------- Importação / exportação ----------
 
   function emptyData() {
-    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel', paydayBusinessDay: 0 } };
+    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7 } };
   }
 
   function isISODate(s) {
@@ -646,6 +661,8 @@
       }
     }
     if (raw.settings && INCOME_PROFILES[raw.settings.incomeProfile]) data.settings.incomeProfile = raw.settings.incomeProfile;
+    const reviewDay = raw.settings && raw.settings.reviewDay;
+    if (Number.isInteger(reviewDay) && reviewDay >= 1 && reviewDay <= 7) data.settings.reviewDay = reviewDay;
     const payday = raw.settings && raw.settings.paydayBusinessDay;
     if (Number.isInteger(payday) && payday >= 1 && payday <= 10) data.settings.paydayBusinessDay = payday;
     return data;
@@ -708,6 +725,8 @@
     bucketAnalysis,
     budgetStatus,
     dailyAllowance,
+    isoWeekday,
+    reviewReminder,
     nthBusinessDay,
     paydayCycle,
     allowanceUntilPayday,

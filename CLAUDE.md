@@ -56,6 +56,12 @@ Só faça o commit quando todas as respostas forem "sim":
   com a lista das metas, e o lançamento fica ligado à escolhida (`goalId`), como no "Guardar
   valor". Sem descrição, vira "Meta: <nome>". Não se parcela. Trocar a categoria ao editar
   desliga o lançamento da meta.
+- **Revisão semanal no dia que a pessoa escolher** (decisão do Isaac, 30/09/2026). Em "Método" a
+  pessoa escolhe o dia da revisão (padrão: domingo). No dia, e nos dias seguintes da semana, o
+  Painel mostra um lembrete com botão "Fazer a revisão" enquanto a revisão da semana não estiver
+  completa (`reviewReminder`). Não lembra antes do dia nem sem lançamentos. A revisão continua
+  valendo em qualquer dia e fecha por semana, de segunda a domingo. O app não manda alarme com
+  ele fechado (não tem servidor); o lembrete só aparece com o app aberto, e a tela diz isso.
 - **Sobrou pode ficar negativo, mas o app avisa antes de deixar guardar** (decisão do Isaac,
   30/09/2026). Ao lançar uma despesa do balde Futuro ou usar "Guardar valor" numa meta, se o
   valor passar do que sobrou no mês (`leftAfterSaving`), o app pergunta "Quer guardar mesmo

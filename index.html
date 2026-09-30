@@ -37,6 +37,7 @@
       <div id="onboarding"></div>
       <div class="cards" id="summary-cards"></div>
       <div id="allowance"></div>
+      <div id="review-reminder"></div>
       <div class="grid-2">
         <article class="panel">
           <h2>Seus baldes</h2>
@@ -162,7 +163,11 @@
       </article>
 
       <article class="panel">
-        <h2>Revisão semanal <span class="muted" id="week-label"></span></h2>
+        <h2 id="review-title" tabindex="-1">Revisão semanal <span class="muted" id="week-label"></span></h2>
+        <label>Meu dia de revisão
+          <select id="review-day"></select>
+        </label>
+        <p class="muted small">Quando chegar esse dia, o Painel lembra você, mas só com o app aberto: o Finan não manda alarme com ele fechado. Você pode fazer a revisão em qualquer dia da semana.</p>
         <ul id="review-list" class="checklist"></ul>
       </article>
 

@@ -131,3 +131,5 @@ Decisões do Isaac aplicadas (30/09/2026)
 - [ ] Sugestão: Painel e limites por ciclo do salário, não por mês de calendário
 - [x] Formulário de lançamento: categoria "Metas" abre a lista das metas (só aparece com metas)
 - [ ] Sugestão: limite do envelope Metas sugerido pela soma dos valores mensais das metas
+- [x] Revisão semanal no dia escolhido (padrão domingo), com lembrete no Painel
+- [ ] Visual: a lista da revisão semanal (`.checklist`) mostra marcadores soltos ao lado das caixas de marcar; falta estilo (achado ao conferir a captura)

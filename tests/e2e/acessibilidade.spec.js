@@ -31,3 +31,15 @@ test('o campo "Para qual meta?" do formulário não tem violações do axe', asy
   const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
   expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`)).toEqual([]);
 });
+
+test('o lembrete da revisão semanal e o seletor do dia não têm violações do axe', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00')); // domingo: dia padrão da revisão
+  await page.goto(APP);
+  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await expect(page.locator('#review-reminder')).toContainText('Hoje é o seu dia de revisão semanal');
+  for (const aba of ['Painel', 'Método']) {
+    await page.getByRole('tab', { name: aba }).click();
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `tela ${aba}`).toEqual([]);
+  }
+});

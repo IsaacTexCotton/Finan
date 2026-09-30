@@ -5,6 +5,7 @@
   const F = window.FinanCore;
   const STORAGE_KEY = 'finan:data';
   const GOALS_CATEGORY = 'metas';
+  const WEEKDAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
   const TAB_KEY = 'finan:tab';
   const TABS = ['painel', 'lancamentos', 'orcamento', 'metas', 'metodo'];
 
@@ -256,6 +257,7 @@
     renderCards(summary, plan);
 
     $('#allowance').innerHTML = renderAllowance(ctx);
+    renderReviewReminder();
 
     renderBuckets(summary, buckets, plan);
 
@@ -491,9 +493,21 @@
     }).join('');
   }
 
+  function renderReviewReminder() {
+    const done = (state.data.reviews[F.weekKey(F.todayISO())] || []).length;
+    const reminder = state.data.transactions.length ? F.reviewReminder(F.todayISO(), state.data.settings.reviewDay, done, REVIEW_ITEMS.length) : null;
+    const text = { hoje: 'Hoje é o seu dia de revisão semanal.', atrasada: 'Sua revisão semanal desta semana ainda não foi feita.' }[reminder];
+    $('#review-reminder').innerHTML = text ? `
+      <article class="panel">
+        <p><strong>${text}</strong> Leva só alguns minutos.</p>
+        <button type="button" class="btn primary" data-action="open-review">Fazer a revisão</button>
+      </article>` : '';
+  }
+
   function renderReview() {
     const week = F.weekKey(F.todayISO());
     const done = new Set(state.data.reviews[week] || []);
+    $('#review-day').innerHTML = WEEKDAYS.map((nome, i) => `<option value="${i + 1}" ${state.data.settings.reviewDay === i + 1 ? 'selected' : ''}>${esc(nome)}</option>`).join('');
     $('#week-label').textContent = `· semana ${week.split('-W')[1]}`;
     $('#review-list').innerHTML = REVIEW_ITEMS.map((item) => `
       <li><label class="check"><input type="checkbox" data-review="${esc(item.id)}" ${done.has(item.id) ? 'checked' : ''}> ${esc(item.text)}</label></li>`).join('') +
@@ -907,6 +921,17 @@
     toast(value > 0 ? `Limite de ${nome} salvo: ${F.formatBRL(value)}.` : `Limite de ${nome} removido.`);
     // Adia o redesenho: com Tab, o foco ainda está chegando ao campo seguinte quando o "change" dispara.
     setTimeout(redesenhar, 0);
+  });
+
+  $('#review-day').addEventListener('change', (event) => {
+    state.data.settings.reviewDay = Number(event.target.value);
+    commit('Dia da revisão atualizado.');
+  });
+
+  $('#review-reminder').addEventListener('click', (event) => {
+    if (!event.target.closest('[data-action="open-review"]')) return;
+    abrirAba('metodo');
+    $('#review-title').focus();
   });
 
   $('#review-list').addEventListener('change', (event) => {

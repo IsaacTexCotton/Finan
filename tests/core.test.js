@@ -507,3 +507,28 @@ test('allowanceUntilPayday também diz quanto dá para gastar até domingo', () 
   assert.equal(antes.daysLeft, 3);
   assert.equal(antes.weekDays, 3);
 });
+
+test('isoWeekday: segunda = 1 … domingo = 7', () => {
+  assert.equal(F.isoWeekday('2026-09-28'), 1);
+  assert.equal(F.isoWeekday('2026-09-30'), 3);
+  assert.equal(F.isoWeekday('2026-09-27'), 7);
+});
+
+test('reviewReminder lembra no dia escolhido e depois dele, até a revisão da semana ficar completa', () => {
+  // semana de 21 a 27/09/2026 (segunda a domingo); revisão com 6 itens
+  assert.equal(F.reviewReminder('2026-09-27', 7, 0, 6), 'hoje');
+  assert.equal(F.reviewReminder('2026-09-26', 7, 0, 6), null); // ainda não chegou o dia
+  assert.equal(F.reviewReminder('2026-09-25', 5, 0, 6), 'hoje'); // sexta escolhida
+  assert.equal(F.reviewReminder('2026-09-26', 5, 0, 6), 'atrasada'); // passou e não fez
+  assert.equal(F.reviewReminder('2026-09-26', 5, 3, 6), 'atrasada'); // revisão pela metade
+  assert.equal(F.reviewReminder('2026-09-25', 5, 6, 6), null); // completa: sem lembrete
+  assert.equal(F.reviewReminder('2026-09-28', 7, 0, 6), null); // nova semana, o dia ainda não chegou
+});
+
+test('dia da revisão nos ajustes: 1 a 7, senão domingo (7)', () => {
+  assert.equal(F.emptyData().settings.reviewDay, 7);
+  assert.equal(F.normalizeData({ settings: { reviewDay: 3 } }).settings.reviewDay, 3);
+  for (const invalido of [0, 8, 2.5, '3', null]) {
+    assert.equal(F.normalizeData({ settings: { reviewDay: invalido } }).settings.reviewDay, 7);
+  }
+});
