@@ -26,7 +26,14 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
       quanto do futuro já está comprometido
 
 ## Parte 4 — Visual e primeira versão utilizável
-- [ ] `css/styles.css`: layout responsivo (celular primeiro), tema claro/escuro
+- [x] `css/styles.css`: visual base (cores, tipografia, botões, campos, cartões e Painel),
+      celular primeiro, com testes de acessibilidade (`tests/css.test.js`) e auditoria axe-core
+- [ ] Visual das telas Lançamentos (lista por dia), Orçamento (envelopes), Metas e Método
+- [ ] Tema escuro (segue a configuração do celular)
+- [ ] Sugestão: barra de navegação fixa embaixo no celular. As 5 abas não cabem na largura de
+      390px (Metas e Método ficam escondidas à direita) e o polegar alcança melhor o rodapé
+- [ ] Sugestão: `scrollIntoView` em `app.js` ignora "reduzir movimento"; trocar por `behavior: auto`
+      quando `prefers-reduced-motion: reduce`
 - [ ] Teste manual no navegador de cada tela (Painel, Lançamentos, Orçamento, Metas, Método)
 - [ ] Teste de fumaça automatizado da interface (Playwright: abrir, lançar, ver no painel)
 

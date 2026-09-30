@@ -70,6 +70,16 @@ Só faça o commit quando todas as respostas forem "sim":
   complexidade 15: trate o aviso como pedido de refatoração.
 - Sem duplicação: se a mesma conta aparece duas vezes, ela vai para `core.js`.
 
+## Regras de visual e acessibilidade (conferidas por `tests/css.test.js`)
+- Celular primeiro; o app precisa permitir lançar e consultar rápido, com uma mão.
+- Cores só pelas variáveis do `:root` em `css/styles.css`. Contraste mínimo WCAG AA: 4,5:1
+  para texto e 3:1 para bordas, foco e barras. Cor nova entra no teste de pares.
+- Alvos de toque com pelo menos 44px (`--tap`), inclusive botões "pequenos".
+- Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
+- Campos com fonte de pelo menos 16px (senão o celular dá zoom ao digitar).
+- Respeitar `prefers-reduced-motion` e o atributo `hidden`.
+- Ao mudar o visual, rodar o teste no navegador (Playwright + axe-core) e olhar a captura.
+
 # Segurança e privacidade (inegociável)
 - Os dados **nunca saem do navegador**: nada de APIs externas, analytics, CDNs com rastreio
   ou envio de dados. Persistência só em `localStorage` e backups baixados pelo usuário.
@@ -95,6 +105,10 @@ Só faça o commit quando todas as respostas forem "sim":
   `eslint-disable-next-line` só nessa linha, com justificativa.
 - **Dependabot abrindo PRs para o branch errado:** ele usa o branch padrão do repositório.
   Solução: o branch padrão deve ser o `main` (Settings → General → Default branch).
+
+- **Teste de CSS reprovando CSS correto:** o leitor do teste tratava o comentário antes da
+  regra como parte do seletor. Solução: o teste remove comentários antes de ler. A exigência
+  (`.btn` com `min-height: var(--tap)`) não mudou.
 
 # Comandos
 - `npm install` — instala as dependências e ativa a trava de commit (`.githooks/pre-commit`),
