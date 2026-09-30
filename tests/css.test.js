@@ -124,3 +124,10 @@ test('os dias da lista têm título próprio e a lista não mostra marcadores', 
   assert.ok(bodyOf('.day').length > 0, 'falta o estilo do título de cada dia (.day)');
   assert.ok(bodyOf('.tx-list').includes('list-style: none'), '.tx-list deve tirar os marcadores da lista');
 });
+
+test('campos de texto e de escolha: o foco pinta a própria borda e cola o contorno nela (sem borda dupla)', () => {
+  const regra = rules().find((r) => r.selector.split(',').map((s) => s.trim()).includes('select:focus-visible'));
+  assert.ok(regra, 'falta a regra select:focus-visible para os campos');
+  assert.match(regra.body, /border-color:\s*var\(--focus\)/, 'a borda do campo focado deve ficar na cor do foco');
+  assert.match(regra.body, /outline-offset:\s*0\b/, 'o contorno deve colar na borda, sem vão');
+});

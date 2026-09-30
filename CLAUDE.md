@@ -122,6 +122,9 @@ Só faça o commit quando todas as respostas forem "sim":
   para texto e 3:1 para bordas, foco e barras. Cor nova entra no teste de pares.
 - Alvos de toque com pelo menos 44px (`--tap`), inclusive botões "pequenos".
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
+  Em campos de texto e de escolha o foco pinta a própria borda de azul e o contorno cola nela
+  (`outline-offset: 0`): um traço só, sem borda dupla (decisão do Isaac, 30/09/2026). Botões,
+  abas e caixas de marcar mantêm o anel afastado. Testes em `tests/e2e/foco-campos.spec.js`.
 - Linguagem simples: palavra do método (balde, envelope, fixa, variável, 50/30/20) é explicada
   no lugar em que aparece. `tests/e2e/explicacoes.spec.js` protege os textos.
 - Nenhuma aba pode ficar escondida: no celular as 5 aparecem em duas linhas (3 + 2), sem

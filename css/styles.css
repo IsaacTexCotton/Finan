@@ -117,6 +117,14 @@ p {
   outline-offset: 2px;
 }
 
+/* Campos já têm borda própria: no foco a borda vira azul e o contorno cola nela (traço único). */
+input:not([type="checkbox"], [type="radio"]):focus-visible,
+select:focus-visible {
+  border-color: var(--focus);
+  outline-width: 2px;
+  outline-offset: 0;
+}
+
 .topbar :focus-visible {
   outline-color: var(--on-primary);
 }
