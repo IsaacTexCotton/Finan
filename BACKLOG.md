@@ -53,6 +53,50 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [ ] Sugestão: Content-Security-Policy no `index.html` (`connect-src 'none'`) para o próprio
       navegador impedir qualquer envio de dados, mesmo que um bug futuro tente
 
+## Achados do teste como usuário leigo (30/09/2026)
+Feito por mim, sozinho, como alguém que não entende de finanças nem do app (celular 390px e PC
+1280px, teclado, zoom 200%, axe-core, leitor de tela via árvore de acessibilidade). Cada item
+tem que virar teste no navegador antes da correção.
+
+Prioridade alta
+- [ ] "Lançar minha renda" (tela de boas-vindas) abre o formulário em **Despesa / Moradia**.
+      Deveria abrir em Receita / Salário, senão a pessoa registra o salário como gasto
+- [ ] **Foco some** (volta ao início da página) depois de: digitar um limite no Orçamento,
+      marcar item da revisão semanal, "Guardar valor" numa meta, excluir lançamento e trocar
+      o tipo de renda. Quem usa teclado ou leitor de tela perde o lugar a cada ação
+      (causa: a tela é redesenhada com innerHTML). Mover o foco para um lugar sensato
+- [ ] Dois jeitos de "guardar" que não se conversam: guardar R$ 300 na meta de reserva e o
+      Painel continua "Futuro R$ 0,00 · 0% da renda"
+- [ ] Mensagens que se contradizem no Painel: "Você guardou R$ 0,00… faça o aporte" junto com
+      "Excelente! Sua taxa de poupança está em 48%" (a sobra do mês é contada como poupança)
+
+Prioridade média
+- [ ] Botões "Editar" e "Excluir" repetidos (17× cada) sem dizer de qual lançamento; o leitor
+      de tela não distingue. Incluir descrição e valor no nome acessível
+- [ ] Abas: setas do teclado não trocam de aba, as 5 são paradas de Tab, sem `aria-controls`
+      e painéis sem nome; sem link "pular para o conteúdo" (8 paradas até o primeiro campo);
+      página sem título principal (h1); abas fora de uma região identificada (axe)
+- [ ] Lista de categorias: cada opção começa com emoji, então digitar "Mer" não escolhe
+      "Mercado" (provado: sem emoji funciona)
+- [ ] Limite do Orçamento salva sem nenhum aviso de "salvo"
+- [ ] Palavras de finanças sem explicação no Painel e no Orçamento: baldes, envelopes, taxa de
+      poupança, "orçamento base zero", fixa/variável. Explicar em linguagem simples
+- [ ] Metas e Método escondidas à direita no celular (ver barra de navegação fixa abaixo)
+
+Prioridade baixa
+- [ ] Etiqueta "variavel" sem acento (aparece na tela do Orçamento)
+- [ ] "para os próximos 1 dia" (singular) no "Você pode gastar hoje"
+- [ ] Tela vazia mostra três selos "Sem renda" que só fazem ruído até existir renda
+- [ ] "Guardar valor" usa janela nativa `prompt()` e excluir usa `confirm()`; funciona, mas
+      destoa do app e não há "desfazer" ao excluir
+- [ ] Títulos dos grupos do Orçamento colados na lista anterior (visual ainda não feito)
+
+Verificado e funcionando: lançar, editar, excluir, parcelar, lançamentos fixos (sem duplicar),
+backup e restauração, "Apagar tudo", CSV, teclado (tecla N, Enter para salvar), zoom 200% e
+320px sem rolagem horizontal, alvos de toque de 44px em todas as telas, contraste e leitura
+do formulário, sem erros de JavaScript.
+Não testado: leitor de tela real, Safari/iOS, Firefox, pessoas de verdade.
+
 ## Refatorações (avisos do ESLint)
 - [ ] `insights` (complexidade 34): quebrar em uma função por tipo de alerta
 - [ ] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações
