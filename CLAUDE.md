@@ -51,6 +51,11 @@ Só faça o commit quando todas as respostas forem "sim":
   o valor inicial (o que já tinha ao criá-la) + os depósitos (`goalSaved`), e o Painel conta os
   depósitos em Guardado. Excluir ou editar o lançamento muda a meta junto. Valor negativo
   ou zero não é aceito.
+- **Lançar direto na meta** (decisão do Isaac, 30/09/2026). No formulário, a categoria "Metas"
+  (balde Futuro) só aparece se a pessoa tem alguma meta. Ao escolhê-la, abre "Para qual meta?"
+  com a lista das metas, e o lançamento fica ligado à escolhida (`goalId`), como no "Guardar
+  valor". Sem descrição, vira "Meta: <nome>". Não se parcela. Trocar a categoria ao editar
+  desliga o lançamento da meta.
 - **Sobrou pode ficar negativo, mas o app avisa antes de deixar guardar** (decisão do Isaac,
   30/09/2026). Ao lançar uma despesa do balde Futuro ou usar "Guardar valor" numa meta, se o
   valor passar do que sobrou no mês (`leftAfterSaving`), o app pergunta "Quer guardar mesmo

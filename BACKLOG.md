@@ -129,3 +129,5 @@ Decisões do Isaac aplicadas (30/09/2026)
 - [x] "Pode gastar hoje" também mostra quanto dá para gastar até domingo
 - [ ] Sugestão: feriados nacionais na conta do dia útil
 - [ ] Sugestão: Painel e limites por ciclo do salário, não por mês de calendário
+- [x] Formulário de lançamento: categoria "Metas" abre a lista das metas (só aparece com metas)
+- [ ] Sugestão: limite do envelope Metas sugerido pela soma dos valores mensais das metas

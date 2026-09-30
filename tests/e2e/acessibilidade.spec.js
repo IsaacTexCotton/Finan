@@ -21,3 +21,13 @@ for (const largura of [390, 1280]) {
     }
   });
 }
+
+test('o campo "Para qual meta?" do formulário não tem violações do axe', async ({ page }) => {
+  await page.goto(APP);
+  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await page.getByRole('tab', { name: 'Lançamentos' }).click();
+  await page.locator('#tx-form').getByLabel('Categoria').selectOption('metas');
+  await expect(page.locator('#tx-form').getByLabel('Para qual meta?')).toBeVisible();
+  const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+  expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`)).toEqual([]);
+});

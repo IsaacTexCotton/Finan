@@ -4,6 +4,7 @@
 
   const F = window.FinanCore;
   const STORAGE_KEY = 'finan:data';
+  const GOALS_CATEGORY = 'metas';
   const TAB_KEY = 'finan:tab';
   const TABS = ['painel', 'lancamentos', 'orcamento', 'metas', 'metodo'];
 
@@ -314,14 +315,28 @@
     const type = form.elements.type.value;
     const select = form.elements.categoryId;
     const current = select.value;
-    const cats = state.data.categories.filter((c) => c.type === type);
+    const editing = state.data.transactions.find((t) => t.id === state.editingId);
+    const showGoals = state.data.goals.length > 0 || (editing && editing.categoryId === GOALS_CATEGORY);
+    const cats = state.data.categories.filter((c) => c.type === type && (showGoals || c.id !== GOALS_CATEGORY));
     const groups = type === 'income'
       ? [['Receitas', cats]]
       : Object.keys(F.BUCKETS).map((b) => [F.BUCKETS[b].label, cats.filter((c) => c.bucket === b)]);
     select.innerHTML = groups.map(([label, list]) => `<optgroup label="${esc(label)}">${list.map((c) => `<option value="${esc(c.id)}">${esc(c.name)} ${esc(c.icon)}</option>`).join('')}</optgroup>`).join('');
     if (cats.some((c) => c.id === current)) select.value = current;
+    renderGoalField();
+  }
+
+  /** "Para qual meta?" só aparece na categoria Metas; e guardar numa meta não se parcela. */
+  function renderGoalField() {
+    const form = $('#tx-form');
+    const isGoal = form.elements.type.value === 'expense' && form.elements.categoryId.value === GOALS_CATEGORY;
+    const select = form.elements.goalId;
+    const current = select.value;
+    select.innerHTML = state.data.goals.map((g) => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('');
+    if (state.data.goals.some((g) => g.id === current)) select.value = current;
+    $('#goal-field').hidden = !isGoal;
     // Parcelamento só para despesas novas; editar muda apenas a parcela escolhida.
-    $('#installments-field').hidden = type !== 'expense' || Boolean(state.editingId);
+    $('#installments-field').hidden = form.elements.type.value !== 'expense' || Boolean(state.editingId) || isGoal;
   }
 
   function renderTransactions(ctx) {
@@ -513,6 +528,8 @@
     renderCategoryOptions();
     form.elements.amount.value = centsToInput(t.amount);
     form.elements.categoryId.value = t.categoryId;
+    if (t.goalId) form.elements.goalId.value = t.goalId;
+    renderGoalField();
     form.elements.date.value = t.date;
     form.elements.description.value = t.description;
     form.elements.recurring.checked = t.recurring;
@@ -546,7 +563,12 @@
       description: form.elements.description.value.trim().slice(0, 120),
       recurring: form.elements.recurring.checked,
     };
-    const installments = entry.type === 'expense' ? Number(form.elements.installments.value) || 1 : 1;
+    const goal = entry.type === 'expense' && entry.categoryId === GOALS_CATEGORY && state.data.goals.find((g) => g.id === form.elements.goalId.value);
+    if (goal) {
+      entry.goalId = goal.id;
+      if (!entry.description) entry.description = `Meta: ${goal.name}`.slice(0, 120);
+    }
+    const installments = entry.type === 'expense' && !goal ? Number(form.elements.installments.value) || 1 : 1;
     const doMes = installments > 1 ? Math.ceil(amount / installments) : amount; // o que cai no mês da compra
     if (!state.editingId && guardaDinheiro(entry) && !confirmarGuardar(doMes, F.monthKey(date))) return;
     let message;
@@ -554,7 +576,9 @@
       const idx = state.data.transactions.findIndex((t) => t.id === state.editingId);
       if (idx > -1) {
         const current = state.data.transactions[idx];
-        state.data.transactions[idx] = { ...current, ...entry, recurring: current.installment ? false : entry.recurring };
+        const updated = { ...current, ...entry, recurring: current.installment ? false : entry.recurring };
+        if (!goal && current.categoryId === GOALS_CATEGORY) delete updated.goalId; // saiu da categoria Metas: sai da meta
+        state.data.transactions[idx] = updated;
       }
       message = 'Lançamento atualizado.';
     } else if (installments > 1) {
@@ -843,6 +867,7 @@
   $('#tx-form').addEventListener('submit', submitTx);
   $('#tx-form').addEventListener('change', (event) => {
     if (event.target.name === 'type') renderCategoryOptions();
+    else if (event.target.name === 'categoryId') renderGoalField();
   });
   $('#goal-form').addEventListener('submit', submitGoal);
   $('#emergency').addEventListener('change', (event) => {
