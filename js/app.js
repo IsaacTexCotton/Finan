@@ -175,7 +175,7 @@
           <li>Registre cada gasto no momento em que ele acontece.</li>
         </ol>
         <div class="actions">
-          <button type="button" class="btn primary" data-action="quick-add">Lançar minha renda</button>
+          <button type="button" class="btn primary" data-action="quick-add" data-type="income">Lançar minha renda</button>
           <button type="button" class="btn" data-action="load-demo">Ver com dados de exemplo</button>
         </div>
       </article>`;
@@ -643,6 +643,7 @@
         break;
       case 'quick-add':
         state.tab = 'lancamentos';
+        if (el && el.dataset.type) $('#tx-form').elements.type.value = el.dataset.type;
         render();
         $('#tx-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
         $('#tx-form').elements.amount.focus();

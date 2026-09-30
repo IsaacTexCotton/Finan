@@ -115,6 +115,11 @@ Só faça o commit quando todas as respostas forem "sim":
   regra como parte do seletor. Solução: o teste remove comentários antes de ler. A exigência
   (`.btn` com `min-height: var(--tap)`) não mudou.
 
+- **"Lançar minha renda" abria o formulário como Despesa:** o botão da tela de boas-vindas e o
+  "+ Lançar" do topo compartilhavam a mesma ação. Solução: o botão ganhou `data-type="income"`
+  e a ação `quick-add` aplica o tipo antes de desenhar o formulário. O "+ Lançar" continua
+  abrindo como Despesa. Testes em `tests/e2e/lancar-renda.spec.js`.
+
 # Comandos
 - `npm install` — instala as dependências e ativa a trava de commit (`.githooks/pre-commit`),
   que roda `npm run check` e bloqueia o commit se algo falhar. Não use `--no-verify`.

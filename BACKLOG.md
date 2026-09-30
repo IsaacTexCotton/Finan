@@ -59,8 +59,9 @@ Feito por mim, sozinho, como alguém que não entende de finanças nem do app (c
 tem que virar teste no navegador antes da correção.
 
 Prioridade alta
-- [ ] "Lançar minha renda" (tela de boas-vindas) abre o formulário em **Despesa / Moradia**.
-      Deveria abrir em Receita / Salário, senão a pessoa registra o salário como gasto
+- [x] "Lançar minha renda" (tela de boas-vindas) abre o formulário em Receita / Salário
+      (antes abria em Despesa / Moradia e a pessoa registrava o salário como gasto).
+      Sobra: a rolagem deixa o topo fixo cobrindo o título "Novo lançamento"
 - [ ] **Foco some** (volta ao início da página) depois de: digitar um limite no Orçamento,
       marcar item da revisão semanal, "Guardar valor" numa meta, excluir lançamento e trocar
       o tipo de renda. Quem usa teclado ou leitor de tela perde o lugar a cada ação
