@@ -13,6 +13,8 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Este backlog
 - [x] Fluxo GitHub: commits direto no `main` com CI, Dependabot, modelo de PR, licença MIT
 - [x] Atualizações do Dependabot: ESLint 10, actions/checkout v7, actions/setup-node v7
+- [x] Guia do método Akita em `docs/` e `CLAUDE.md` no modelo do guia (TDD vermelho → verde,
+      checklist antes de cada commit, problemas já resolvidos)
 
 ## Parte 3 — Revisão do método financeiro ✅
 - [x] Baldes adaptativos: 50/30/20 quando cabe; acima de 50% em essenciais o plano se adapta
