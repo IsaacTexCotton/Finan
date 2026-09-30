@@ -73,6 +73,8 @@ Só faça o commit quando todas as respostas forem "sim":
   do ciclo (do último pagamento até hoje). Só sábado e domingo são folga; feriado não entra na
   conta. Sem o dia informado, ou com renda variável, conta até o fim do mês. O resto do Painel
   continua por mês de calendário.
+  O cartão também mostra quanto dá para gastar **até domingo** (a semana da revisão semanal):
+  o mesmo ritmo por dia × os dias que faltam até domingo, nunca além do fim do período.
 - **Orçamento base zero:** a soma dos envelopes sugeridos bate exatamente com a renda.
 - **Reserva de emergência:** média dos gastos essenciais × 6 meses (renda estável: CLT,
   servidor, aposentadoria) ou × 12 meses (renda variável: autônomo, freelancer, empresário).

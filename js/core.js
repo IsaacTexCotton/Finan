@@ -294,8 +294,16 @@
     const variable = budgetRows.filter((r) => r.kind === 'variavel');
     if (!variable.length) return null;
     const daysLeft = daysInMonth(key) - Number(today.slice(8, 10)) + 1;
-    const remaining = variable.reduce((sum, r) => sum + Math.max(r.remaining, 0), 0);
-    return { perDay: Math.floor(remaining / daysLeft), remaining, daysLeft };
+    return spendingPace(variable, daysLeft, today);
+  }
+
+  /** Quanto sobra nos envelopes variáveis, por dia e até domingo (nunca além de `daysLeft`). */
+  function spendingPace(variableRows, daysLeft, today) {
+    const remaining = variableRows.reduce((sum, r) => sum + Math.max(r.remaining, 0), 0);
+    const [y, m, d] = today.split('-').map(Number);
+    const weekday = new Date(y, m - 1, d).getDay() || 7; // segunda = 1 … domingo = 7
+    const weekDays = Math.min(8 - weekday, daysLeft);
+    return { perDay: Math.floor(remaining / daysLeft), perWeek: Math.floor((remaining * weekDays) / daysLeft), weekDays, remaining, daysLeft };
   }
 
   /** N-ésimo dia útil do mês (segunda a sexta; feriados não entram na conta). */
@@ -338,8 +346,7 @@
     const rows = budgetStatus(budgets, summarize(cycleTx, categories), categories, monthKey(today), today);
     const variable = rows.filter((r) => r.kind === 'variavel');
     if (!variable.length) return null;
-    const remaining = variable.reduce((sum, r) => sum + Math.max(r.remaining, 0), 0);
-    return { perDay: Math.floor(remaining / daysLeft), remaining, daysLeft, nextPayday: end };
+    return { ...spendingPace(variable, daysLeft, today), nextPayday: end };
   }
 
   /** Arredonda centavos para múltiplos de R$ step (padrão R$ 10). */

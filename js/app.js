@@ -228,6 +228,7 @@
           <span class="card-label">Você pode gastar hoje</span>
           <span class="allowance-value">${money(allowance.perDay)}</span>
         </div>
+        <p>Nesta semana, até domingo (${allowance.weekDays} ${allowance.weekDays === 1 ? 'dia' : 'dias'}): <strong>${money(allowance.perWeek)}</strong>.</p>
         <p>${money(allowance.remaining)} livres nos envelopes variáveis para os próximos ${dias}${ate}.</p>
       </div>`;
   }

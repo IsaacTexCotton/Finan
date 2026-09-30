@@ -479,3 +479,31 @@ test('dia de pagamento nos ajustes: só 1 a 10, senão 0 (não informado)', () =
   assert.equal(F.normalizeData({ settings: { paydayBusinessDay: 2.5 } }).settings.paydayBusinessDay, 0);
   assert.equal(F.normalizeData({ settings: { paydayBusinessDay: '5' } }).settings.paydayBusinessDay, 0);
 });
+
+test('dailyAllowance também diz quanto dá para gastar até domingo', () => {
+  const s = F.summarize([tx('expense', 'mercado', 20000, '2026-09-08')], cats);
+  const rows = F.budgetStatus({ mercado: 100000 }, s, cats, '2026-09', '2026-09-10');
+  // quinta-feira 10/09: hoje, sexta, sábado e domingo = 4 dos 21 dias que faltam
+  const quinta = F.dailyAllowance(rows, '2026-09', '2026-09-10');
+  assert.equal(quinta.weekDays, 4);
+  assert.equal(quinta.perWeek, Math.floor((80000 * 4) / 21));
+  // domingo 13/09: só o próprio dia
+  assert.equal(F.dailyAllowance(rows, '2026-09', '2026-09-13').weekDays, 1);
+  // segunda 28/09: faltam só 3 dias no mês, menos que os 7 da semana; vale o que sobra do mês
+  const fim = F.dailyAllowance(rows, '2026-09', '2026-09-28');
+  assert.equal(fim.weekDays, 3);
+  assert.equal(fim.perWeek, 80000);
+});
+
+test('allowanceUntilPayday também diz quanto dá para gastar até domingo', () => {
+  const list = [tx('expense', 'mercado', 10000, '2026-09-10')];
+  // segunda 14/09: 7 dias de semana, 23 dias até o pagamento de 07/10
+  const r = F.allowanceUntilPayday(list, cats, { mercado: 60000 }, '2026-09-14', 5);
+  assert.equal(r.daysLeft, 23);
+  assert.equal(r.weekDays, 7);
+  assert.equal(r.perWeek, Math.floor((50000 * 7) / 23));
+  // sexta 04/09, pagamento na segunda 07/09: faltam 3 dias (sexta a domingo)
+  const antes = F.allowanceUntilPayday(list, cats, { mercado: 60000 }, '2026-09-04', 5);
+  assert.equal(antes.daysLeft, 3);
+  assert.equal(antes.weekDays, 3);
+});
