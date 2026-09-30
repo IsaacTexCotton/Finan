@@ -13,7 +13,7 @@ module.exports = [
     },
   },
   {
-    files: ['tests/**/*.js', 'eslint.config.js'],
+    files: ['tests/**/*.js', 'eslint.config.js', 'playwright.config.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: globals.node },
   },
   {

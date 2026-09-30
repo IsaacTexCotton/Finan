@@ -78,7 +78,8 @@ Só faça o commit quando todas as respostas forem "sim":
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
 - Campos com fonte de pelo menos 16px (senão o celular dá zoom ao digitar).
 - Respeitar `prefers-reduced-motion` e o atributo `hidden`.
-- Ao mudar o visual, rodar o teste no navegador (Playwright + axe-core) e olhar a captura.
+- Ao mudar o visual ou o comportamento de uma tela, rodar `npm run test:e2e` (navegador de
+  celular de verdade) e olhar a captura.
 
 # Segurança e privacidade (inegociável)
 - Os dados **nunca saem do navegador**: nada de APIs externas, analytics, CDNs com rastreio
@@ -114,5 +115,8 @@ Só faça o commit quando todas as respostas forem "sim":
 - `npm install` — instala as dependências e ativa a trava de commit (`.githooks/pre-commit`),
   que roda `npm run check` e bloqueia o commit se algo falhar. Não use `--no-verify`.
 - `npm run check` — lint + testes (o mesmo que a CI roda, além do `npm audit`)
-- `npm test` — só os testes
+- `npm test` — só os testes rápidos (contas e CSS)
+- `npm run test:e2e` — testes no navegador (Playwright, celular Pixel 7): abrem o app de
+  verdade e usam como o usuário usa. Precisa do Chromium (`npx playwright install chromium`).
+  Não entram na trava de commit por serem mais lentos; a CI roda em todo push.
 - `npm start` — servidor local em http://localhost:8080 (ou abra `index.html` direto)

@@ -31,3 +31,16 @@ jobs:
         run: npm audit --audit-level=high
       - name: Testes
         run: npm test
+      - name: Instalar o navegador do teste (Chromium)
+        run: npx playwright install --with-deps chromium
+      - name: Testes no navegador (E2E)
+        run: npm run test:e2e
+      - name: Guardar o relatório do teste se falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-e2e
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

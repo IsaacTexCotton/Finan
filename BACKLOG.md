@@ -36,7 +36,7 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [ ] Sugestão: `scrollIntoView` em `app.js` ignora "reduzir movimento"; trocar por `behavior: auto`
       quando `prefers-reduced-motion: reduce`
 - [ ] Teste manual no navegador de cada tela (Painel, Lançamentos, Orçamento, Metas, Método)
-- [ ] Teste de fumaça automatizado da interface (Playwright: abrir, lançar, ver no painel)
+- [x] Teste no navegador na CI (Playwright): abrir o app, lançar uma despesa e ver no Painel
 
 ## Parte 5 — Publicar
 - [ ] README com o método e como usar
