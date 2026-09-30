@@ -357,3 +357,64 @@ test('insights distinguem gastar mais do que ganhou de guardar mais do que sobro
   assert.equal(b[0].level, 'alerta');
   assert.match(b[0].text, /Gastos mais o que você guardou passam da renda em R\$\s100,00/);
 });
+
+// ---------- Guardado nas metas entra no Painel (decisão do Isaac, 30/09/2026) ----------
+
+test('"Metas" é uma categoria do balde Futuro, para o que se guarda nas metas', () => {
+  const metas = F.indexCategories(cats).metas;
+  assert.ok(metas, 'falta a categoria metas');
+  assert.equal(metas.bucket, 'futuro');
+  assert.equal(metas.type, 'expense');
+});
+
+test('goalSaved soma o valor inicial da meta e os depósitos ligados a ela', () => {
+  const meta = { id: 'g1', name: 'Viagem', target: 600000, saved: 120000, deadline: '' };
+  const lista = [
+    tx('expense', 'metas', 30000, '2026-09-10', { goalId: 'g1' }),
+    tx('expense', 'metas', 10000, '2026-09-20', { goalId: 'g1' }),
+    tx('expense', 'metas', 99999, '2026-09-20', { goalId: 'outra' }),
+    tx('expense', 'mercado', 5000, '2026-09-21'),
+  ];
+  assert.equal(F.goalSaved(meta, lista), 160000);
+  assert.equal(F.goalSaved(meta, []), 120000);
+  assert.equal(F.goalSaved(meta), 120000);
+});
+
+test('createGoalDeposit cria um lançamento do Futuro ligado à meta', () => {
+  const viagem = { id: 'g1', name: 'Viagem de férias', target: 600000, saved: 0, deadline: '' };
+  const dep = F.createGoalDeposit(viagem, 30000, '2026-09-15', 'novo-id');
+  assert.equal(dep.id, 'novo-id');
+  assert.equal(dep.type, 'expense');
+  assert.equal(dep.amount, 30000);
+  assert.equal(dep.date, '2026-09-15');
+  assert.equal(dep.goalId, 'g1');
+  assert.equal(dep.categoryId, 'metas');
+  assert.equal(dep.description, 'Meta: Viagem de férias');
+  assert.equal(dep.recurring, false);
+
+  const reserva = { id: 'g2', name: 'Reserva de emergência', target: 1800000, saved: 0, deadline: '' };
+  assert.equal(F.createGoalDeposit(reserva, 10000, '2026-09-15', 'x').categoryId, 'reserva');
+
+  // e ele conta como Guardado, não como Gasto
+  const s = F.summarize([tx('income', 'salario', 500000, '2026-09-01'), dep], cats);
+  assert.equal(s.saved, 30000);
+  assert.equal(s.consumption, 0);
+  assert.equal(s.balance, 470000);
+});
+
+test('goalProgress usa os depósitos ligados à meta', () => {
+  const meta = { id: 'g1', name: 'Viagem', target: 1000000, saved: 200000, deadline: '' };
+  const lista = [tx('expense', 'metas', 300000, '2026-09-10', { goalId: 'g1' })];
+  const p = F.goalProgress(meta, '2026-09-29', lista);
+  assert.equal(p.remaining, 500000);
+  assert.equal(p.ratio, 0.5);
+  assert.equal(F.goalProgress(meta, '2026-09-29').remaining, 800000); // sem a lista, como antes
+});
+
+test('normalizeData preserva o vínculo do lançamento com a meta', () => {
+  const base = tx('expense', 'metas', 1000, '2026-09-01');
+  const data = F.normalizeData({ transactions: [{ ...base, id: 'a', goalId: 'g1' }, { ...base, id: 'b', goalId: 42 }, { ...base, id: 'c' }] });
+  assert.equal(data.transactions[0].goalId, 'g1');
+  assert.equal(data.transactions[1].goalId, undefined);
+  assert.equal(data.transactions[2].goalId, undefined);
+});

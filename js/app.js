@@ -429,12 +429,12 @@
       return;
     }
     $('#goal-list').innerHTML = state.data.goals.map((g) => {
-      const p = F.goalProgress(g, ctx.today);
+      const p = F.goalProgress(g, ctx.today, state.data.transactions);
       return `
         <div class="goal">
           <div class="goal-head">
             <strong>${esc(g.name)}</strong>
-            <span>${money(g.saved)} de ${money(g.target)}</span>
+            <span>${money(F.goalSaved(g, state.data.transactions))} de ${money(g.target)}</span>
           </div>
           ${bar(p.ratio, p.done ? 'ok' : 'progresso')}
           <div class="goal-foot muted small">
@@ -600,11 +600,12 @@
     const input = prompt(`Quanto você guardou para "${goal.name}"? (R$)`);
     if (input == null) return;
     const amount = F.parseAmount(input);
-    if (!amount) {
+    if (!(amount > 0)) {
       toast('Valor inválido.');
       return;
     }
-    goal.saved = Math.max(goal.saved + amount, 0);
+    // Guardar numa meta é guardar: vira um lançamento do Futuro, ligado à meta, que conta no Painel.
+    state.data.transactions.push(F.createGoalDeposit(goal, amount, F.todayISO(), newId()));
     commit(`${F.formatBRL(amount)} adicionados à meta.`);
   }
 

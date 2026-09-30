@@ -1,0 +1,68 @@
+const { test, expect } = require('@playwright/test');
+const { APP } = require('./ajuda');
+
+// Guardar dinheiro numa meta é guardar: entra no cartão Guardado do Painel, no balde Futuro,
+// e aparece na lista de lançamentos. Dados de exemplo: Guardado do mês = R$ 900,00.
+
+let resposta;
+
+test.beforeEach(async ({ page }) => {
+  resposta = '300';
+  page.on('dialog', (d) => d.accept(d.type() === 'prompt' ? resposta : undefined));
+  await page.goto(APP);
+  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+});
+
+const meta = (page, nome) => page.locator('#goal-list .goal').filter({ hasText: nome });
+const guardado = (page) => page.locator('#summary-cards .card').filter({ hasText: 'Guardado' });
+
+test('guardar numa meta aumenta a meta e também o Guardado do Painel', async ({ page }) => {
+  await expect(guardado(page)).toContainText(/R\$\s900,00/);
+
+  await page.getByRole('tab', { name: 'Metas' }).click();
+  await meta(page, 'Viagem de férias').getByRole('button', { name: /Guardar valor/ }).click();
+  await expect(page.getByRole('status')).toContainText(/R\$\s300,00 adicionados à meta/);
+  await expect(meta(page, 'Viagem de férias')).toContainText(/R\$\s1\.500,00 de R\$\s6\.000,00/); // 1.200 que já tinha + 300
+
+  await page.getByRole('tab', { name: 'Painel' }).click();
+  await expect(guardado(page)).toContainText(/R\$\s1\.200,00/); // 900 + 300
+
+  await page.getByRole('tab', { name: 'Lançamentos' }).click();
+  const linha = page.locator('#tx-list .tx').filter({ hasText: 'Meta: Viagem de férias' });
+  await expect(linha).toContainText('Metas');
+  await expect(linha).toContainText(/R\$\s300,00/);
+});
+
+test('excluir o depósito da lista desfaz o valor da meta e do Guardado', async ({ page }) => {
+  await page.getByRole('tab', { name: 'Metas' }).click();
+  await meta(page, 'Viagem de férias').getByRole('button', { name: /Guardar valor/ }).click();
+  await expect(meta(page, 'Viagem de férias')).toContainText(/R\$\s1\.500,00 de/);
+
+  await page.getByRole('tab', { name: 'Lançamentos' }).click();
+  await page.locator('#tx-list .tx').filter({ hasText: 'Meta: Viagem de férias' }).getByRole('button', { name: /Excluir/ }).click();
+
+  await page.getByRole('tab', { name: 'Metas' }).click();
+  await expect(meta(page, 'Viagem de férias')).toContainText(/R\$\s1\.200,00 de R\$\s6\.000,00/);
+  await page.getByRole('tab', { name: 'Painel' }).click();
+  await expect(guardado(page)).toContainText(/R\$\s900,00/);
+});
+
+test('o depósito na meta de reserva entra na categoria Reserva de emergência', async ({ page }) => {
+  await page.getByRole('tab', { name: 'Metas' }).click();
+  await meta(page, 'Reserva de emergência').getByRole('button', { name: /Guardar valor/ }).click();
+  await page.getByRole('tab', { name: 'Lançamentos' }).click();
+  await expect(page.locator('#tx-list .tx').filter({ hasText: 'Meta: Reserva de emergência' })).toContainText('Reserva de emergência');
+});
+
+test('valor que não é um número positivo é recusado e não cria lançamento', async ({ page }) => {
+  await page.getByRole('tab', { name: 'Lançamentos' }).click();
+  const antes = await page.locator('#tx-list .tx').count();
+  await page.getByRole('tab', { name: 'Metas' }).click();
+  for (const invalido of ['abc', '0', '-50']) {
+    resposta = invalido;
+    await meta(page, 'Viagem de férias').getByRole('button', { name: /Guardar valor/ }).click();
+    await expect(page.getByRole('status')).toContainText('Valor inválido');
+  }
+  await page.getByRole('tab', { name: 'Lançamentos' }).click();
+  await expect(page.locator('#tx-list .tx')).toHaveCount(antes);
+});

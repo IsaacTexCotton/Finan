@@ -45,6 +45,12 @@ Só faça o commit quando todas as respostas forem "sim":
   não é "despesa" para o usuário, embora seja uma saída da conta. A **taxa de poupança** é o
   Guardado ÷ renda; a sobra do mês não conta, porque dinheiro parado ainda não foi guardado.
   Ninguém recebe "Excelente!" por ter sobrado dinheiro sem guardar.
+- **Guardar numa meta é guardar** (decisão do Isaac, 30/09/2026). "Guardar valor" cria um
+  lançamento do balde Futuro, ligado à meta por `goalId`, datado de hoje: a categoria é
+  "Reserva de emergência" para a meta de reserva e "Metas" para as demais. O valor da meta é
+  o valor inicial (o que já tinha ao criá-la) + os depósitos (`goalSaved`), e o Painel conta os
+  depósitos em Guardado. Excluir ou editar o lançamento muda a meta junto. Valor negativo
+  ou zero não é aceito.
 - **Baldes adaptativos:** o plano olha a parcela da renda gasta com Essenciais nos 3 meses
   anteriores (sem o mês corrente):
   - até 50% → 50/30/20;

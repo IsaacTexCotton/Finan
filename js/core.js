@@ -54,6 +54,7 @@
 
     { id: 'reserva', name: 'Reserva de emergência', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '🛟' },
     { id: 'investimentos', name: 'Investimentos', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '📈' },
+    { id: 'metas', name: 'Metas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '🎯' },
     { id: 'dividas', name: 'Quitação de dívidas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '⛓️' },
   ];
 
@@ -358,10 +359,35 @@
     return (ty - fy) * 12 + (tm - fm);
   }
 
+  /**
+   * Quanto já foi guardado numa meta: o valor inicial (o que a pessoa já tinha ao criá-la)
+   * mais os depósitos, que são lançamentos do Futuro ligados à meta por goalId.
+   * Assim o valor da meta e o "Guardado" do Painel vêm dos mesmos lançamentos.
+   */
+  function goalSaved(goal, transactions = []) {
+    return goal.saved + transactions.filter((t) => t.goalId === goal.id && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  }
+
+  /** Depósito numa meta = lançamento do balde Futuro ligado a ela (a reserva vai para "Reserva de emergência"). */
+  function createGoalDeposit(goal, amount, date, id) {
+    return {
+      id,
+      type: 'expense',
+      categoryId: /reserva/i.test(goal.name) ? 'reserva' : 'metas',
+      amount,
+      date,
+      description: `Meta: ${goal.name}`.slice(0, 120),
+      recurring: false,
+      goalId: goal.id,
+      createdAt: Date.now(),
+    };
+  }
+
   /** Progresso de uma meta e o aporte mensal necessário para cumprir o prazo. */
-  function goalProgress(goal, today) {
-    const remaining = Math.max(goal.target - goal.saved, 0);
-    const ratio = goal.target > 0 ? Math.min(goal.saved / goal.target, 1) : 0;
+  function goalProgress(goal, today, transactions = []) {
+    const saved = goalSaved(goal, transactions);
+    const remaining = Math.max(goal.target - saved, 0);
+    const ratio = goal.target > 0 ? Math.min(saved / goal.target, 1) : 0;
     let monthsLeft = null;
     let monthly = null;
     if (goal.deadline) {
@@ -535,6 +561,7 @@
           description: typeof t.description === 'string' ? t.description.slice(0, 120) : '',
           recurring: Boolean(t.recurring),
           createdAt: Number.isFinite(t.createdAt) ? t.createdAt : 0,
+          ...(typeof t.goalId === 'string' && t.goalId ? { goalId: t.goalId.slice(0, 80) } : {}),
           ...(validInstallment(t.installment) ? { installment: { group: t.installment.group, n: t.installment.n, of: t.installment.of } } : {}),
         }));
     }
@@ -622,6 +649,8 @@
     suggestBudgets,
     averageEssential,
     emergencyFundTarget,
+    goalSaved,
+    createGoalDeposit,
     goalProgress,
     recurringForMonth,
     MAX_INSTALLMENTS,
