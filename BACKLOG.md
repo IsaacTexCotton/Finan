@@ -136,3 +136,16 @@ Decisões do Isaac aplicadas (30/09/2026)
 - [ ] Visual: a lista da revisão semanal (`.checklist`) mostra marcadores soltos ao lado das caixas de marcar; falta estilo (achado ao conferir a captura)
 - [x] "Pode gastar" limitado ao que sobrou no período (guardar numa meta baixa o valor)
 - [ ] Sugestão: reservar também o que a pessoa ainda pretende guardar no mês (envelope Metas com limite)
+
+## Orçamento pelo que a pessoa realmente gasta (reformulação, 30/09/2026)
+Decisão do Isaac: a sugestão atual inventa números (porcentagem repartida à força entre
+categorias). Novo princípio: o orçamento parte da realidade; a porcentagem do plano vira teto
+do balde e comparação. Uma parte por vez:
+- [x] Parte 1: teto do balde, o que já foi distribuído e o que sobra, com aviso de excesso
+- [ ] Parte 2: botão "Sugerir pelo meu plano" sugere a média dos últimos 3 meses por categoria
+      (nas fixas, o valor que a pessoa de fato paga), só para categorias com gasto; o balde
+      Futuro vem do percentual do plano. Substitui a repartição igualitária atual
+      (`suggestBudgets`). O teste "suggestBudgets distribui a renda pelo 50/30/20 respeitando o
+      histórico" codifica a regra antiga e precisará ser trocado por decisão do Isaac.
+- [ ] Parte 3: questionário simples (aluguel, mercado, transporte…) para quem não tem histórico
+- [ ] Sugestão: cada valor sugerido mostra o motivo ("média dos últimos 3 meses: R$ 290")

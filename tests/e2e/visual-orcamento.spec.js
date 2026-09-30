@@ -49,8 +49,13 @@ test.describe('no celular (390px)', () => {
     expect(primeiroTitulo.y - (aviso.y + aviso.height), 'espaço entre o aviso e o primeiro grupo').toBeGreaterThanOrEqual(8);
   });
 
-  test('cada grupo mostra o total e a parte da renda em uma linha própria', async ({ page }) => {
-    await expect(page.locator('.budget-group').first().locator('.budget-sum')).toContainText(/R\$\s2\.950,00 · 57% da renda \(meta 55%\)/);
+  test('cada grupo mostra o teto e o que foi distribuído, cada um em uma linha própria', async ({ page }) => {
+    const grupo = page.locator('.budget-group').first();
+    await expect(grupo.locator('.budget-sum')).toContainText(/Teto do balde: R\$\s[\d.]+,\d{2} \(\d+% da renda\)/);
+    await expect(grupo.locator('.budget-room')).toContainText(/Distribuído nos limites: R\$\s[\d.]+,\d{2}/);
+    const teto = await grupo.locator('.budget-sum').boundingBox();
+    const distribuido = await grupo.locator('.budget-room').boundingBox();
+    expect(distribuido.y, 'o distribuído fica abaixo do teto, em outra linha').toBeGreaterThan(teto.y + teto.height - 1);
   });
 
   test('o aviso da renda tem fundo colorido, além do texto', async ({ page }) => {

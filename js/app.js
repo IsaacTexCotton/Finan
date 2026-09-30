@@ -390,6 +390,20 @@
     $('#tx-list').innerHTML = html + '</ul>';
   }
 
+  const ROOM_CLASS = { passou: 'danger', justo: 'ok', cabe: '', 'sem-renda': '' };
+
+  /** O que sobra do teto do balde, em texto (nunca só cor). */
+  function roomText(room) {
+    const base = `Distribuído nos limites: ${money(room.distributed)}`;
+    if (room.status === 'passou') return `${base} · passa do teto em ${money(-room.left)}. Reduza algum limite.`;
+    if (room.status === 'justo') return `${base} · o teto está todo distribuído`;
+    if (room.status === 'cabe') {
+      const gasto = room.spentWithoutLimit > 0 ? ` (elas já gastaram ${money(room.spentWithoutLimit)})` : '';
+      return `${base} · sobram ${money(room.left)} para as categorias sem limite${gasto}`;
+    }
+    return base;
+  }
+
   function renderBudget(ctx) {
     const { summary, budgetRows, plan } = ctx;
     const rows = Object.fromEntries(budgetRows.map((r) => [r.categoryId, r]));
@@ -403,14 +417,15 @@
     else zb = '<div class="notice ok">Tudo certo: cada real da renda tem um destino. 🎯</div>';
     $('#zero-based').innerHTML = zb;
 
+    const rooms = Object.fromEntries(F.bucketBudgetStatus(state.data.budgets, state.data.categories, summary, plan).map((r) => [r.id, r]));
     $('#budget-table').innerHTML = Object.keys(F.BUCKETS).map((bucketId) => {
       const cats = expenseCategories().filter((c) => c.bucket === bucketId);
-      const bucketBudget = cats.reduce((sum, c) => sum + (state.data.budgets[c.id] || 0), 0);
-      const share = summary.income > 0 ? ` · ${F.formatPercent(bucketBudget / summary.income)} da renda` : '';
+      const room = rooms[bucketId];
       return `
         <div class="budget-group">
           <h3>${esc(F.BUCKETS[bucketId].label)}</h3>
-          <p class="budget-sum">${money(bucketBudget)}${esc(share)} (meta ${plan[bucketId]}%)</p>
+          <p class="budget-sum">${room.ceiling === null ? 'Lance a renda do mês para ver o teto deste balde.' : `Teto do balde: ${money(room.ceiling)} (${plan[bucketId]}% da renda)`}</p>
+          <p class="budget-room ${ROOM_CLASS[room.status]}">${roomText(room)}</p>
           ${cats.map((c) => {
             const r = rows[c.id];
             const limit = state.data.budgets[c.id] || 0;

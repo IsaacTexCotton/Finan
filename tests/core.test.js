@@ -591,3 +591,58 @@ test('allowanceUntilPayday também limita pelo que sobrou no ciclo do salário',
   const semRenda = F.allowanceUntilPayday([tx('expense', 'mercado', 10000, '2026-09-10')], cats, budgets, '2026-09-20', 5);
   assert.equal(semRenda.capped, false);
 });
+
+test('bucketCeilings divide a renda pelo plano em múltiplos de R$ 10, somando a renda arredondada', () => {
+  assert.deepEqual(F.bucketCeilings(300000, { essencial: 50, estilo: 30, futuro: 20 }), { essencial: 150000, estilo: 90000, futuro: 60000 });
+  assert.deepEqual(F.bucketCeilings(0, { essencial: 50, estilo: 30, futuro: 20 }), { essencial: 0, estilo: 0, futuro: 0 });
+  for (const income of [333300, 517000, 280500]) {
+    for (const plan of [{ essencial: 50, estilo: 30, futuro: 20 }, { essencial: 60, estilo: 25, futuro: 15 }]) {
+      const teto = F.bucketCeilings(income, plan);
+      assert.equal(teto.essencial + teto.estilo + teto.futuro, Math.round(income / 1000) * 1000, `renda ${income}`);
+      for (const v of Object.values(teto)) assert.equal(v % 1000, 0);
+    }
+  }
+});
+
+test('bucketBudgetStatus mostra teto, distribuído e o que sobra em cada balde', () => {
+  const plan = { essencial: 50, estilo: 30, futuro: 20 };
+  const list = [
+    tx('income', 'salario', 300000, '2026-09-07'),
+    tx('expense', 'compras', 12000, '2026-09-10'), // estilo, sem limite
+    tx('expense', 'lazer', 20000, '2026-09-11'), // estilo, com limite
+  ];
+  const summary = F.summarize(list, cats);
+  const budgets = { moradia: 100000, mercado: 60000, lazer: 30000 };
+  const [essencial, estilo, futuro] = F.bucketBudgetStatus(budgets, cats, summary, plan);
+
+  assert.equal(essencial.id, 'essencial');
+  assert.equal(essencial.ceiling, 150000);
+  assert.equal(essencial.distributed, 160000);
+  assert.equal(essencial.left, -10000);
+  assert.equal(essencial.status, 'passou');
+
+  assert.equal(estilo.ceiling, 90000);
+  assert.equal(estilo.distributed, 30000);
+  assert.equal(estilo.left, 60000);
+  assert.equal(estilo.spentWithoutLimit, 12000); // só compras; lazer tem limite
+  assert.equal(estilo.status, 'cabe');
+
+  assert.equal(futuro.distributed, 0);
+  assert.equal(futuro.left, 60000);
+  assert.equal(futuro.status, 'cabe');
+});
+
+test('bucketBudgetStatus: teto todo distribuído é "justo" e sem renda não há teto', () => {
+  const plan = { essencial: 50, estilo: 30, futuro: 20 };
+  const comRenda = F.summarize([tx('income', 'salario', 300000, '2026-09-07')], cats);
+  const [, estilo] = F.bucketBudgetStatus({ lazer: 90000 }, cats, comRenda, plan);
+  assert.equal(estilo.left, 0);
+  assert.equal(estilo.status, 'justo');
+
+  const semRenda = F.summarize([], cats);
+  const [essencial] = F.bucketBudgetStatus({ moradia: 100000 }, cats, semRenda, plan);
+  assert.equal(essencial.ceiling, null);
+  assert.equal(essencial.left, null);
+  assert.equal(essencial.status, 'sem-renda');
+  assert.equal(essencial.distributed, 100000); // o que foi distribuído continua visível
+});

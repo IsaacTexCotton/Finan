@@ -382,6 +382,35 @@
     return Math.round(cents / step) * step;
   }
 
+  /** Teto de cada balde: a parte da renda que o plano reserva para ele, em múltiplos de R$ 10. */
+  function bucketCeilings(income, plan) {
+    const ids = Object.keys(BUCKETS);
+    if (!(income > 0)) return Object.fromEntries(ids.map((id) => [id, 0]));
+    const values = allocate(roundTo(income), ids.map((id) => plan[id] / 100));
+    return Object.fromEntries(ids.map((id, i) => [id, values[i]]));
+  }
+
+  /**
+   * Por balde: teto, quanto já foi distribuído em limites por categoria e o que sobra do teto.
+   * As categorias sem limite gastam do que sobra (`spentWithoutLimit` é o que elas já gastaram).
+   * Sem renda no mês não há teto (`ceiling` e `left` nulos).
+   */
+  function bucketBudgetStatus(budgets, categories, summary, plan) {
+    const ceilings = summary.income > 0 ? bucketCeilings(summary.income, plan) : null;
+    return Object.keys(BUCKETS).map((id) => {
+      const cats = categories.filter((c) => c.type === 'expense' && c.bucket === id);
+      const distributed = cats.reduce((sum, c) => sum + (budgets[c.id] || 0), 0);
+      const spentWithoutLimit = cats.filter((c) => !(budgets[c.id] > 0)).reduce((sum, c) => sum + (summary.byCategory[c.id] || 0), 0);
+      const ceiling = ceilings ? ceilings[id] : null;
+      const left = ceiling === null ? null : ceiling - distributed;
+      let status = 'sem-renda';
+      if (left !== null) status = 'cabe';
+      if (left === 0) status = 'justo';
+      if (left !== null && left < 0) status = 'passou';
+      return { id, label: BUCKETS[id].label, share: plan[id], ceiling, distributed, left, spentWithoutLimit, status };
+    });
+  }
+
   /**
    * Sugere limites por categoria distribuindo a renda pelo 50/30/20.
    * Dentro de cada balde, o peso de cada categoria segue o histórico (ou divide igualmente).
@@ -389,15 +418,14 @@
   function suggestBudgets(income, categories, history = {}, targets = DEFAULT_TARGETS) {
     const result = {};
     if (!(income > 0)) return result;
-    const bucketIds = Object.keys(BUCKETS);
-    const bucketTotals = allocate(roundTo(income), bucketIds.map((id) => targets[id] / 100));
-    bucketIds.forEach((bucketId, b) => {
+    const bucketTotals = bucketCeilings(income, targets);
+    Object.keys(BUCKETS).forEach((bucketId) => {
       const cats = categories.filter((c) => c.type === 'expense' && c.bucket === bucketId);
       if (!cats.length) return;
       const weights = cats.map((c) => history[c.id] || 0);
       const weightSum = weights.reduce((a, b) => a + b, 0);
       const shares = cats.map((c, i) => (weightSum > 0 ? weights[i] / weightSum : 1 / cats.length));
-      const values = allocate(bucketTotals[b], shares);
+      const values = allocate(bucketTotals[bucketId], shares);
       cats.forEach((c, i) => {
         if (values[i] > 0) result[c.id] = values[i];
       });
@@ -744,6 +772,8 @@
     paydayCycle,
     allowanceUntilPayday,
     suggestBudgets,
+    bucketCeilings,
+    bucketBudgetStatus,
     averageEssential,
     emergencyFundTarget,
     goalSaved,

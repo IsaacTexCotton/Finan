@@ -92,6 +92,14 @@ Só faça o commit quando todas as respostas forem "sim":
   valor quando o dinheiro que sobrou fica menor que o prometido pelos envelopes, e o cartão diz
   por quê ("Limitado ao que sobrou…"). Sobra negativa dá R$ 0. Sem renda registrada no período
   não há o que comparar e valem só os envelopes. O cartão também mostra quanto já foi guardado.
+- **Teto do balde** (decisão do Isaac, 30/09/2026). Cada balde tem um teto: a parte da renda do
+  mês que o plano reserva para ele (`bucketCeilings`, em múltiplos de R$ 10, somando a renda
+  arredondada). Os limites por categoria são **opcionais**: as categorias sem limite gastam do
+  que sobra do teto. A tela do Orçamento mostra, por balde, o teto, o que já foi distribuído em
+  limites e o que sobra, e avisa com texto quando os limites passam do teto (`bucketBudgetStatus`).
+  O app **não corta nada sozinho**: mostra o tamanho do excesso e a pessoa decide. Sem renda no
+  mês não há teto. Próximas partes (em `BACKLOG.md`): a sugestão pelo que a pessoa realmente
+  gasta (média de 3 meses) e o questionário para quem não tem histórico.
 - **Orçamento base zero:** a soma dos envelopes sugeridos bate exatamente com a renda.
 - **Reserva de emergência:** média dos gastos essenciais × 6 meses (renda estável: CLT,
   servidor, aposentadoria) ou × 12 meses (renda variável: autônomo, freelancer, empresário).

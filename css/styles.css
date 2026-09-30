@@ -986,6 +986,22 @@ input[name="amount"] {
   font-size: 0.9375rem;
 }
 
+.budget-room {
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.budget-room.danger {
+  color: var(--danger-fg);
+  font-weight: 700;
+}
+
+.budget-room.ok {
+  color: var(--ok-fg);
+  font-weight: 700;
+}
+
 .budget-row {
   display: grid;
   gap: 0.5rem 1.5rem;
