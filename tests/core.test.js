@@ -646,3 +646,60 @@ test('bucketBudgetStatus: teto todo distribuído é "justo" e sem renda não há
   assert.equal(essencial.status, 'sem-renda');
   assert.equal(essencial.distributed, 100000); // o que foi distribuído continua visível
 });
+
+// ---- Sugestão de orçamento pelo que a pessoa realmente gasta (Parte 2 da reformulação) ----
+
+const PLANO = { essencial: 50, estilo: 30, futuro: 20 };
+
+test('suggestFromHistory sugere a média dos meses anteriores e, nas fixas, o valor que a pessoa paga', () => {
+  const list = [
+    tx('income', 'salario', 300000, '2026-09-07'),
+    tx('expense', 'mercado', 999999, '2026-09-08'), // mês corrente: não conta como histórico
+    tx('expense', 'mercado', 55000, '2026-06-10'),
+    tx('expense', 'mercado', 60000, '2026-07-10'),
+    tx('expense', 'moradia', 100000, '2026-06-05'),
+    tx('expense', 'moradia', 120000, '2026-07-05'), // a fixa usa o valor mais recente
+    tx('expense', 'contas', 30000, '2026-06-06'), // não houve em julho: vale o último pago
+    tx('expense', 'lazer', 20000, '2026-07-12'),
+    tx('expense', 'investimentos', 20000, '2026-06-15'),
+    tx('expense', 'reserva', 20000, '2026-07-15'),
+  ];
+  const r = F.suggestFromHistory(list, cats, '2026-09', PLANO);
+  assert.equal(r.status, 'ok');
+  assert.equal(r.months, 2); // junho e julho têm lançamentos; agosto não
+  assert.equal(r.budgets.mercado, 58000); // média 575, arredondada para cima de R$ 10
+  assert.equal(r.budgets.moradia, 120000);
+  assert.equal(r.budgets.contas, 30000);
+  assert.equal(r.budgets.lazer, 10000); // média de 2 meses: 200 e 0
+  assert.equal(r.budgets.educacao, undefined); // nunca gastou: sem limite inventado
+  // Futuro vem do percentual do plano (20% de R$ 3.000 = R$ 600), repartido pelo histórico do Futuro
+  assert.equal(r.budgets.reserva, 30000);
+  assert.equal(r.budgets.investimentos, 30000);
+  assert.equal(r.budgets.metas, undefined);
+});
+
+test('suggestFromHistory: sem histórico de gastos, ou sem renda, não inventa nada', () => {
+  const soMesCorrente = [tx('income', 'salario', 300000, '2026-09-07'), tx('expense', 'mercado', 50000, '2026-09-08')];
+  assert.deepEqual(F.suggestFromHistory(soMesCorrente, cats, '2026-09', PLANO), { status: 'sem-historico', budgets: {} });
+
+  const semRenda = [tx('expense', 'mercado', 50000, '2026-08-08')];
+  assert.deepEqual(F.suggestFromHistory(semRenda, cats, '2026-09', PLANO), { status: 'sem-renda', budgets: {} });
+});
+
+test('suggestFromHistory usa a renda do mês anterior quando o mês ainda não tem renda', () => {
+  const list = [tx('income', 'salario', 400000, '2026-08-07'), tx('expense', 'mercado', 50000, '2026-08-10')];
+  const r = F.suggestFromHistory(list, cats, '2026-09', PLANO);
+  assert.equal(r.status, 'ok');
+  assert.equal(r.income, 400000);
+  const futuro = cats.filter((c) => c.bucket === 'futuro').reduce((sum, c) => sum + (r.budgets[c.id] || 0), 0);
+  assert.equal(futuro, 80000); // 20% de R$ 4.000, dividido igualmente entre as categorias do Futuro
+});
+
+test('suggestFromHistory: o Futuro segue o plano adaptado e a soma bate com o teto do balde', () => {
+  const list = [tx('income', 'salario', 333300, '2026-09-07'), tx('expense', 'mercado', 50000, '2026-08-10')];
+  for (const plano of [PLANO, { essencial: 60, estilo: 25, futuro: 15 }]) {
+    const r = F.suggestFromHistory(list, cats, '2026-09', plano);
+    const futuro = cats.filter((c) => c.bucket === 'futuro').reduce((sum, c) => sum + (r.budgets[c.id] || 0), 0);
+    assert.equal(futuro, F.bucketCeilings(333300, plano).futuro);
+  }
+});

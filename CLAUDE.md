@@ -98,9 +98,20 @@ Só faça o commit quando todas as respostas forem "sim":
   que sobra do teto. A tela do Orçamento mostra, por balde, o teto, o que já foi distribuído em
   limites e o que sobra, e avisa com texto quando os limites passam do teto (`bucketBudgetStatus`).
   O app **não corta nada sozinho**: mostra o tamanho do excesso e a pessoa decide. Sem renda no
-  mês não há teto. Próximas partes (em `BACKLOG.md`): a sugestão pelo que a pessoa realmente
-  gasta (média de 3 meses) e o questionário para quem não tem histórico.
-- **Orçamento base zero:** a soma dos envelopes sugeridos bate exatamente com a renda.
+  mês não há teto.
+- **Sugestão de orçamento pelo que a pessoa realmente gasta** (decisão do Isaac, 30/09/2026).
+  O botão "Sugerir pelos meus gastos" (`suggestFromHistory`) **não inventa números**: Essenciais e
+  Estilo de vida recebem a média dos últimos 3 meses com lançamentos (nas categorias `fixa`, o
+  valor mais recente que foi pago), arredondada para cima em R$ 10, e só para categorias que
+  tiveram gasto. O Futuro vem da parte do plano sobre a renda, repartida pelo histórico do
+  próprio Futuro (igual entre as categorias se não houver). O mês corrente não entra no
+  histórico; a renda é a do mês ou, sem ela, a do mês anterior. Sem renda ou sem meses
+  anteriores com gastos, não sugere nada e explica. A sugestão substitui os limites atuais
+  (com confirmação) e **não força a soma a bater com a renda**: a tela mostra o que falta ou
+  passa ("Faltam R$ X sem destino", teto do balde). Falta ainda o questionário para quem não
+  tem histórico (`BACKLOG.md`).
+- **Orçamento base zero (na tela):** a tela compara a soma dos limites com a renda e mostra o
+  que falta ou passa. A sugestão não força essa soma (ver acima).
 - **Reserva de emergência:** média dos gastos essenciais × 6 meses (renda estável: CLT,
   servidor, aposentadoria) ou × 12 meses (renda variável: autônomo, freelancer, empresário).
 - **Compras parceladas:** entram no mês da compra; uma parcela por mês nos seguintes; os

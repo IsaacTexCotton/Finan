@@ -248,7 +248,7 @@
         <p>Comece em 3 minutos:</p>
         <ol>
           <li>Lance sua <strong>renda do mês</strong> (salário, extras).</li>
-          <li>Na aba <strong>Orçamento</strong>, clique em <em>Sugerir pelo meu plano</em> e ajuste os limites.</li>
+          <li>Na aba <strong>Orçamento</strong>, clique em <em>Sugerir pelos meus gastos</em> e ajuste os limites.</li>
           <li>Registre cada gasto no momento em que ele acontece.</li>
         </ol>
         <div class="actions">
@@ -665,23 +665,20 @@
   }
 
   function suggestBudget() {
-    const summary = F.summarize(F.transactionsOfMonth(state.data.transactions, state.month), state.data.categories);
-    let income = summary.income;
-    let history = summary.byCategory;
-    if (!(income > 0)) {
-      const prev = F.summarize(F.transactionsOfMonth(state.data.transactions, F.shiftMonth(state.month, -1)), state.data.categories);
-      income = prev.income;
-      history = prev.byCategory;
-    }
-    if (!(income > 0)) {
+    const { plan } = monthContext();
+    const result = F.suggestFromHistory(state.data.transactions, state.data.categories, state.month, plan);
+    if (result.status === 'sem-renda') {
       toast('Lance sua renda primeiro para receber uma sugestão.');
       return;
     }
+    if (result.status === 'sem-historico') {
+      toast('Ainda não há gastos de meses anteriores para basear a sugestão. Registre seus gastos e volte no próximo mês.');
+      return;
+    }
     const hasBudget = Object.keys(state.data.budgets).length > 0;
-    const { plan } = monthContext();
-    if (hasBudget && !confirm(`Substituir os limites atuais pela sugestão do seu plano (${plan.essencial}/${plan.estilo}/${plan.futuro})?`)) return;
-    state.data.budgets = F.suggestBudgets(income, state.data.categories, history, plan);
-    commit('Orçamento sugerido. Ajuste os valores à sua realidade.');
+    if (hasBudget && !confirm('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
+    state.data.budgets = result.budgets;
+    commit(`Orçamento sugerido pela média dos últimos ${result.months} ${result.months === 1 ? 'mês' : 'meses'}. Ajuste os valores à sua realidade.`);
   }
 
   /** Avisa antes de guardar mais do que sobrou no mês. Devolve false se a pessoa desistir. */
