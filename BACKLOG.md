@@ -72,8 +72,9 @@ Prioridade alta
       "Excelente! Sua taxa de poupança está em 48%" (a sobra do mês é contada como poupança)
 
 Prioridade média
-- [ ] Botões "Editar" e "Excluir" repetidos (17× cada) sem dizer de qual lançamento; o leitor
-      de tela não distingue. Incluir descrição e valor no nome acessível
+- [x] Botões "Editar" e "Excluir" repetidos (17× cada) sem dizer de qual lançamento; o leitor
+      de tela não distingue. Agora o nome inclui descrição, parcela e valor; os botões das
+      metas dizem de qual meta são
 - [ ] Abas: setas do teclado não trocam de aba, as 5 são paradas de Tab, sem `aria-controls`
       e painéis sem nome; sem link "pular para o conteúdo" (8 paradas até o primeiro campo);
       página sem título principal (h1); abas fora de uma região identificada (axe)

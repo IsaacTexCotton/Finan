@@ -158,6 +158,12 @@
     return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
   }
 
+  /** Nome falado pelos botões de um lançamento: distingue um de outro para o leitor de tela. */
+  function nomeDoLancamento(t, cat) {
+    const parcela = t.installment ? `, parcela ${F.installmentLabel(t)}` : '';
+    return `${t.description || cat.name}${parcela}, ${F.formatBRL(t.amount)}`;
+  }
+
   function bar(ratio, status, markerRatio) {
     const width = Math.max(0, Math.min(ratio, 1)) * 100;
     const marker = markerRatio != null ? `<span class="bar-marker" style="left:${Math.min(markerRatio, 1) * 100}%"></span>` : '';
@@ -322,6 +328,7 @@
         lastDate = t.date;
       }
       const cat = cats[t.categoryId] || { name: t.categoryId, icon: '•' };
+      const nome = esc(nomeDoLancamento(t, cat));
       html += `
         <li class="tx">
           <span class="tx-icon" aria-hidden="true">${esc(cat.icon)}</span>
@@ -331,8 +338,8 @@
           </span>
           <span class="tx-amount ${t.type === 'income' ? 'positive' : ''}">${t.type === 'income' ? '+' : '−'} ${money(t.amount)}</span>
           <span class="tx-actions">
-            <button type="button" class="icon-btn" data-action="edit-tx" data-id="${esc(t.id)}" aria-label="Editar">✎</button>
-            <button type="button" class="icon-btn" data-action="delete-tx" data-id="${esc(t.id)}" aria-label="Excluir">🗑</button>
+            <button type="button" class="icon-btn" data-action="edit-tx" data-id="${esc(t.id)}" aria-label="Editar ${nome}">✎</button>
+            <button type="button" class="icon-btn" data-action="delete-tx" data-id="${esc(t.id)}" aria-label="Excluir ${nome}">🗑</button>
           </span>
         </li>`;
     }
@@ -422,8 +429,8 @@
           <div class="goal-foot muted small">
             <span>${p.done ? 'Meta concluída! 🎉' : `${esc(F.formatPercent(p.ratio))} · faltam ${money(p.remaining)}`}${!p.done && p.monthly ? ` · guarde ${money(p.monthly)}/mês por ${p.monthsLeft} ${p.monthsLeft === 1 ? 'mês' : 'meses'}` : ''}</span>
             <span class="actions">
-              ${p.done ? '' : `<button type="button" class="btn small" data-action="deposit-goal" data-id="${esc(g.id)}">Guardar valor</button>`}
-              <button type="button" class="icon-btn" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir meta">🗑</button>
+              ${p.done ? '' : `<button type="button" class="btn small" data-action="deposit-goal" data-id="${esc(g.id)}" aria-label="Guardar valor na meta ${esc(g.name)}">Guardar valor</button>`}
+              <button type="button" class="icon-btn" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir meta ${esc(g.name)}">🗑</button>
             </span>
           </div>
         </div>`;

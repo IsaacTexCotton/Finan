@@ -79,6 +79,8 @@ Só faça o commit quando todas as respostas forem "sim":
   para texto e 3:1 para bordas, foco e barras. Cor nova entra no teste de pares.
 - Alvos de toque com pelo menos 44px (`--tap`), inclusive botões "pequenos".
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
+- Botões que se repetem numa lista (Editar, Excluir, Guardar valor) têm `aria-label` com o
+  item a que se referem, para o leitor de tela distinguir um do outro.
 - Campos com fonte de pelo menos 16px (senão o celular dá zoom ao digitar).
 - Respeitar `prefers-reduced-motion` e o atributo `hidden`.
 - Ao mudar o visual ou o comportamento de uma tela, rodar `npm run test:e2e` (navegador de
