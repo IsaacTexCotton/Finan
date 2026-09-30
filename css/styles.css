@@ -125,6 +125,33 @@ p {
   outline-offset: -4px;
 }
 
+/* Atalho "Pular para o conteúdo": só aparece quando recebe o foco do teclado. */
+.pular {
+  position: absolute;
+  top: -4rem;
+  left: 0.5rem;
+  z-index: 30;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+
+.pular:focus {
+  top: 0.5rem;
+}
+
+.pular:focus-visible {
+  outline-color: var(--on-primary);
+}
+
+/* O conteúdo recebe foco só por programação (depois do atalho); não é um controle. */
+main:focus-visible {
+  outline-color: transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -150,7 +177,14 @@ p {
 }
 
 .brand {
-  display: none;
+  /* título principal da página: no celular fica escondido só da vista, não do leitor de tela */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
   font-size: 1.125rem;
   white-space: nowrap;
 }
@@ -192,6 +226,11 @@ p {
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   scrollbar-width: thin;
+}
+
+.tablist {
+  display: flex;
+  flex: 1 0 auto;
 }
 
 .tabs button {
@@ -259,7 +298,12 @@ main {
 
 @media (min-width: 30rem) {
   .brand {
-    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
   }
 }
 

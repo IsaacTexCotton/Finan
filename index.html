@@ -10,8 +10,9 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
   <header class="topbar">
-    <div class="brand">💰 <strong>Finan</strong></div>
+    <h1 class="brand"><span aria-hidden="true">💰</span> Finan</h1>
     <div class="month-picker" aria-label="Mês selecionado">
       <button type="button" class="icon-btn" data-action="prev-month" aria-label="Mês anterior">‹</button>
       <span id="month-label"></span>
@@ -20,17 +21,19 @@
     <button type="button" class="btn primary" data-action="quick-add">+ Lançar</button>
   </header>
 
-  <nav class="tabs" role="tablist">
-    <button type="button" role="tab" data-tab="painel">Painel</button>
-    <button type="button" role="tab" data-tab="lancamentos">Lançamentos</button>
-    <button type="button" role="tab" data-tab="orcamento">Orçamento</button>
-    <button type="button" role="tab" data-tab="metas">Metas</button>
-    <button type="button" role="tab" data-tab="metodo">Método</button>
+  <nav class="tabs" aria-label="Seções do app">
+    <div class="tablist" role="tablist">
+      <button type="button" role="tab" id="aba-painel" aria-controls="tab-painel" data-tab="painel">Painel</button>
+      <button type="button" role="tab" id="aba-lancamentos" aria-controls="tab-lancamentos" data-tab="lancamentos">Lançamentos</button>
+      <button type="button" role="tab" id="aba-orcamento" aria-controls="tab-orcamento" data-tab="orcamento">Orçamento</button>
+      <button type="button" role="tab" id="aba-metas" aria-controls="tab-metas" data-tab="metas">Metas</button>
+      <button type="button" role="tab" id="aba-metodo" aria-controls="tab-metodo" data-tab="metodo">Método</button>
+    </div>
   </nav>
 
-  <main>
+  <main id="conteudo" tabindex="-1">
     <!-- Painel -->
-    <section id="tab-painel" class="tab-panel" role="tabpanel">
+    <section id="tab-painel" class="tab-panel" role="tabpanel" aria-labelledby="aba-painel">
       <div id="onboarding"></div>
       <div class="cards" id="summary-cards"></div>
       <div id="allowance"></div>
@@ -52,7 +55,7 @@
     </section>
 
     <!-- Lançamentos -->
-    <section id="tab-lancamentos" class="tab-panel" role="tabpanel" hidden>
+    <section id="tab-lancamentos" class="tab-panel" role="tabpanel" aria-labelledby="aba-lancamentos" hidden>
       <article class="panel">
         <h2 id="form-title">Novo lançamento</h2>
         <form id="tx-form" autocomplete="off">
@@ -104,7 +107,7 @@
     </section>
 
     <!-- Orçamento -->
-    <section id="tab-orcamento" class="tab-panel" role="tabpanel" hidden>
+    <section id="tab-orcamento" class="tab-panel" role="tabpanel" aria-labelledby="aba-orcamento" hidden>
       <article class="panel">
         <div class="panel-head">
           <h2>Envelopes do mês</h2>
@@ -117,7 +120,7 @@
     </section>
 
     <!-- Metas -->
-    <section id="tab-metas" class="tab-panel" role="tabpanel" hidden>
+    <section id="tab-metas" class="tab-panel" role="tabpanel" aria-labelledby="aba-metas" hidden>
       <div id="emergency"></div>
       <article class="panel">
         <h2>Suas metas</h2>
@@ -139,7 +142,7 @@
     </section>
 
     <!-- Método -->
-    <section id="tab-metodo" class="tab-panel" role="tabpanel" hidden>
+    <section id="tab-metodo" class="tab-panel" role="tabpanel" aria-labelledby="aba-metodo" hidden>
       <article class="panel method">
         <h2>O Método Finan em 5 passos</h2>
         <ol class="steps">

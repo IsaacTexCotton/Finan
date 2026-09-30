@@ -198,6 +198,7 @@
       const active = b.dataset.tab === state.tab;
       b.classList.toggle('active', active);
       b.setAttribute('aria-selected', String(active));
+      b.tabIndex = active ? 0 : -1; // só a aba atual é parada do Tab; as setas trocam de aba
     });
     TABS.forEach((t) => { $(`#tab-${t}`).hidden = t !== state.tab; });
 
@@ -758,12 +759,26 @@
 
   // ---------- Eventos ----------
 
+  function abrirAba(tab) {
+    state.tab = tab;
+    try { localStorage.setItem(TAB_KEY, state.tab); } catch (e) { /* preferência opcional */ }
+    render();
+  }
+
+  // Padrão de abas do teclado: setas, Home e End trocam de aba e levam o foco junto.
+  $('[role="tablist"]').addEventListener('keydown', (event) => {
+    const atual = TABS.indexOf(state.tab);
+    const destino = { ArrowRight: (atual + 1) % TABS.length, ArrowLeft: (atual + TABS.length - 1) % TABS.length, Home: 0, End: TABS.length - 1 }[event.key];
+    if (destino === undefined) return;
+    event.preventDefault();
+    abrirAba(TABS[destino]);
+    $(`[data-tab="${TABS[destino]}"]`).focus();
+  });
+
   document.addEventListener('click', (event) => {
     const tabBtn = event.target.closest('[data-tab]');
     if (tabBtn) {
-      state.tab = tabBtn.dataset.tab;
-      try { localStorage.setItem(TAB_KEY, state.tab); } catch (e) { /* preferência opcional */ }
-      render();
+      abrirAba(tabBtn.dataset.tab);
       return;
     }
     const actionEl = event.target.closest('[data-action]');

@@ -1,0 +1,23 @@
+const { test, expect } = require('@playwright/test');
+const { AxeBuilder } = require('@axe-core/playwright');
+const { APP } = require('./ajuda');
+
+// Verificador automático de acessibilidade (axe-core) em todas as telas, celular e PC.
+// Pega contraste, nomes que faltam, títulos, regiões e outros problemas conhecidos.
+
+const ABAS = ['Painel', 'Lançamentos', 'Orçamento', 'Metas', 'Método'];
+const REGRAS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
+
+for (const largura of [390, 1280]) {
+  test(`nenhuma violação do axe em nenhuma tela (${largura}px)`, async ({ page }) => {
+    await page.setViewportSize({ width: largura, height: 900 });
+    await page.goto(APP);
+    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    for (const aba of ABAS) {
+      await page.getByRole('tab', { name: aba }).click();
+      const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+      const resumo = violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`);
+      expect(resumo, `tela ${aba} a ${largura}px`).toEqual([]);
+    }
+  });
+}

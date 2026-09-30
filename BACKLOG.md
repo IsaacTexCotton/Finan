@@ -75,9 +75,10 @@ Prioridade média
 - [x] Botões "Editar" e "Excluir" repetidos (17× cada) sem dizer de qual lançamento; o leitor
       de tela não distingue. Agora o nome inclui descrição, parcela e valor; os botões das
       metas dizem de qual meta são
-- [ ] Abas: setas do teclado não trocam de aba, as 5 são paradas de Tab, sem `aria-controls`
-      e painéis sem nome; sem link "pular para o conteúdo" (8 paradas até o primeiro campo);
-      página sem título principal (h1); abas fora de uma região identificada (axe)
+- [x] Abas: setas, Home e End trocam de aba; só a aba atual é parada do Tab; `aria-controls`
+      e painéis com nome; link "Pular para o conteúdo"; título principal (h1); abas dentro de
+      uma região de navegação. `acessibilidade.spec.js` roda o axe-core em todas as telas
+      (celular e PC) e exige zero violações, inclusive boas práticas
 - [x] Lista de categorias: cada opção começava com emoji, então digitar "Mer" não escolhia
       "Mercado". Agora o nome vem primeiro e o emoji depois ("Mercado 🛒")
 - [x] Limite do Orçamento salvava sem aviso. Agora diz "Limite de Mercado salvo: R$ 500,00" (ou "removido")

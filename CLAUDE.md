@@ -79,6 +79,10 @@ Só faça o commit quando todas as respostas forem "sim":
   para texto e 3:1 para bordas, foco e barras. Cor nova entra no teste de pares.
 - Alvos de toque com pelo menos 44px (`--tap`), inclusive botões "pequenos".
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
+- As abas seguem o padrão ARIA (setas trocam de aba, só a atual é parada do Tab, cada aba
+  controla um painel com nome). A página tem um título principal (h1) e o atalho "Pular para
+  o conteúdo". `tests/e2e/acessibilidade.spec.js` (axe-core) precisa continuar com zero
+  violações em todas as telas; tela ou controle novo entra nesse teste.
 - Em listas de escolha (`<select>`), o texto de cada opção começa pelo nome, nunca por emoji:
   o navegador acha a opção pelas primeiras letras digitadas.
 - Botões que se repetem numa lista (Editar, Excluir, Guardar valor) têm `aria-label` com o
