@@ -89,7 +89,11 @@ Só faça o commit quando todas as respostas forem "sim":
 - **Todo texto vindo do usuário ou de backup passa por `esc()` antes de ir para `innerHTML`.**
 - Dados importados passam por `normalizeData` (valida e descarta o que for inválido).
 - CSV exportado neutraliza fórmulas (`=`, `+`, `-`, `@`).
-- Antes de publicar, faça uma revisão de segurança do código.
+- Antes de publicar, faça uma revisão de segurança do código. `tests/e2e/seguranca.spec.js`
+  garante que HTML digitado ou vindo de backup nunca executa e que o app não faz requisição
+  de rede. Mudou como algo é desenhado na tela? Esses testes têm que continuar passando.
+- Publicação (GitHub Pages): `.github/workflows/publicar.yml` publica só `index.html`,
+  `css/` e `js/`. Arquivo novo que o app precise em produção tem que entrar nesse `cp`.
 
 # Problemas já resolvidos
 - **Arredondamento dos envelopes passava da renda** (ex.: renda R$ 3.333 virava R$ 3.340 de

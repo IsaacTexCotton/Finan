@@ -17,6 +17,11 @@ module.exports = [
     languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: globals.node },
   },
   {
+    // Os testes no navegador têm funções (page.evaluate) que rodam dentro da página.
+    files: ['tests/e2e/**/*.js'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+  {
     rules: {
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-var': 'error',

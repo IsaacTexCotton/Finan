@@ -41,7 +41,17 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 
 ## Parte 5 — Publicar
 - [ ] README com o método e como usar
-- [ ] Publicar no GitHub Pages (deploy automático pela CI)
+- [x] Revisão de segurança antes de publicar: nenhum segredo ou dado pessoal no repositório;
+      testes no navegador provam que texto malicioso (digitado ou vindo de backup) aparece
+      como texto e não executa, e que o app não faz nenhuma requisição de rede
+- [x] Workflow `publicar.yml` pronto (publicação manual, só `index.html`, `css/` e `js/`,
+      depois de lint e testes)
+- [ ] Isaac: trocar o branch padrão para `main` (Settings > General) e ligar o Pages
+      (Settings > Pages > Source: GitHub Actions)
+- [ ] Disparar a primeira publicação e conferir o link; depois publicar sozinho a cada push
+      em `main` com a CI verde
+- [ ] Sugestão: Content-Security-Policy no `index.html` (`connect-src 'none'`) para o próprio
+      navegador impedir qualquer envio de dados, mesmo que um bug futuro tente
 
 ## Refatorações (avisos do ESLint)
 - [ ] `insights` (complexidade 34): quebrar em uma função por tipo de alerta
