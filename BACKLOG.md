@@ -28,7 +28,8 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 ## Parte 4 — Visual e primeira versão utilizável
 - [x] `css/styles.css`: visual base (cores, tipografia, botões, campos, cartões e Painel),
       celular primeiro, com testes de acessibilidade (`tests/css.test.js`) e auditoria axe-core
-- [ ] Visual das telas Lançamentos (lista por dia), Orçamento (envelopes), Metas e Método
+- [x] Visual da tela Lançamentos: formulário para o polegar e lista por dia
+- [ ] Visual das telas Orçamento (envelopes), Metas e Método
 - [ ] Tema escuro (segue a configuração do celular)
 - [ ] Sugestão: barra de navegação fixa embaixo no celular. As 5 abas não cabem na largura de
       390px (Metas e Método ficam escondidas à direita) e o polegar alcança melhor o rodapé

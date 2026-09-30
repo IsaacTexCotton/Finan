@@ -90,3 +90,37 @@ test('a página carrega o css/styles.css', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   assert.ok(html.includes('href="css/styles.css"'));
 });
+
+// ---------- Tela Lançamentos: fácil de usar com o polegar ----------
+
+/** Junta o corpo de todas as regras cujo seletor é exatamente o informado. */
+function bodyOf(selector) {
+  return rules().filter((r) => r.selector.split(',').map((s) => s.trim()).includes(selector)).map((r) => r.body).join('\n');
+}
+
+function remOf(body, prop) {
+  const m = body.match(new RegExp(`(?:^|[;\\s])${prop}:\\s*([\\d.]+)rem`));
+  return m ? Number(m[1]) : 0;
+}
+
+test('o botão Salvar ocupa a largura toda e é mais alto que o mínimo de toque', () => {
+  const body = bodyOf('#tx-submit');
+  assert.ok(body.includes('width: 100%'), '#tx-submit deve ter width: 100%');
+  assert.ok(remOf(body, 'min-height') >= 3, '#tx-submit deve ter min-height de pelo menos 3rem');
+});
+
+test('o campo de valor aparece em destaque, com fonte grande', () => {
+  const body = bodyOf('input[name="amount"]');
+  assert.ok(remOf(body, 'font-size') >= 1.5, 'o campo de valor deve ter font-size de pelo menos 1.5rem');
+});
+
+test('cada lançamento da lista mantém os botões de editar e excluir com alvo de toque', () => {
+  assert.ok(bodyOf('.tx').includes('display: grid'), '.tx deve ser um grid (descrição, valor e botões sem apertar)');
+  assert.ok(bodyOf('.tx-actions').includes('display: flex'), '.tx-actions deve agrupar os botões');
+  assert.ok(hasRule('.icon-btn', 'min-width: var(--tap)'), '.icon-btn deve ter min-width: var(--tap)');
+});
+
+test('os dias da lista têm título próprio e a lista não mostra marcadores', () => {
+  assert.ok(bodyOf('.day').length > 0, 'falta o estilo do título de cada dia (.day)');
+  assert.ok(bodyOf('.tx-list').includes('list-style: none'), '.tx-list deve tirar os marcadores da lista');
+});

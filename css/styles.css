@@ -233,6 +233,7 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .grid-2 {
@@ -407,7 +408,7 @@ select:disabled {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: var(--tap);
+  min-height: 3rem;
   border: 2px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--surface);
@@ -427,8 +428,7 @@ select:disabled {
 }
 
 .form-error {
-  min-height: 1.5em;
-  margin: 0.5rem 0;
+  margin: 0.25rem 0;
   color: var(--danger-fg);
   font-weight: 700;
 }
@@ -757,4 +757,116 @@ select:disabled {
 .toast.show {
   opacity: 1;
   transform: none;
+}
+
+/* ---------- Tela Lançamentos: formulário para o polegar e lista por dia ---------- */
+
+input[name="amount"] {
+  min-height: 3.5rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+#tx-form .actions {
+  flex-direction: column;
+}
+
+#tx-form .actions .btn {
+  width: 100%;
+}
+
+#tx-submit {
+  width: 100%;
+  min-height: 3.25rem;
+  font-size: 1.125rem;
+}
+
+.day {
+  margin: 1.25rem 0 0.25rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.day::first-letter {
+  text-transform: uppercase;
+}
+
+.tx-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tx {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon main amount"
+    "icon main actions";
+  column-gap: 0.75rem;
+  align-items: start;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tx:last-child {
+  border-bottom: 0;
+}
+
+.tx-icon {
+  display: grid;
+  grid-area: icon;
+  align-self: start;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  font-size: 1.25rem;
+}
+
+.tx-main {
+  display: flex;
+  flex-direction: column;
+  grid-area: main;
+  min-width: 0;
+}
+
+.tx-desc {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.tx-cat {
+  font-size: 0.9375rem;
+}
+
+.tx-amount {
+  grid-area: amount;
+  justify-self: end;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tx-actions {
+  display: flex;
+  grid-area: actions;
+  justify-self: end;
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 0.25rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  vertical-align: middle;
 }
