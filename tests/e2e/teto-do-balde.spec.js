@@ -57,6 +57,8 @@ test('sem renda no mês não há teto: a tela pede a renda e mantém o que foi d
 
 test('mudar um limite atualiza o que sobra do teto', async ({ page }) => {
   await abrir(page, COM_RENDA);
+  await page.getByRole('button', { name: 'Adicionar item em Estilo de vida' }).click();
+  await page.locator('.add-panel .add-item', { hasText: 'Restaurantes e delivery' }).click();
   await page.getByLabel('Limite para Restaurantes e delivery').fill('200');
   await page.getByLabel('Limite para Restaurantes e delivery').blur();
   await expect(grupo(page, 'Estilo de vida').locator('.budget-room')).toContainText(/Distribuído nos limites: R\$\s500,00 · sobram R\$\s400,00/);

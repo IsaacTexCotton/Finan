@@ -112,6 +112,17 @@ Só faça o commit quando todas as respostas forem "sim":
   Valor inválido mostra o erro no lugar; "Agora não" fecha sem mudar nada. A sugestão substitui os
   limites atuais (com confirmação) e **não força a soma a bater com a renda**: a tela mostra o
   que falta ou passa ("Faltam R$ X sem destino", teto do balde). Sem renda, pede a renda antes.
+- **Orçamento enxuto e "Adicionar item"** (decisão do Isaac, 30/09/2026). Na primeira abertura o
+  Orçamento mostra só o essencial (`DEFAULT_BUDGET_ITEMS` em `core.js`, um único lugar: Moradia,
+  Contas da casa, Mercado, Transporte, Saúde e Reserva de emergência), mas os três baldes sempre
+  aparecem, mesmo vazios. O resto entra pelo botão "Adicionar" no fim de cada balde, que lista só
+  as categorias do catálogo **daquele balde** que ainda não estão no orçamento. Tocar numa a
+  adiciona (`settings.budgetItems`), fecha a lista e leva o foco ao campo de limite dela.
+  **Quem já tem limite definido nunca perde o item.** "Criar" cadastra um item novo no balde e no
+  catálogo (`state.data.categories`, então vale para lançamentos, filtros e Painel): é despesa,
+  "variável" (Essenciais e Estilo de vida) ou "fixa" (Futuro), com o ícone 🏷️. Nome vazio, com
+  mais de 60 letras ou **repetido em qualquer lugar do catálogo** (sem diferenciar maiúsculas e
+  acentos) é bloqueado com o erro no lugar. Ainda não há "remover item" nem editar o nome.
 - **Orçamento base zero (na tela):** a tela compara a soma dos limites com a renda e mostra o
   que falta ou passa. A sugestão não força essa soma (ver acima).
 - **Reserva de emergência:** média dos gastos essenciais × 6 meses (renda estável: CLT,

@@ -66,6 +66,8 @@
     month: F.monthKey(F.todayISO()),
     tab: loadTab(),
     editingId: null,
+    addingTo: null, // balde com a lista "Adicionar" aberta
+    creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
   };
@@ -418,39 +420,71 @@
     $('#zero-based').innerHTML = zb;
 
     const rooms = Object.fromEntries(F.bucketBudgetStatus(state.data.budgets, state.data.categories, summary, plan).map((r) => [r.id, r]));
+    const visible = F.budgetVisibleCategories(state.data.categories, state.data.budgets, state.data.settings.budgetItems);
     $('#budget-table').innerHTML = Object.keys(F.BUCKETS).map((bucketId) => {
-      const cats = expenseCategories().filter((c) => c.bucket === bucketId);
       const room = rooms[bucketId];
+      const label = F.BUCKETS[bucketId].label;
       return `
         <div class="budget-group">
-          <h3>${esc(F.BUCKETS[bucketId].label)}</h3>
+          <h3>${esc(label)}</h3>
           <p class="budget-sum">${room.ceiling === null ? 'Lance a renda do mês para ver o teto deste balde.' : `Teto do balde: ${money(room.ceiling)} (${plan[bucketId]}% da renda)`}</p>
           <p class="budget-room ${ROOM_CLASS[room.status]}">${roomText(room)}</p>
-          ${cats.map((c) => {
-            const r = rows[c.id];
-            const limit = state.data.budgets[c.id] || 0;
-            const spent = summary.byCategory[c.id] || 0;
-            const detail = r
-              ? `${money(r.spent)} de ${money(r.limit)} · ${r.remaining >= 0 ? `restam ${money(r.remaining)}` : `passou ${money(-r.remaining)}`}${r.status === 'risco' ? ` · projeção ${money(r.projected)}` : ''}`
-              : (spent ? `${money(spent)} gastos · sem limite definido` : 'sem limite definido');
-            return `
-              <div class="budget-row">
-                <div class="budget-info">
-                  <div class="budget-head">
-                    <span class="cat-name">${esc(c.icon)} ${esc(c.name)} <span class="tag">${esc(TIPO_DA_CATEGORIA[c.kind] || c.kind)}</span></span>
-                    ${r ? `<span class="badge status-${esc(r.status)}">${esc(STATUS_LABEL[r.status])}</span>` : ''}
-                  </div>
-                  ${r ? bar(r.ratio, r.status) : ''}
-                  <span class="budget-detail">${detail}</span>
-                </div>
-                <div class="budget-limit">
-                  <span class="budget-limit-label" aria-hidden="true">Limite mensal (R$)</span>
-                  <input class="budget-input" data-category="${esc(c.id)}" inputmode="decimal" aria-label="Limite para ${esc(c.name)}" placeholder="Limite" value="${limit ? esc(centsToInput(limit)) : ''}">
-                </div>
-              </div>`;
-          }).join('')}
+          ${visible[bucketId].map((c) => budgetRowHtml(c, rows[c.id], summary)).join('')}
+          <button type="button" class="btn small budget-add" data-action="open-add" data-bucket="${esc(bucketId)}" aria-label="Adicionar item em ${esc(label)}">Adicionar</button>
+          ${state.addingTo === bucketId ? addPanelHtml(bucketId) : ''}
         </div>`;
     }).join('');
+  }
+
+  /** Uma linha do Orçamento: nome, status, barra e o campo do limite. */
+  function budgetRowHtml(c, r, summary) {
+    const limit = state.data.budgets[c.id] || 0;
+    const spent = summary.byCategory[c.id] || 0;
+    const detail = r
+      ? `${money(r.spent)} de ${money(r.limit)} · ${r.remaining >= 0 ? `restam ${money(r.remaining)}` : `passou ${money(-r.remaining)}`}${r.status === 'risco' ? ` · projeção ${money(r.projected)}` : ''}`
+      : (spent ? `${money(spent)} gastos · sem limite definido` : 'sem limite definido');
+    return `
+      <div class="budget-row">
+        <div class="budget-info">
+          <div class="budget-head">
+            <span class="cat-name">${esc(c.icon)} ${esc(c.name)} <span class="tag">${esc(TIPO_DA_CATEGORIA[c.kind] || c.kind)}</span></span>
+            ${r ? `<span class="badge status-${esc(r.status)}">${esc(STATUS_LABEL[r.status])}</span>` : ''}
+          </div>
+          ${r ? bar(r.ratio, r.status) : ''}
+          <span class="budget-detail">${detail}</span>
+        </div>
+        <div class="budget-limit">
+          <span class="budget-limit-label" aria-hidden="true">Limite mensal (R$)</span>
+          <input class="budget-input" data-category="${esc(c.id)}" inputmode="decimal" aria-label="Limite para ${esc(c.name)}" placeholder="Limite" value="${limit ? esc(centsToInput(limit)) : ''}">
+        </div>
+      </div>`;
+  }
+
+  /** Lista "Adicionar" de um balde: itens do catálogo que ainda não estão no orçamento, e o "Criar". */
+  function addPanelHtml(bucketId) {
+    const items = F.budgetAddable(state.data.categories, bucketId, state.data.budgets, state.data.settings.budgetItems);
+    const list = items.length
+      ? `<ul class="add-list">${items.map((c) => `<li><button type="button" class="btn add-item" data-action="add-item" data-id="${esc(c.id)}">${esc(c.name)} ${esc(c.icon)}</button></li>`).join('')}</ul>`
+      : '<p class="muted">Todos os itens deste grupo já estão no orçamento. Use "Criar" para cadastrar um novo.</p>';
+    const create = state.creating
+      ? `<form class="create-form" data-form="create-item" novalidate>
+          <label>Nome do novo item
+            <input name="name" maxlength="${60}" autocomplete="off">
+          </label>
+          <p class="form-error" id="create-error" role="alert"></p>
+          <div class="actions">
+            <button type="submit" class="btn primary">Criar e adicionar</button>
+            <button type="button" class="btn" data-action="cancel-create">Cancelar</button>
+          </div>
+        </form>`
+      : '<button type="button" class="btn" data-action="start-create">Criar</button>';
+    return `
+      <div class="add-panel">
+        <h4 id="add-title" tabindex="-1">Adicionar em ${esc(F.BUCKETS[bucketId].label)}</h4>
+        ${list}
+        ${create}
+        <button type="button" class="btn small" data-action="close-add">Fechar</button>
+      </div>`;
   }
 
   function renderPayday(profileId) {
@@ -979,6 +1013,58 @@
   $('#filter-category').addEventListener('change', (event) => {
     state.filterCategory = event.target.value;
     renderTransactions(monthContext());
+  });
+
+  // Adicionar item ao orçamento: abrir/fechar a lista, escolher um item ou criar um novo.
+  function focusBudgetLimit(categoryId) {
+    const input = $$('.budget-input').find((el) => el.dataset.category === categoryId);
+    if (input) input.focus();
+  }
+
+  function addBudgetItem(category) {
+    const items = state.data.settings.budgetItems;
+    if (!items.includes(category.id)) items.push(category.id);
+    state.addingTo = null;
+    state.creating = false;
+    commit(`${category.name} adicionado ao orçamento.`);
+    focusBudgetLimit(category.id);
+  }
+
+  function createBudgetItem(form) {
+    const check = F.validateCategoryName(state.data.categories, form.elements.name.value);
+    if (!check.ok) {
+      $('#create-error').textContent = check.error;
+      form.elements.name.focus();
+      return;
+    }
+    const category = F.createCategory(state.addingTo, check.name, newId());
+    state.data.categories.push(category);
+    addBudgetItem(category);
+  }
+
+  const ADD_ACTIONS = {
+    'open-add': (el) => { state.addingTo = el.dataset.bucket; state.creating = false; render(); $('#add-title').focus(); },
+    'close-add': () => {
+      const bucket = state.addingTo;
+      state.addingTo = null;
+      state.creating = false;
+      render();
+      $$('.budget-add').find((el) => el.dataset.bucket === bucket).focus();
+    },
+    'add-item': (el) => addBudgetItem(state.data.categories.find((c) => c.id === el.dataset.id)),
+    'start-create': () => { state.creating = true; render(); $('.create-form input').focus(); },
+    'cancel-create': () => { state.creating = false; render(); $('[data-action="start-create"]').focus(); },
+  };
+
+  $('#budget-table').addEventListener('click', (event) => {
+    const el = event.target.closest('[data-action]');
+    const action = el && ADD_ACTIONS[el.dataset.action];
+    if (action) action(el);
+  });
+
+  $('#budget-table').addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (event.target.dataset.form === 'create-item') createBudgetItem(event.target);
   });
 
   $('#budget-table').addEventListener('change', (event) => {

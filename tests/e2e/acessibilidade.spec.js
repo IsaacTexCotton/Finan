@@ -66,3 +66,14 @@ test('o questionário do Orçamento aberto não tem violações do axe', async (
   const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
   expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`)).toEqual([]);
 });
+
+test('a lista "Adicionar" e o formulário "Criar" do Orçamento não têm violações do axe', async ({ page }) => {
+  await page.goto(APP);
+  await page.getByRole('tab', { name: 'Orçamento' }).click();
+  await page.getByRole('button', { name: 'Adicionar item em Estilo de vida' }).click();
+  for (const etapa of ['lista', 'criar']) {
+    if (etapa === 'criar') await page.getByRole('button', { name: 'Criar', exact: true }).click();
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), etapa).toEqual([]);
+  }
+});

@@ -31,7 +31,7 @@ test('sugere a média das variáveis, o valor das fixas e o Futuro pelo plano', 
 
   await expect(page.getByLabel('Limite para Mercado')).toHaveValue('580,00'); // média de 550 e 600, arredondada para cima
   await expect(page.getByLabel('Limite para Moradia')).toHaveValue('1200,00'); // fixa: o valor mais recente
-  await expect(page.getByLabel('Limite para Lazer')).toHaveValue(''); // nunca gastou: sem limite inventado
+  await expect(page.getByLabel('Limite para Lazer')).toHaveCount(0); // nunca gastou: sem limite inventado, e o Lazer nem aparece na lista
   await expect(page.getByLabel('Limite para Reserva de emergência')).toHaveValue('150,00'); // Futuro: 20% de R$ 3.000 ÷ 4
 });
 

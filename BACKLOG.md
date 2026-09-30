@@ -149,3 +149,10 @@ do balde e comparação. Uma parte por vez:
       trocados (hoje ele só divide o balde Futuro por dentro de `suggestFromHistory`)
 - [x] Parte 3: questionário simples (aluguel, mercado, transporte…) para quem não tem histórico
 - [ ] Sugestão: cada valor sugerido mostra o motivo ("média dos últimos 3 meses: R$ 290")
+
+## Adicionar item ao orçamento (30/09/2026)
+- [x] Orçamento enxuto na primeira abertura, botão "Adicionar" por balde e "Criar" item novo
+- [ ] Sugestão: remover um item do orçamento (hoje um item adicionado fica para sempre; só os
+      que aparecem por ter limite somem ao apagar o limite)
+- [ ] Sugestão: escolher "fixa" ou "variável" e o ícone ao criar um item
+- [ ] Sugestão: renomear e excluir categorias criadas pela pessoa

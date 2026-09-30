@@ -46,7 +46,7 @@ test('responder cria os limites: os valores informados e o Futuro pelo plano', a
   await expect(questionario(page)).toBeHidden();
   await expect(page.getByLabel('Limite para Moradia')).toHaveValue('1200,00');
   await expect(page.getByLabel('Limite para Mercado')).toHaveValue('600,00');
-  await expect(page.getByLabel('Limite para Lazer')).toHaveValue(''); // em branco: sem limite
+  await expect(page.getByLabel('Limite para Lazer')).toHaveCount(0); // em branco: sem limite, e o Lazer nem aparece na lista
   await expect(page.getByLabel('Limite para Reserva de emergência')).toHaveValue('150,00'); // 20% de R$ 3.000 ÷ 4
 });
 
