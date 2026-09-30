@@ -82,12 +82,13 @@ Prioridade média
 - [x] Lista de categorias: cada opção começava com emoji, então digitar "Mer" não escolhia
       "Mercado". Agora o nome vem primeiro e o emoji depois ("Mercado 🛒")
 - [x] Limite do Orçamento salvava sem aviso. Agora diz "Limite de Mercado salvo: R$ 500,00" (ou "removido")
-- [ ] Palavras de finanças sem explicação no Painel e no Orçamento: baldes, envelopes, taxa de
-      poupança, "orçamento base zero", fixa/variável. Explicar em linguagem simples
+- [x] Palavras de finanças sem explicação no Painel e no Orçamento: baldes, 50/30/20,
+      envelopes, fixa/variável e "orçamento base zero" (agora "dar um destino a cada real").
+      Falta só "taxa de poupança", que depende da decisão sobre o que conta como poupança
 - [ ] Metas e Método escondidas à direita no celular (ver barra de navegação fixa abaixo)
 
 Prioridade baixa
-- [ ] Etiqueta "variavel" sem acento (aparece na tela do Orçamento)
+- [x] Etiqueta "variavel" sem acento (aparece na tela do Orçamento)
 - [ ] "para os próximos 1 dia" (singular) no "Você pode gastar hoje"
 - [ ] Tela vazia mostra três selos "Sem renda" que só fazem ruído até existir renda
 - [ ] "Guardar valor" usa janela nativa `prompt()` e excluir usa `confirm()`; funciona, mas

@@ -24,7 +24,7 @@
   const DEFAULT_TARGETS = { essencial: 50, estilo: 30, futuro: 20 };
 
   const PLAN_PROFILES = {
-    'sem-historico': { label: 'Começando', description: 'Ainda sem histórico: o plano começa no clássico 50/30/20.' },
+    'sem-historico': { label: 'Começando', description: 'Ainda sem histórico: o plano começa no 50/30/20, ou seja, até 50% da renda para Essenciais, até 30% para Estilo de vida e pelo menos 20% para o Futuro.' },
     confortavel: { label: 'Confortável', description: 'Os essenciais cabem em até 50% da renda: siga o 50/30/20.' },
     ajustando: { label: 'Ajustando', description: 'Os essenciais passam de 50% da renda: o plano se adapta e volta ao 50/30/20 conforme eles caem.' },
     critico: { label: 'Crítico', description: 'Os essenciais passam de 80% da renda: o foco é cortar custos fixos ou aumentar a renda.' },

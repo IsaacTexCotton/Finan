@@ -16,6 +16,8 @@
     { id: 'metas', text: 'Atualizei o valor guardado nas minhas metas.' },
   ];
 
+  const TIPO_DA_CATEGORIA = { fixa: 'fixa', variavel: 'variável' };
+
   const STATUS_LABEL = {
     ok: 'No plano',
     atencao: 'Atenção',
@@ -271,6 +273,7 @@
     $('#plan-info').innerHTML = `
       <span class="badge plan-${esc(plan.profile)}">${esc(profile.label)}</span>
       <strong>${plan.essencial}/${plan.estilo}/${plan.futuro}</strong>
+      <span class="muted small">essenciais / estilo de vida / futuro</span>
       <span class="muted">${esc(profile.description)}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${esc(F.formatPercent(plan.essentialShare))} da renda.` : ''}</span>`;
     $('#buckets').innerHTML = buckets.map((b) => `
       <div class="bucket">
@@ -355,9 +358,9 @@
 
     let zb;
     if (summary.income <= 0) zb = '<div class="notice">Lance a renda deste mês para comparar com o orçamento.</div>';
-    else if (unassigned > 0) zb = `<div class="notice warn">Faltam <strong>${money(unassigned)}</strong> sem função. Distribua nos envelopes (de preferência no balde Futuro).</div>`;
+    else if (unassigned > 0) zb = `<div class="notice warn">Faltam <strong>${money(unassigned)}</strong> sem destino. Distribua nos envelopes (de preferência para o Futuro: reserva, investimentos ou dívidas).</div>`;
     else if (unassigned < 0) zb = `<div class="notice danger">Seu orçamento passa a renda em <strong>${money(-unassigned)}</strong>. Reduza algum envelope.</div>`;
-    else zb = '<div class="notice ok">Orçamento base zero fechado: cada real tem uma função. 🎯</div>';
+    else zb = '<div class="notice ok">Tudo certo: cada real da renda tem um destino. 🎯</div>';
     $('#zero-based').innerHTML = zb;
 
     $('#budget-table').innerHTML = Object.keys(F.BUCKETS).map((bucketId) => {
@@ -377,7 +380,7 @@
             return `
               <div class="budget-row">
                 <div class="budget-info">
-                  <span class="cat-name">${esc(c.icon)} ${esc(c.name)} <span class="tag">${esc(c.kind)}</span></span>
+                  <span class="cat-name">${esc(c.icon)} ${esc(c.name)} <span class="tag">${esc(TIPO_DA_CATEGORIA[c.kind] || c.kind)}</span></span>
                   ${r ? bar(r.ratio, r.status) : ''}
                   <span class="muted small">${detail}</span>
                 </div>
