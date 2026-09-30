@@ -212,6 +212,26 @@
     renderReview();
   }
 
+  /** Só vale até o próximo pagamento para renda estável com o dia útil informado; senão, até o fim do mês. */
+  function renderAllowance(ctx) {
+    const { incomeProfile, paydayBusinessDay } = state.data.settings;
+    const byPayday = incomeProfile === 'estavel' && paydayBusinessDay > 0 && state.month === F.monthKey(ctx.today);
+    const allowance = byPayday
+      ? F.allowanceUntilPayday(state.data.transactions, state.data.categories, state.data.budgets, ctx.today, paydayBusinessDay)
+      : F.dailyAllowance(ctx.budgetRows, state.month, ctx.today);
+    if (!allowance) return '';
+    const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
+    const ate = byPayday ? `, até o próximo pagamento (${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)})` : '';
+    return `
+      <div class="allowance">
+        <div>
+          <span class="card-label">Você pode gastar hoje</span>
+          <span class="allowance-value">${money(allowance.perDay)}</span>
+        </div>
+        <p>${money(allowance.remaining)} livres nos envelopes variáveis para os próximos ${dias}${ate}.</p>
+      </div>`;
+  }
+
   function renderDashboard(ctx) {
     const { summary, buckets, budgetRows, previousSummary, commitments, plan } = ctx;
     const hasData = state.data.transactions.length > 0;
@@ -233,15 +253,7 @@
 
     renderCards(summary, plan);
 
-    const allowance = F.dailyAllowance(budgetRows, state.month, ctx.today);
-    $('#allowance').innerHTML = allowance ? `
-      <div class="allowance">
-        <div>
-          <span class="card-label">Você pode gastar hoje</span>
-          <span class="allowance-value">${money(allowance.perDay)}</span>
-        </div>
-        <p>${money(allowance.remaining)} livres nos envelopes variáveis para os próximos ${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}.</p>
-      </div>` : '';
+    $('#allowance').innerHTML = renderAllowance(ctx);
 
     renderBuckets(summary, buckets, plan);
 
@@ -401,6 +413,20 @@
     }).join('');
   }
 
+  function renderPayday(profileId) {
+    if (profileId !== 'estavel') return '<p class="muted small">Com renda variável, o "Você pode gastar hoje" do Painel conta até o fim do mês.</p>';
+    const atual = state.data.settings.paydayBusinessDay;
+    const opcoes = Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}" ${atual === i + 1 ? 'selected' : ''}>${i + 1}º dia útil</option>`).join('');
+    return `
+      <label>Em que dia útil você recebe?
+        <select id="payday">
+          <option value="0" ${atual ? '' : 'selected'}>Não informar (contar até o fim do mês)</option>
+          ${opcoes}
+        </select>
+      </label>
+      <p class="muted small">Com o dia informado, o "Você pode gastar hoje" do Painel passa a durar até o seu próximo pagamento. Só sábado e domingo contam como folga; feriados não.</p>`;
+  }
+
   function renderGoals(ctx) {
     const profileId = state.data.settings.incomeProfile;
     const months = F.INCOME_PROFILES[profileId].months;
@@ -417,6 +443,7 @@
             ${Object.entries(F.INCOME_PROFILES).map(([id, p]) => `<option value="${esc(id)}" ${id === profileId ? 'selected' : ''}>${esc(p.label)} — ${p.months} meses</option>`).join('')}
           </select>
         </label>
+        ${renderPayday(profileId)}
         ${target > 0 ? `
           <p>Com base nos seus gastos essenciais, sua reserva ideal é de <strong>${money(target)}</strong> (${months} meses de custo de vida).</p>
           ${goalAction}`
@@ -818,9 +845,13 @@
   });
   $('#goal-form').addEventListener('submit', submitGoal);
   $('#emergency').addEventListener('change', (event) => {
-    if (event.target.id !== 'income-profile') return;
-    state.data.settings.incomeProfile = event.target.value;
-    commit('Tipo de renda atualizado.');
+    if (event.target.id === 'payday') {
+      state.data.settings.paydayBusinessDay = Number(event.target.value);
+      commit('Dia de pagamento atualizado.');
+    } else if (event.target.id === 'income-profile') {
+      state.data.settings.incomeProfile = event.target.value;
+      commit('Tipo de renda atualizado.');
+    }
   });
 
   $('#filter-text').addEventListener('input', (event) => {

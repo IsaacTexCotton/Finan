@@ -123,3 +123,8 @@ Decisões do Isaac aplicadas (30/09/2026)
 - Plano adaptativo editável manualmente
 - Categorias personalizadas pela interface
 - Funcionar offline como app instalável (PWA)
+
+## Dia de pagamento
+- [x] "Você pode gastar hoje" até o próximo pagamento, pelo N-ésimo dia útil (renda estável)
+- [ ] Sugestão: feriados nacionais na conta do dia útil
+- [ ] Sugestão: Painel e limites por ciclo do salário, não por mês de calendário

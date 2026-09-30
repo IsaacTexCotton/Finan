@@ -439,3 +439,43 @@ test('leftAfterSaving continua negativo se o mês já estava no vermelho', () =>
   const vermelho = F.summarize([tx('income', 'salario', 100000, '2026-09-01'), tx('expense', 'lazer', 130000, '2026-09-02')], cats);
   assert.equal(F.leftAfterSaving(vermelho, 1000), -31000);
 });
+
+test('nthBusinessDay acha o N-ésimo dia útil (segunda a sexta, sem feriados)', () => {
+  assert.equal(F.nthBusinessDay('2026-09', 5), '2026-09-07'); // 1 é terça
+  assert.equal(F.nthBusinessDay('2026-10', 5), '2026-10-07');
+  assert.equal(F.nthBusinessDay('2026-08', 1), '2026-08-03'); // 1º de agosto é sábado
+  assert.equal(F.nthBusinessDay('2026-08', 5), '2026-08-07');
+});
+
+test('paydayCycle: o ciclo vai de um pagamento ao próximo', () => {
+  assert.deepEqual(F.paydayCycle('2026-09-20', 5), { start: '2026-09-07', end: '2026-10-07', daysLeft: 17 });
+  // antes do pagamento do mês, ainda vale o ciclo do mês anterior
+  assert.deepEqual(F.paydayCycle('2026-09-04', 5), { start: '2026-08-07', end: '2026-09-07', daysLeft: 3 });
+  // no dia do pagamento, um ciclo novo começa
+  assert.deepEqual(F.paydayCycle('2026-09-07', 5), { start: '2026-09-07', end: '2026-10-07', daysLeft: 30 });
+  // virada de ano
+  assert.deepEqual(F.paydayCycle('2026-12-30', 5), { start: '2026-12-07', end: '2027-01-07', daysLeft: 8 });
+});
+
+test('allowanceUntilPayday divide o que sobra nos envelopes variáveis até o próximo pagamento', () => {
+  const list = [
+    tx('expense', 'mercado', 5000, '2026-09-02'), // ciclo anterior: não conta
+    tx('expense', 'mercado', 10000, '2026-09-10'),
+    tx('expense', 'moradia', 150000, '2026-09-08'), // fixa: não entra
+  ];
+  const budgets = { mercado: 60000, moradia: 150000 };
+  const r = F.allowanceUntilPayday(list, cats, budgets, '2026-09-20', 5);
+  assert.equal(r.remaining, 50000);
+  assert.equal(r.daysLeft, 17);
+  assert.equal(r.perDay, Math.floor(50000 / 17));
+  assert.equal(r.nextPayday, '2026-10-07');
+  assert.equal(F.allowanceUntilPayday(list, cats, { moradia: 150000 }, '2026-09-20', 5), null);
+});
+
+test('dia de pagamento nos ajustes: só 1 a 10, senão 0 (não informado)', () => {
+  assert.equal(F.emptyData().settings.paydayBusinessDay, 0);
+  assert.equal(F.normalizeData({ settings: { paydayBusinessDay: 5 } }).settings.paydayBusinessDay, 5);
+  assert.equal(F.normalizeData({ settings: { paydayBusinessDay: 11 } }).settings.paydayBusinessDay, 0);
+  assert.equal(F.normalizeData({ settings: { paydayBusinessDay: 2.5 } }).settings.paydayBusinessDay, 0);
+  assert.equal(F.normalizeData({ settings: { paydayBusinessDay: '5' } }).settings.paydayBusinessDay, 0);
+});

@@ -67,6 +67,12 @@ Só faça o commit quando todas as respostas forem "sim":
 - **Envelopes:** cada categoria pode ter um limite mensal. Categorias `fixa` (aluguel,
   assinaturas) não entram na projeção de fim de mês; `variavel` (mercado, delivery) entram,
   e também no "pode gastar hoje".
+- **"Você pode gastar hoje" até o próximo pagamento** (decisão do Isaac, 30/09/2026). Com renda
+  estável e o "N-ésimo dia útil em que recebe" informado (1º a 10º, nas Metas), o valor divide
+  o que sobra nos envelopes variáveis pelos dias até o próximo pagamento, contando só os gastos
+  do ciclo (do último pagamento até hoje). Só sábado e domingo são folga; feriado não entra na
+  conta. Sem o dia informado, ou com renda variável, conta até o fim do mês. O resto do Painel
+  continua por mês de calendário.
 - **Orçamento base zero:** a soma dos envelopes sugeridos bate exatamente com a renda.
 - **Reserva de emergência:** média dos gastos essenciais × 6 meses (renda estável: CLT,
   servidor, aposentadoria) ou × 12 meses (renda variável: autônomo, freelancer, empresário).

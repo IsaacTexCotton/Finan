@@ -298,6 +298,50 @@
     return { perDay: Math.floor(remaining / daysLeft), remaining, daysLeft };
   }
 
+  /** N-ésimo dia útil do mês (segunda a sexta; feriados não entram na conta). */
+  function nthBusinessDay(key, n) {
+    const [y, m] = key.split('-').map(Number);
+    let count = 0;
+    for (let day = 1; day <= daysInMonth(key); day++) {
+      const weekday = new Date(y, m - 1, day).getDay();
+      if (weekday !== 0 && weekday !== 6) count++;
+      if (count === n) return `${key}-${pad(day)}`;
+    }
+    return `${key}-${pad(daysInMonth(key))}`;
+  }
+
+  function daysBetween(fromISO, toISO) {
+    const utc = (iso) => Date.UTC(...iso.split('-').map((v, i) => (i === 1 ? Number(v) - 1 : Number(v))));
+    return Math.round((utc(toISO) - utc(fromISO)) / 86400000);
+  }
+
+  /**
+   * Ciclo do salário que contém `today`: começa no último pagamento (inclusive) e termina
+   * no próximo (exclusive). `daysLeft` conta hoje e não conta o dia do próximo pagamento.
+   */
+  function paydayCycle(today, businessDay) {
+    const key = monthKey(today);
+    const thisPayday = nthBusinessDay(key, businessDay);
+    const startKey = today >= thisPayday ? key : shiftMonth(key, -1);
+    const start = nthBusinessDay(startKey, businessDay);
+    const end = nthBusinessDay(shiftMonth(startKey, 1), businessDay);
+    return { start, end, daysLeft: daysBetween(today, end) };
+  }
+
+  /**
+   * Quanto dá para gastar por dia, nas categorias variáveis, até o próximo pagamento.
+   * Os limites são mensais; o gasto considerado é só o do ciclo do salário atual.
+   */
+  function allowanceUntilPayday(transactions, categories, budgets, today, businessDay) {
+    const { start, end, daysLeft } = paydayCycle(today, businessDay);
+    const cycleTx = transactions.filter((t) => t.date >= start && t.date < end);
+    const rows = budgetStatus(budgets, summarize(cycleTx, categories), categories, monthKey(today), today);
+    const variable = rows.filter((r) => r.kind === 'variavel');
+    if (!variable.length) return null;
+    const remaining = variable.reduce((sum, r) => sum + Math.max(r.remaining, 0), 0);
+    return { perDay: Math.floor(remaining / daysLeft), remaining, daysLeft, nextPayday: end };
+  }
+
   /** Arredonda centavos para múltiplos de R$ step (padrão R$ 10). */
   function roundTo(cents, step = 1000) {
     return Math.round(cents / step) * step;
@@ -531,7 +575,7 @@
   // ---------- Importação / exportação ----------
 
   function emptyData() {
-    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel' } };
+    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel', paydayBusinessDay: 0 } };
   }
 
   function isISODate(s) {
@@ -595,6 +639,8 @@
       }
     }
     if (raw.settings && INCOME_PROFILES[raw.settings.incomeProfile]) data.settings.incomeProfile = raw.settings.incomeProfile;
+    const payday = raw.settings && raw.settings.paydayBusinessDay;
+    if (Number.isInteger(payday) && payday >= 1 && payday <= 10) data.settings.paydayBusinessDay = payday;
     return data;
   }
 
@@ -655,6 +701,9 @@
     bucketAnalysis,
     budgetStatus,
     dailyAllowance,
+    nthBusinessDay,
+    paydayCycle,
+    allowanceUntilPayday,
     suggestBudgets,
     averageEssential,
     emergencyFundTarget,
