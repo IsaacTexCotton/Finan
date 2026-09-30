@@ -739,3 +739,74 @@ test('budgetsFromAnswers sem nenhuma resposta ainda devolve só o Futuro, e sem 
   assert.ok(Object.keys(soFuturo).every((id) => cats.find((c) => c.id === id).bucket === 'futuro'));
   assert.deepEqual(F.budgetsFromAnswers({ mercado: 60000 }, cats, 0, PLANO), { mercado: 60000 });
 });
+
+// ---- Adicionar item ao orçamento: começa enxuto e a pessoa monta o resto aos poucos ----
+
+const ids = (lista) => lista.map((c) => c.id);
+
+test('DEFAULT_BUDGET_ITEMS é a lista essencial e só aponta para despesas que existem no catálogo', () => {
+  assert.deepEqual(F.DEFAULT_BUDGET_ITEMS, ['moradia', 'contas', 'mercado', 'transporte', 'saude', 'reserva']);
+  for (const id of F.DEFAULT_BUDGET_ITEMS) assert.ok(cats.some((c) => c.id === id && c.type === 'expense'), id);
+});
+
+test('budgetVisibleCategories na primeira abertura mostra só o essencial, com os três baldes presentes', () => {
+  const v = F.budgetVisibleCategories(cats, {}, []);
+  assert.deepEqual(Object.keys(v), ['essencial', 'estilo', 'futuro']);
+  assert.deepEqual(ids(v.essencial), ['moradia', 'contas', 'mercado', 'transporte', 'saude']);
+  assert.deepEqual(ids(v.estilo), []);
+  assert.deepEqual(ids(v.futuro), ['reserva']);
+});
+
+test('budgetVisibleCategories acrescenta o que a pessoa adicionou e o que já tem limite, na ordem do catálogo', () => {
+  const v = F.budgetVisibleCategories(cats, { lazer: 25000, investimentos: 0 }, ['impostos', 'compras']);
+  assert.deepEqual(ids(v.essencial), ['moradia', 'contas', 'mercado', 'transporte', 'saude', 'impostos']);
+  assert.deepEqual(ids(v.estilo), ['lazer', 'compras']); // lazer pelo limite, compras por ter sido adicionada
+  assert.deepEqual(ids(v.futuro), ['reserva']); // limite zero não conta como limite
+});
+
+test('budgetAddable lista só o que ainda não está no orçamento, do balde tocado', () => {
+  assert.deepEqual(ids(F.budgetAddable(cats, 'essencial', {}, [])), ['educacao', 'impostos']);
+  assert.deepEqual(ids(F.budgetAddable(cats, 'estilo', {}, [])), ['restaurantes', 'lazer', 'compras', 'assinaturas', 'cuidados', 'presentes', 'outros']);
+  assert.deepEqual(ids(F.budgetAddable(cats, 'futuro', {}, [])), ['investimentos', 'metas', 'dividas']);
+  // depois de adicionar, sai da lista
+  assert.ok(!ids(F.budgetAddable(cats, 'estilo', {}, ['lazer'])).includes('lazer'));
+  // quem já tem limite também não volta para a lista
+  assert.ok(!ids(F.budgetAddable(cats, 'estilo', { compras: 10000 }, [])).includes('compras'));
+  // receitas nunca entram
+  assert.ok(ids(F.budgetAddable(cats, 'estilo', {}, [])).every((id) => cats.find((c) => c.id === id).type === 'expense'));
+});
+
+test('validateCategoryName bloqueia nome vazio, longo demais e repetido em qualquer lugar do catálogo', () => {
+  assert.deepEqual(F.validateCategoryName(cats, '  Pets  '), { ok: true, name: 'Pets' });
+  assert.deepEqual(F.validateCategoryName(cats, 'Cuidados   com   o jardim'), { ok: true, name: 'Cuidados com o jardim' }); // espaços repetidos viram um só
+  assert.match(F.validateCategoryName(cats, '').error, /Dê um nome/);
+  assert.match(F.validateCategoryName(cats, '    ').error, /Dê um nome/);
+  assert.match(F.validateCategoryName(cats, undefined).error, /Dê um nome/);
+  assert.match(F.validateCategoryName(cats, 'x'.repeat(61)).error, /no máximo 60/);
+  // repetido: sem diferenciar maiúsculas nem acentos, e em qualquer balde ou tipo
+  for (const nome of ['Lazer', 'lazer', ' LAZER ', 'saude', 'SAÚDE', 'Mercado', 'salario']) {
+    const r = F.validateCategoryName(cats, nome);
+    assert.equal(r.ok, false, nome);
+    assert.match(r.error, /Já existe um item chamado/);
+  }
+});
+
+test('createCategory cria uma despesa do balde escolhido, variável ou fixa conforme o balde', () => {
+  const nova = F.createCategory('estilo', 'Pets', 'id-1');
+  assert.deepEqual(nova, { id: 'id-1', name: 'Pets', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🏷️' });
+  assert.equal(F.createCategory('essencial', 'Farmácia', 'id-2').kind, 'variavel');
+  assert.equal(F.createCategory('futuro', 'Previdência', 'id-3').kind, 'fixa');
+});
+
+test('os itens adicionados ao orçamento são salvos e validados', () => {
+  assert.deepEqual(F.emptyData().settings.budgetItems, []);
+  const data = F.normalizeData({
+    categories: [...cats, { id: 'pets', name: 'Pets', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🏷️' }],
+    settings: { budgetItems: ['lazer', 'pets', 'lazer', 'salario', 'nao-existe', 42, 'x'.repeat(200)] },
+  });
+  assert.deepEqual(data.settings.budgetItems, ['lazer', 'pets']); // sem repetidos, sem receita, sem id desconhecido
+  assert.deepEqual(F.normalizeData({ settings: { budgetItems: 'lazer' } }).settings.budgetItems, []);
+  assert.deepEqual(F.normalizeData({}).settings.budgetItems, []);
+  // a categoria criada pela pessoa sobrevive a um backup e continua no catálogo
+  assert.ok(data.categories.some((c) => c.id === 'pets' && c.bucket === 'estilo' && c.name === 'Pets'));
+});

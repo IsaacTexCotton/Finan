@@ -58,6 +58,13 @@
     { id: 'dividas', name: 'Quitação de dívidas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '⛓️' },
   ];
 
+  // Itens que o Orçamento mostra na primeira abertura: só o essencial para viver, mais a reserva
+  // ("pague-se primeiro"). Os demais entram pelo botão "Adicionar". Ajuste a lista aqui.
+  const DEFAULT_BUDGET_ITEMS = ['moradia', 'contas', 'mercado', 'transporte', 'saude', 'reserva'];
+
+  const MAX_CATEGORY_NAME = 60;
+  const NEW_CATEGORY_ICON = '🏷️';
+
   // Meses de gastos essenciais que a reserva de emergência deve cobrir, por tipo de renda.
   const INCOME_PROFILES = {
     estavel: { label: 'Renda estável (CLT, servidor público, aposentadoria)', months: 6 },
@@ -380,6 +387,48 @@
   /** Arredonda centavos para múltiplos de R$ step (padrão R$ 10). */
   function roundTo(cents, step = 1000) {
     return Math.round(cents / step) * step;
+  }
+
+  // ---------- Itens do orçamento: começa enxuto e a pessoa monta o resto ----------
+
+  /** Aparece no Orçamento: a lista essencial, o que a pessoa adicionou e tudo o que já tem limite. */
+  function isBudgetItem(category, budgets, added) {
+    return category.type === 'expense' && (DEFAULT_BUDGET_ITEMS.includes(category.id) || added.includes(category.id) || budgets[category.id] > 0);
+  }
+
+  /** Despesas do catálogo de um balde, filtradas por `wanted(category)`, na ordem do catálogo. */
+  function categoriesOfBucket(categories, bucketId, wanted) {
+    return categories.filter((c) => c.type === 'expense' && c.bucket === bucketId && wanted(c));
+  }
+
+  /** Categorias que o Orçamento mostra, por balde (os três baldes sempre existem, mesmo vazios). */
+  function budgetVisibleCategories(categories, budgets, added = []) {
+    return Object.fromEntries(Object.keys(BUCKETS).map((bucketId) => [bucketId, categoriesOfBucket(categories, bucketId, (c) => isBudgetItem(c, budgets, added))]));
+  }
+
+  /** O que o botão "Adicionar" oferece num balde: as categorias do catálogo que ainda não estão no orçamento. */
+  function budgetAddable(categories, bucketId, budgets, added = []) {
+    return categoriesOfBucket(categories, bucketId, (c) => !isBudgetItem(c, budgets, added));
+  }
+
+  /** Nome para comparar: sem acento, sem maiúsculas e com espaços normalizados. */
+  function nameKey(name) {
+    return String(name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  /** Valida o nome de um item novo: não pode ser vazio, longo demais nem repetido em nenhum lugar do catálogo. */
+  function validateCategoryName(categories, rawName) {
+    const name = String(rawName == null ? '' : rawName).replace(/\s+/g, ' ').trim();
+    if (!name) return { ok: false, error: 'Dê um nome ao item.' };
+    if (name.length > MAX_CATEGORY_NAME) return { ok: false, error: `O nome pode ter no máximo ${MAX_CATEGORY_NAME} letras.` };
+    const repeated = categories.find((c) => nameKey(c.name) === nameKey(name));
+    if (repeated) return { ok: false, error: `Já existe um item chamado "${repeated.name}". Procure na lista ou use outro nome.` };
+    return { ok: true, name };
+  }
+
+  /** Item novo do catálogo: despesa do balde escolhido (fixa no Futuro, variável nos outros). */
+  function createCategory(bucketId, name, id) {
+    return { id, name, type: 'expense', bucket: bucketId, kind: bucketId === 'futuro' ? 'fixa' : 'variavel', icon: NEW_CATEGORY_ICON };
   }
 
   /** Teto de cada balde: a parte da renda que o plano reserva para ele, em múltiplos de R$ 10. */
@@ -712,7 +761,7 @@
   // ---------- Importação / exportação ----------
 
   function emptyData() {
-    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7 } };
+    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7, budgetItems: [] } };
   }
 
   function isISODate(s) {
@@ -778,6 +827,9 @@
     if (raw.settings && INCOME_PROFILES[raw.settings.incomeProfile]) data.settings.incomeProfile = raw.settings.incomeProfile;
     const reviewDay = raw.settings && raw.settings.reviewDay;
     if (Number.isInteger(reviewDay) && reviewDay >= 1 && reviewDay <= 7) data.settings.reviewDay = reviewDay;
+    const expenseIds = new Set(data.categories.filter((c) => c.type === 'expense').map((c) => c.id));
+    const items = raw.settings && raw.settings.budgetItems;
+    if (Array.isArray(items)) data.settings.budgetItems = [...new Set(items.filter((id) => typeof id === 'string' && expenseIds.has(id)))];
     const payday = raw.settings && raw.settings.paydayBusinessDay;
     if (Number.isInteger(payday) && payday >= 1 && payday <= 10) data.settings.paydayBusinessDay = payday;
     return data;
@@ -851,6 +903,11 @@
     suggestFromHistory,
     referenceIncome,
     budgetsFromAnswers,
+    DEFAULT_BUDGET_ITEMS,
+    budgetVisibleCategories,
+    budgetAddable,
+    validateCategoryName,
+    createCategory,
     averageEssential,
     emergencyFundTarget,
     goalSaved,
