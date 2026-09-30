@@ -231,13 +231,7 @@
         </div>
       </article>`;
 
-    const balanceClass = summary.balance < 0 ? 'negative' : 'positive';
-    const savingsClass = summary.income > 0 && summary.savingsRate >= 0.2 ? 'positive' : summary.income > 0 && summary.savingsRate < 0 ? 'negative' : '';
-    $('#summary-cards').innerHTML = `
-      <div class="card"><span class="card-label">Receitas</span><span class="card-value">${money(summary.income)}</span></div>
-      <div class="card"><span class="card-label">Despesas</span><span class="card-value">${money(summary.expense)}</span></div>
-      <div class="card"><span class="card-label">Saldo</span><span class="card-value ${balanceClass}">${money(summary.balance)}</span></div>
-      <div class="card"><span class="card-label">Taxa de poupança</span><span class="card-value ${savingsClass}">${summary.income > 0 ? esc(F.formatPercent(summary.savingsRate)) : '—'}</span><span class="card-hint">meta: ${plan.futuro}% ou mais</span></div>`;
+    renderCards(summary, plan);
 
     const allowance = F.dailyAllowance(budgetRows, state.month, ctx.today);
     $('#allowance').innerHTML = allowance ? `
@@ -266,6 +260,19 @@
           <span class="cat-value">${money(value)}</span>
         </div>`;
     }).join('') : '<p class="muted">Nenhuma despesa neste mês ainda.</p>';
+  }
+
+  /** Quatro números que somam a renda: Receitas = Gastos + Guardado + Sobrou. */
+  function renderCards(summary, plan) {
+    const temRenda = summary.income > 0;
+    const sobrouClasse = summary.balance < 0 ? 'negative' : 'positive';
+    const guardadoClasse = temRenda && summary.savingsRate >= plan.futuro / 100 ? 'positive' : '';
+    const taxa = temRenda ? `${esc(F.formatPercent(summary.savingsRate))} da renda` : 'sem renda ainda';
+    $('#summary-cards').innerHTML = `
+      <div class="card"><span class="card-label">Receitas</span><span class="card-value">${money(summary.income)}</span></div>
+      <div class="card"><span class="card-label">Gastos</span><span class="card-value">${money(summary.consumption)}</span><span class="card-hint">essenciais + estilo de vida</span></div>
+      <div class="card"><span class="card-label">Guardado</span><span class="card-value ${guardadoClasse}">${money(summary.saved)}</span><span class="card-hint">${taxa} · meta: ${plan.futuro}% ou mais</span></div>
+      <div class="card"><span class="card-label">Sobrou</span><span class="card-value ${sobrouClasse}">${money(summary.balance)}</span><span class="card-hint">renda menos o que gastou e guardou</span></div>`;
   }
 
   function renderBuckets(summary, buckets, plan) {

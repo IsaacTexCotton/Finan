@@ -51,7 +51,10 @@ test('summarize separa receitas, despesas e baldes', () => {
   assert.equal(s.expense, 380000);
   assert.equal(s.balance, 120000);
   assert.deepEqual(s.byBucket, { essencial: 230000, estilo: 50000, futuro: 100000 });
-  assert.equal(s.savingsRate, 0.44);
+  // Decisão do Isaac (30/09/2026): a taxa de poupança conta só o que foi guardado (balde Futuro),
+  // não a sobra do mês. Antes era (renda - gastos) / renda = 0,44.
+  assert.equal(s.savingsRate, 0.2);
+  assert.equal(s.saved, 100000);
 
   const b = F.bucketAnalysis(s);
   assert.deepEqual(b.map((x) => x.status), ['ok', 'ok', 'ok']);
@@ -304,4 +307,53 @@ test('plano adaptativo muda as metas dos baldes, os envelopes sugeridos e as men
 
   const critico = F.insights({ summary: s, buckets: [], budgetRows: [], previousSummary: null, categories: cats, plan: F.adaptivePlan(0.9) });
   assert.ok(critico.some((m) => m.level === 'alerta' && m.text.includes('reduzir custos fixos')));
+});
+
+test('gastos, guardado e sobrou separam o que foi consumido do que foi guardado', () => {
+  const s = F.summarize([
+    tx('income', 'salario', 500000, '2026-09-05'),
+    tx('expense', 'moradia', 150000, '2026-09-05'),
+    tx('expense', 'mercado', 80000, '2026-09-10'),
+    tx('expense', 'lazer', 40000, '2026-09-12'),
+    tx('expense', 'investimentos', 60000, '2026-09-06'),
+    tx('expense', 'reserva', 30000, '2026-09-06'),
+  ], cats);
+  assert.equal(s.consumption, 270000); // Gastos: essenciais + estilo de vida
+  assert.equal(s.saved, 90000); // Guardado: balde Futuro
+  assert.equal(s.balance, 140000); // Sobrou: renda - gastos - guardado
+  assert.equal(s.consumption + s.saved + s.balance, s.income, 'os três somam exatamente a renda');
+  assert.equal(s.savingsRate, 0.18);
+});
+
+test('a sobra do mês não conta como poupança: sem guardar nada, a taxa é zero', () => {
+  const s = F.summarize([tx('income', 'salario', 280000, '2026-09-01'), tx('expense', 'mercado', 35000, '2026-09-02')], cats);
+  assert.equal(s.saved, 0);
+  assert.equal(s.savingsRate, 0);
+  assert.equal(s.balance, 245000); // sobrou bastante, mas nada foi guardado
+});
+
+test('insights não elogiam a poupança de quem não guardou nada, mesmo sobrando dinheiro', () => {
+  const s = F.summarize([tx('income', 'salario', 280000, '2026-09-01'), tx('expense', 'moradia', 90000, '2026-09-02')], cats);
+  const list = F.insights({ summary: s, buckets: F.bucketAnalysis(s), budgetRows: [], previousSummary: null, categories: cats });
+  assert.ok(!list.some((i) => /Excelente/.test(i.text)), 'não pode haver "Excelente" com R$ 0,00 guardados');
+  assert.ok(list.some((i) => /Você guardou R\$\s0,00/.test(i.text)));
+});
+
+test('insights elogiam quem guardou a meta, dizendo quanto da renda foi guardado', () => {
+  const s = F.summarize([tx('income', 'salario', 100000, '2026-09-01'), tx('expense', 'investimentos', 25000, '2026-09-02')], cats);
+  const list = F.insights({ summary: s, buckets: F.bucketAnalysis(s), budgetRows: [], previousSummary: null, categories: cats });
+  const elogio = list.find((i) => i.level === 'bom');
+  assert.ok(elogio && elogio.text.includes('Você guardou 25% da renda'), elogio && elogio.text);
+});
+
+test('insights distinguem gastar mais do que ganhou de guardar mais do que sobrou', () => {
+  const gastou = F.summarize([tx('income', 'salario', 100000, '2026-09-01'), tx('expense', 'lazer', 120000, '2026-09-02')], cats);
+  const a = F.insights({ summary: gastou, buckets: F.bucketAnalysis(gastou), budgetRows: [], previousSummary: null, categories: cats });
+  assert.equal(a[0].level, 'perigo');
+  assert.match(a[0].text, /Você gastou R\$\s200,00 a mais do que ganhou/);
+
+  const guardou = F.summarize([tx('income', 'salario', 100000, '2026-09-01'), tx('expense', 'moradia', 50000, '2026-09-02'), tx('expense', 'investimentos', 60000, '2026-09-02')], cats);
+  const b = F.insights({ summary: guardou, buckets: F.bucketAnalysis(guardou), budgetRows: [], previousSummary: null, categories: cats });
+  assert.equal(b[0].level, 'alerta');
+  assert.match(b[0].text, /Gastos mais o que você guardou passam da renda em R\$\s100,00/);
 });

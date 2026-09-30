@@ -11,8 +11,8 @@ test('lançar uma despesa e vê-la no Painel', async ({ page }) => {
   // 1. Abre o app vazio: nenhuma despesa ainda
   await page.goto(APP);
   const formulario = page.locator('#tx-form');
-  const cartaoDespesas = page.locator('#summary-cards .card').filter({ hasText: 'Despesas' });
-  await expect(cartaoDespesas).toContainText(/R\$\s0,00/);
+  const cartaoGastos = page.locator('#summary-cards .card').filter({ hasText: 'Gastos' });
+  await expect(cartaoGastos).toContainText(/R\$\s0,00/);
   await expect(page.locator('#top-categories')).toContainText('Nenhuma despesa neste mês ainda.');
 
   // 2. "+ Lançar" leva ao formulário, com o cursor no campo de valor
@@ -32,7 +32,7 @@ test('lançar uma despesa e vê-la no Painel', async ({ page }) => {
 
   // 5. E aparece no Painel: no total de despesas e na categoria Mercado
   await page.getByRole('tab', { name: 'Painel' }).click();
-  await expect(cartaoDespesas).toContainText(/R\$\s25,90/);
+  await expect(cartaoGastos).toContainText(/R\$\s25,90/);
   await expect(page.locator('#top-categories .cat-row').filter({ hasText: 'Mercado' })).toContainText(/R\$\s25,90/);
 
   expect(erros, 'o app não deve gerar erros de JavaScript').toEqual([]);

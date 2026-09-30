@@ -68,8 +68,9 @@ Prioridade alta
       ou ao título do bloco (`guardarFoco` em `app.js`), com 8 testes em `foco.spec.js`
 - [ ] Dois jeitos de "guardar" que não se conversam: guardar R$ 300 na meta de reserva e o
       Painel continua "Futuro R$ 0,00 · 0% da renda"
-- [ ] Mensagens que se contradizem no Painel: "Você guardou R$ 0,00… faça o aporte" junto com
-      "Excelente! Sua taxa de poupança está em 48%" (a sobra do mês é contada como poupança)
+- [x] Mensagens que se contradiziam no Painel ("Você guardou R$ 0,00" junto com "Excelente!
+      taxa de poupança 48%"). O Painel agora mostra Receitas, Gastos, Guardado e Sobrou, que
+      somam a renda; a taxa de poupança conta só o guardado (Futuro), sem a sobra
 
 Prioridade média
 - [x] Botões "Editar" e "Excluir" repetidos (17× cada) sem dizer de qual lançamento; o leitor
@@ -84,7 +85,7 @@ Prioridade média
 - [x] Limite do Orçamento salvava sem aviso. Agora diz "Limite de Mercado salvo: R$ 500,00" (ou "removido")
 - [x] Palavras de finanças sem explicação no Painel e no Orçamento: baldes, 50/30/20,
       envelopes, fixa/variável e "orçamento base zero" (agora "dar um destino a cada real").
-      Falta só "taxa de poupança", que depende da decisão sobre o que conta como poupança
+      "Taxa de poupança" deixou de aparecer: agora é "Você guardou X% da renda"
 - [x] Metas e Método escondidas à direita no celular. Agora as 5 abas aparecem inteiras: duas
       linhas (3 + 2) no celular e uma linha a partir de 480px; `abas-visiveis.spec.js` confere
       de 320 a 1280px. Uma barra fixa embaixo não coube em 320px ("Lançamentos")

@@ -39,6 +39,12 @@ Só faça o commit quando todas as respostas forem "sim":
   Entrada com `parseAmount` (aceita `1.234,56`), saída com `formatBRL` (`R$ 1.234,56`).
 - **Datas são strings locais `AAAA-MM-DD`.** Não use `new Date('AAAA-MM-DD')` (vira UTC).
 - **Três baldes:** Essenciais, Estilo de vida e Futuro (reserva, investimentos, dívidas).
+- **Gastar e guardar são coisas diferentes** (decisão do Isaac, 30/09/2026). O Painel mostra
+  quatro números que somam a renda: **Gastos** (Essenciais + Estilo de vida), **Guardado**
+  (balde Futuro), **Sobrou** (renda − gastos − guardado) e as **Receitas**. Dinheiro do Futuro
+  não é "despesa" para o usuário, embora seja uma saída da conta. A **taxa de poupança** é o
+  Guardado ÷ renda; a sobra do mês não conta, porque dinheiro parado ainda não foi guardado.
+  Ninguém recebe "Excelente!" por ter sobrado dinheiro sem guardar.
 - **Baldes adaptativos:** o plano olha a parcela da renda gasta com Essenciais nos 3 meses
   anteriores (sem o mês corrente):
   - até 50% → 50/30/20;

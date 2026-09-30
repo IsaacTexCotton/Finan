@@ -9,8 +9,8 @@ test('os lançamentos continuam lá depois de recarregar a página', async ({ pa
   const conferirPainel = async () => {
     await page.getByRole('tab', { name: 'Painel' }).click();
     await expect(cartao('Receitas')).toContainText(/R\$\s3\.000,00/);
-    await expect(cartao('Despesas')).toContainText(/R\$\s25,90/);
-    await expect(cartao('Saldo')).toContainText(/R\$\s2\.974,10/);
+    await expect(cartao('Gastos')).toContainText(/R\$\s25,90/);
+    await expect(cartao('Sobrou')).toContainText(/R\$\s2\.974,10/);
     await expect(page.locator('#onboarding')).not.toContainText('Bem-vindo');
   };
 

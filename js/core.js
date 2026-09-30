@@ -192,11 +192,14 @@
       const bucket = (cats[t.categoryId] && cats[t.categoryId].bucket) || 'estilo';
       byBucket[bucket] += t.amount;
     }
-    const consumption = byBucket.essencial + byBucket.estilo;
+    const consumption = byBucket.essencial + byBucket.estilo; // Gastos: o que foi consumido
+    const saved = byBucket.futuro; // Guardado: reserva, investimentos e dívidas
     const balance = income - expense;
     // Taxa de poupança: tudo o que não foi consumido (aportes no "Futuro" + sobra).
-    const savingsRate = income > 0 ? (income - consumption) / income : 0;
-    return { income, expense, balance, consumption, savingsRate, byCategory, byBucket };
+    // Taxa de poupança: só o que foi guardado (Futuro) sobre a renda. A sobra do mês não conta:
+    // dinheiro parado na conta ainda não foi guardado.
+    const savingsRate = income > 0 ? saved / income : 0;
+    return { income, expense, balance, consumption, saved, savingsRate, byCategory, byBucket };
   }
 
   /**
@@ -451,8 +454,10 @@
     if (summary.income <= 0) {
       list.push({ level: 'info', text: 'Registre sua renda do mês para ativar a análise dos baldes.' });
     }
-    if (summary.income > 0 && summary.balance < 0) {
-      list.push({ level: 'perigo', text: `Você gastou ${formatBRL(-summary.balance)} a mais do que ganhou este mês. Corte primeiro no balde Estilo de vida.` });
+    if (summary.income > 0 && summary.consumption > summary.income) {
+      list.push({ level: 'perigo', text: `Você gastou ${formatBRL(summary.consumption - summary.income)} a mais do que ganhou este mês. Corte primeiro no balde Estilo de vida.` });
+    } else if (summary.income > 0 && summary.balance < 0) {
+      list.push({ level: 'alerta', text: `Gastos mais o que você guardou passam da renda em ${formatBRL(-summary.balance)}. Reveja quanto guardar neste mês.` });
     }
     for (const row of budgetRows) {
       if (row.status === 'estourado') list.push({ level: 'perigo', text: `${row.name}: envelope estourado em ${formatBRL(-row.remaining)}.` });
@@ -484,7 +489,7 @@
     if (planMessage) list.push(planMessage);
     const savingsGoal = (plan ? plan.futuro : DEFAULT_TARGETS.futuro) / 100;
     if (summary.income > 0 && summary.savingsRate >= savingsGoal) {
-      list.push({ level: 'bom', text: `Excelente! Sua taxa de poupança está em ${formatPercent(summary.savingsRate)}.` });
+      list.push({ level: 'bom', text: `Excelente! Você guardou ${formatPercent(summary.savingsRate)} da renda.` });
     }
     if (!list.length) list.push({ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' });
     return list;

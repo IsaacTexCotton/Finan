@@ -23,7 +23,7 @@ test('"Lançar minha renda" abre o formulário já como Receita e o salário ent
   // 4. No Painel, vai para Receitas e não para Despesas
   await page.getByRole('tab', { name: 'Painel' }).click();
   await expect(page.locator('#summary-cards .card').filter({ hasText: 'Receitas' })).toContainText(/R\$\s2\.800,00/);
-  await expect(page.locator('#summary-cards .card').filter({ hasText: 'Despesas' })).toContainText(/R\$\s0,00/);
+  await expect(page.locator('#summary-cards .card').filter({ hasText: 'Gastos' })).toContainText(/R\$\s0,00/);
 
   expect(erros, 'o app não deve gerar erros de JavaScript').toEqual([]);
 });
