@@ -43,3 +43,14 @@ test('o lembrete da revisão semanal e o seletor do dia não têm violações do
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `tela ${aba}`).toEqual([]);
   }
 });
+
+test('o "Como funciona" do Orçamento, fechado e aberto, não tem violações do axe', async ({ page }) => {
+  await page.goto(APP);
+  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await page.getByRole('tab', { name: 'Orçamento' }).click();
+  for (const aberto of [false, true]) {
+    if (aberto) await page.getByRole('tabpanel', { name: 'Orçamento' }).locator('details.how summary').click();
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), aberto ? 'aberto' : 'fechado').toEqual([]);
+  }
+});

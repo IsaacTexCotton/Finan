@@ -146,6 +146,10 @@ Só faça o commit quando todas as respostas forem "sim":
   abas e caixas de marcar mantêm o anel afastado. Testes em `tests/e2e/foco-campos.spec.js`.
 - Linguagem simples: palavra do método (balde, envelope, fixa, variável, 50/30/20) é explicada
   no lugar em que aparece. `tests/e2e/explicacoes.spec.js` protege os textos.
+  Textos longos de ajuda ficam recolhidos num "Como funciona" (`details.how`, abre ao tocar),
+  mas a definição curta de cada palavra continua visível (no Orçamento: envelope, fixa e
+  variável). Decisão do Isaac, 30/09/2026: o primeiro balde tem que aparecer na primeira tela
+  do celular (`tests/e2e/como-funciona.spec.js`).
 - Nenhuma aba pode ficar escondida: no celular as 5 aparecem em duas linhas (3 + 2), sem
   deslizar, e o tamanho delas não muda ao trocar de aba (`tests/e2e/abas-visiveis.spec.js`,
   de 320 a 1280px).

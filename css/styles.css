@@ -1066,3 +1066,41 @@ input[name="amount"] {
     gap: 0.15rem;
   }
 }
+
+/* "Como funciona": texto de ajuda que abre ao tocar. */
+.how {
+  margin: 0.75rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+}
+
+.how summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 1rem;
+  color: var(--primary-strong);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.how[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.how summary::before {
+  margin-right: 0.6rem;
+  content: "▸";
+  content: "▸" / "";
+}
+
+.how[open] summary::before {
+  content: "▾";
+  content: "▾" / "";
+}
+
+.how > p {
+  margin: 0;
+  padding: 0.6rem 1rem;
+}
