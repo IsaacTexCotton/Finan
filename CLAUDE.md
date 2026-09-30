@@ -51,6 +51,12 @@ Só faça o commit quando todas as respostas forem "sim":
   o valor inicial (o que já tinha ao criá-la) + os depósitos (`goalSaved`), e o Painel conta os
   depósitos em Guardado. Excluir ou editar o lançamento muda a meta junto. Valor negativo
   ou zero não é aceito.
+- **Sobrou pode ficar negativo, mas o app avisa antes de deixar guardar** (decisão do Isaac,
+  30/09/2026). Ao lançar uma despesa do balde Futuro ou usar "Guardar valor" numa meta, se o
+  valor passar do que sobrou no mês (`leftAfterSaving`), o app pergunta "Quer guardar mesmo
+  assim?" e a pessoa decide. Sem renda registrada no mês não há o que comparar e não avisa.
+  Gastar (Essenciais e Estilo de vida) além da renda não gera esse aviso: o Painel já alerta.
+  Editar um lançamento existente também não pergunta.
 - **Baldes adaptativos:** o plano olha a parcela da renda gasta com Essenciais nos 3 meses
   anteriores (sem o mês corrente):
   - até 50% → 50/30/20;

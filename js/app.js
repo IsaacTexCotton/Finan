@@ -519,6 +519,8 @@
       recurring: form.elements.recurring.checked,
     };
     const installments = entry.type === 'expense' ? Number(form.elements.installments.value) || 1 : 1;
+    const doMes = installments > 1 ? Math.ceil(amount / installments) : amount; // o que cai no mês da compra
+    if (!state.editingId && guardaDinheiro(entry) && !confirmarGuardar(doMes, F.monthKey(date))) return;
     let message;
     if (state.editingId) {
       const idx = state.data.transactions.findIndex((t) => t.id === state.editingId);
@@ -594,6 +596,19 @@
     commit('Orçamento sugerido. Ajuste os valores à sua realidade.');
   }
 
+  /** Avisa antes de guardar mais do que sobrou no mês. Devolve false se a pessoa desistir. */
+  function confirmarGuardar(valor, mes) {
+    const resumo = F.summarize(F.transactionsOfMonth(state.data.transactions, mes), state.data.categories);
+    const depois = F.leftAfterSaving(resumo, valor);
+    if (depois === null || depois >= 0) return true;
+    return confirm(`Guardar ${F.formatBRL(valor)} deixa ${F.monthLabel(mes)} no vermelho: depois de guardar, faltariam ${F.formatBRL(-depois)}. Quer guardar mesmo assim?`);
+  }
+
+  function guardaDinheiro(entry) {
+    const categoria = F.indexCategories(state.data.categories)[entry.categoryId];
+    return entry.type === 'expense' && Boolean(categoria) && categoria.bucket === 'futuro';
+  }
+
   function depositGoal(id) {
     const goal = state.data.goals.find((g) => g.id === id);
     if (!goal) return;
@@ -604,6 +619,7 @@
       toast('Valor inválido.');
       return;
     }
+    if (!confirmarGuardar(amount, F.monthKey(F.todayISO()))) return;
     // Guardar numa meta é guardar: vira um lançamento do Futuro, ligado à meta, que conta no Painel.
     state.data.transactions.push(F.createGoalDeposit(goal, amount, F.todayISO(), newId()));
     commit(`${F.formatBRL(amount)} adicionados à meta.`);

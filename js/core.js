@@ -238,6 +238,14 @@
     return { profile: 'critico', essentialShare: share, essencial, estilo: rest - futuro, futuro };
   }
 
+  /**
+   * Quanto sobraria do mês depois de guardar mais `amount`. Null quando não há renda registrada,
+   * porque sem renda não há o que comparar. Negativo = guardar passaria do que sobrou.
+   */
+  function leftAfterSaving(summary, amount) {
+    return summary.income > 0 ? summary.balance - amount : null;
+  }
+
   /** Compara o realizado de cada balde com a meta do plano (padrão 50/30/20). */
   function bucketAnalysis(summary, targets = DEFAULT_TARGETS) {
     return Object.keys(BUCKETS).map((id) => {
@@ -643,6 +651,7 @@
     transactionsOfMonth,
     sortTransactions,
     summarize,
+    leftAfterSaving,
     bucketAnalysis,
     budgetStatus,
     dailyAllowance,

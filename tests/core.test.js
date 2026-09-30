@@ -418,3 +418,24 @@ test('normalizeData preserva o vínculo do lançamento com a meta', () => {
   assert.equal(data.transactions[1].goalId, undefined);
   assert.equal(data.transactions[2].goalId, undefined);
 });
+
+test('leftAfterSaving diz quanto sobraria do mês depois de guardar mais um valor', () => {
+  const s = F.summarize([
+    tx('income', 'salario', 100000, '2026-09-01'),
+    tx('expense', 'moradia', 50000, '2026-09-02'),
+    tx('expense', 'investimentos', 40000, '2026-09-03'),
+  ], cats); // sobrou 10.000
+  assert.equal(F.leftAfterSaving(s, 5000), 5000);
+  assert.equal(F.leftAfterSaving(s, 10000), 0);
+  assert.equal(F.leftAfterSaving(s, 20000), -10000); // passaria do que sobrou
+});
+
+test('leftAfterSaving não julga quando não há renda registrada', () => {
+  const semRenda = F.summarize([tx('expense', 'moradia', 50000, '2026-09-02')], cats);
+  assert.equal(F.leftAfterSaving(semRenda, 10000), null);
+});
+
+test('leftAfterSaving continua negativo se o mês já estava no vermelho', () => {
+  const vermelho = F.summarize([tx('income', 'salario', 100000, '2026-09-01'), tx('expense', 'lazer', 130000, '2026-09-02')], cats);
+  assert.equal(F.leftAfterSaving(vermelho, 1000), -31000);
+});

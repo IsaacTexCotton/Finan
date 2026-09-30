@@ -106,6 +106,11 @@ backup e restauração, "Apagar tudo", CSV, teclado (tecla N, Enter para salvar)
 do formulário, sem erros de JavaScript.
 Não testado: leitor de tela real, Safari/iOS, Firefox, pessoas de verdade.
 
+Decisões do Isaac aplicadas (30/09/2026)
+- [x] Sobrou pode ficar negativo, mas o app avisa antes de deixar guardar mais do que sobrou
+      (formulário e "Guardar valor" nas metas); a pessoa escolhe se guarda mesmo assim
+- [ ] Sugestão: o aviso também ao editar um lançamento do Futuro para um valor maior
+
 ## Refatorações (avisos do ESLint)
 - [ ] `insights` (complexidade 34): quebrar em uma função por tipo de alerta
 - [ ] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações
