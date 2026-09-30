@@ -62,10 +62,10 @@ Prioridade alta
 - [x] "Lançar minha renda" (tela de boas-vindas) abre o formulário em Receita / Salário
       (antes abria em Despesa / Moradia e a pessoa registrava o salário como gasto).
       Sobra: a rolagem deixa o topo fixo cobrindo o título "Novo lançamento"
-- [ ] **Foco some** (volta ao início da página) depois de: digitar um limite no Orçamento,
+- [x] **Foco some** (volta ao início da página) depois de: digitar um limite no Orçamento,
       marcar item da revisão semanal, "Guardar valor" numa meta, excluir lançamento e trocar
-      o tipo de renda. Quem usa teclado ou leitor de tela perde o lugar a cada ação
-      (causa: a tela é redesenhada com innerHTML). Mover o foco para um lugar sensato
+      o tipo de renda. Corrigido: o redesenho devolve o foco ao mesmo controle, ao vizinho
+      ou ao título do bloco (`guardarFoco` em `app.js`), com 8 testes em `foco.spec.js`
 - [ ] Dois jeitos de "guardar" que não se conversam: guardar R$ 300 na meta de reserva e o
       Painel continua "Futuro R$ 0,00 · 0% da renda"
 - [ ] Mensagens que se contradizem no Painel: "Você guardou R$ 0,00… faça o aporte" junto com

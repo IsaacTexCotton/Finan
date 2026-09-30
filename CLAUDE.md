@@ -69,6 +69,9 @@ Só faça o commit quando todas as respostas forem "sim":
 - Funções pequenas com uma responsabilidade. O ESLint avisa acima de 60 linhas ou
   complexidade 15: trate o aviso como pedido de refatoração.
 - Sem duplicação: se a mesma conta aparece duas vezes, ela vai para `core.js`.
+- **Depois de uma ação do usuário que muda dados, use `commit()`** (salva, redesenha e devolve
+  o foco). Redesenhar com `render()` direto apaga o controle em que a pessoa estava e o foco
+  volta ao início da página, o que quebra o uso por teclado e leitor de tela.
 
 ## Regras de visual e acessibilidade (conferidas por `tests/css.test.js`)
 - Celular primeiro; o app precisa permitir lançar e consultar rápido, com uma mão.
@@ -119,6 +122,13 @@ Só faça o commit quando todas as respostas forem "sim":
   "+ Lançar" do topo compartilhavam a mesma ação. Solução: o botão ganhou `data-type="income"`
   e a ação `quick-add` aplica o tipo antes de desenhar o formulário. O "+ Lançar" continua
   abrindo como Despesa. Testes em `tests/e2e/lancar-renda.spec.js`.
+
+- **O foco sumia depois de ações** (limite do Orçamento, revisão semanal, guardar valor,
+  excluir, tipo de renda): o `innerHTML` apagava o controle e o foco voltava ao início da
+  página. Solução: `commit()` agora passa por `redesenhar()`, que guarda o foco e o devolve ao
+  mesmo controle (ou ao vizinho, ou ao título do bloco). No limite do Orçamento o redesenho
+  é adiado (`setTimeout`), porque com Tab o foco ainda está chegando ao campo seguinte quando
+  o evento `change` dispara. Testes em `tests/e2e/foco.spec.js`.
 
 # Comandos
 - `npm install` — instala as dependências e ativa a trava de commit (`.githooks/pre-commit`),

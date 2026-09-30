@@ -70,9 +70,51 @@
     return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   }
 
+  const visivel = (el) => Boolean(el) && el.offsetParent !== null;
+
+  /**
+   * A tela é redesenhada com innerHTML, o que apaga o controle em que a pessoa estava e joga o
+   * foco para o início da página. Quem usa teclado ou leitor de tela perderia o lugar a cada ação.
+   * Guarda onde o foco está e devolve uma função que o restaura depois do redesenho: no mesmo
+   * controle; se ele sumiu, no que ocupou o lugar dele (ex.: o próximo "Excluir"); e, se não
+   * houver, no título do bloco onde a pessoa estava.
+   */
+  function guardarFoco() {
+    const atual = document.activeElement;
+    if (!atual || !$('main').contains(atual)) return () => {};
+    const tag = atual.tagName.toLowerCase();
+    const atributos = ['data-category', 'data-review', 'data-action', 'data-id'].filter((n) => atual.hasAttribute(n));
+    const dosAtributos = atributos.map((n) => `[${n}="${CSS.escape(atual.getAttribute(n))}"]`).join('');
+    const seletor = atual.id ? `#${CSS.escape(atual.id)}` : atributos.length ? tag + dosAtributos : null;
+    const mesmaAcao = atual.dataset.action ? `${tag}[data-action="${CSS.escape(atual.dataset.action)}"]` : null;
+    const posicao = mesmaAcao ? $$(mesmaAcao).filter(visivel).indexOf(atual) : -1;
+    const aba = atual.closest('.tab-panel');
+    const bloco = aba ? $$('.panel', aba).indexOf(atual.closest('.panel')) : -1;
+
+    return () => {
+      const agora = document.activeElement;
+      if (agora && agora !== document.body && $('main').contains(agora)) return;
+      let alvo = seletor && $$(seletor).find(visivel);
+      if (!alvo && mesmaAcao) {
+        const irmaos = $$(mesmaAcao).filter(visivel);
+        alvo = irmaos[Math.min(posicao, irmaos.length - 1)];
+      }
+      if (!alvo && aba && bloco >= 0) alvo = $$('.panel', aba)[bloco]?.querySelector('h2');
+      if (!alvo) return;
+      if (!alvo.matches('button, input, select, a[href]')) alvo.tabIndex = -1;
+      alvo.focus();
+    };
+  }
+
+  function redesenhar() {
+    const devolverFoco = guardarFoco();
+    render();
+    devolverFoco();
+  }
+
   function commit(message) {
     saveData();
-    render();
+    redesenhar();
     if (message) toast(message);
   }
 
@@ -753,7 +795,9 @@
     }
     if (value > 0) state.data.budgets[id] = value;
     else delete state.data.budgets[id];
-    commit();
+    saveData();
+    // Adia o redesenho: com Tab, o foco ainda está chegando ao campo seguinte quando o "change" dispara.
+    setTimeout(redesenhar, 0);
   });
 
   $('#review-list').addEventListener('change', (event) => {
