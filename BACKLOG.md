@@ -15,6 +15,7 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Atualizações do Dependabot: ESLint 10, actions/checkout v7, actions/setup-node v7
 - [x] Guia do método Akita em `docs/` e `CLAUDE.md` no modelo do guia (TDD vermelho → verde,
       checklist antes de cada commit, problemas já resolvidos)
+- [x] Trava de commit: `.githooks/pre-commit` bloqueia commit com lint ou teste falhando
 
 ## Parte 3 — Revisão do método financeiro ✅
 - [x] Baldes adaptativos: 50/30/20 quando cabe; acima de 50% em essenciais o plano se adapta

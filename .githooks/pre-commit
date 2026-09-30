@@ -1,0 +1,11 @@
+#!/bin/sh
+# Trava do projeto: só deixa fazer commit se o lint e os testes passarem.
+# Ativada automaticamente pelo "npm install" (script "prepare" do package.json).
+# Guia: docs/guia-metodo-akita.md, seção "Antes de cada commit".
+
+echo "Trava do Finan: rodando npm run check antes do commit..."
+if ! npm run check --silent; then
+  echo ""
+  echo "Commit bloqueado: o lint ou os testes falharam. Corrija e tente de novo."
+  exit 1
+fi

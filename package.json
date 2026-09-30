@@ -4,6 +4,7 @@
   "description": "Finan — método e app para controlar gastos pessoais (50/30/20 + envelopes + revisão semanal).",
   "private": true,
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
     "lint": "eslint .",
     "test": "node --test tests/*.test.js",
     "check": "npm run lint && npm test",

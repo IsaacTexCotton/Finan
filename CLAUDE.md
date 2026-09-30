@@ -89,13 +89,16 @@ Só faça o commit quando todas as respostas forem "sim":
   das contas com inteiros. Teste cobre o caso 0.6.
 - **Commit feito com teste falhando:** o comando encadeava `npm run check | grep ... && git
   commit`, e o `grep` "passava" mesmo com falha. Solução: conferir o código de saída do
-  próprio `npm run check` antes do commit.
+  próprio `npm run check` antes do commit. Depois, a trava `.githooks/pre-commit` passou a
+  bloquear automaticamente qualquer commit com lint ou teste falhando.
 - **ESLint acusando o invólucro do módulo** (`core.js`) como função de 387 linhas. Solução:
   `eslint-disable-next-line` só nessa linha, com justificativa.
 - **Dependabot abrindo PRs para o branch errado:** ele usa o branch padrão do repositório.
   Solução: o branch padrão deve ser o `main` (Settings → General → Default branch).
 
 # Comandos
+- `npm install` — instala as dependências e ativa a trava de commit (`.githooks/pre-commit`),
+  que roda `npm run check` e bloqueia o commit se algo falhar. Não use `--no-verify`.
 - `npm run check` — lint + testes (o mesmo que a CI roda, além do `npm audit`)
 - `npm test` — só os testes
 - `npm start` — servidor local em http://localhost:8080 (ou abra `index.html` direto)
