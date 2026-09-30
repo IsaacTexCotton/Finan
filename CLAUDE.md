@@ -153,6 +153,8 @@ Só faça o commit quando todas as respostas forem "sim":
   de rede. Mudou como algo é desenhado na tela? Esses testes têm que continuar passando.
 - Publicação (GitHub Pages): `.github/workflows/publicar.yml` publica só `index.html`,
   `css/` e `js/`. Arquivo novo que o app precise em produção tem que entrar nesse `cp`.
+  Publica sozinho depois que a CI passa num push no `main` (nunca em PR de fork), e também
+  pode ser disparado à mão. Endereço: https://isaactexcotton.github.io/Finan/
 
 # Problemas já resolvidos
 - **Arredondamento dos envelopes passava da renda** (ex.: renda R$ 3.333 virava R$ 3.340 de

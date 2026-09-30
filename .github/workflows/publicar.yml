@@ -1,12 +1,18 @@
 name: Publicar no GitHub Pages
 
-# Publicação manual: aba Actions > "Publicar no GitHub Pages" > Run workflow.
+# Publica sozinho a cada push no main, depois que a CI passar (lint, segurança,
+# testes e testes no navegador). Também dá para publicar à mão: aba Actions >
+# "Publicar no GitHub Pages" > Run workflow.
 # Pré-requisitos, uma vez só, feitos pelo dono do repositório:
 #   1. Settings > General > Default branch = main
 #   2. Settings > Pages > Build and deployment > Source = GitHub Actions
 # Só vai ao ar o que o app usa: index.html, css/ e js/. Testes, docs e
 # configurações ficam de fora.
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,11 +29,20 @@ jobs:
     name: Verificar e publicar
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Só publica se a CI passou num push do próprio repositório (nunca num PR de fork).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # o mesmo commit que a CI aprovou (ou o branch, na publicação manual)
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
