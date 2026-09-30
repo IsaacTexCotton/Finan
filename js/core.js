@@ -293,21 +293,33 @@
 
   /**
    * Quanto dá para gastar por dia, até o fim do mês, nas categorias variáveis
-   * sem estourar nenhum envelope. Retorna null fora do mês corrente.
+   * sem estourar nenhum envelope nem passar do que sobrou (`summary` do mês).
+   * Retorna null fora do mês corrente.
    */
-  function dailyAllowance(budgetRows, key, today) {
+  function dailyAllowance(budgetRows, key, today, summary = null) {
     if (monthKey(today) !== key) return null;
     const variable = budgetRows.filter((r) => r.kind === 'variavel');
     if (!variable.length) return null;
     const daysLeft = daysInMonth(key) - Number(today.slice(8, 10)) + 1;
-    return spendingPace(variable, daysLeft, today);
+    return spendingPace(variable, daysLeft, today, summary);
   }
 
-  /** Quanto sobra nos envelopes variáveis, por dia e até domingo (nunca além de `daysLeft`). */
-  function spendingPace(variableRows, daysLeft, today) {
-    const remaining = variableRows.reduce((sum, r) => sum + Math.max(r.remaining, 0), 0);
+  /**
+   * Quanto dá para gastar por dia e até domingo (nunca além de `daysLeft`). Vale o menor entre o que
+   * resta nos envelopes variáveis e o que sobrou no período (`summary`): o app não promete dinheiro
+   * que já foi gasto ou guardado. Sem renda no período (`left` nulo) só valem os envelopes.
+   */
+  function spendingPace(variableRows, daysLeft, today, summary = null) {
+    const envelopeRemaining = variableRows.reduce((sum, r) => sum + Math.max(r.remaining, 0), 0);
+    const left = summary ? leftAfterSaving(summary, 0) : null;
+    const capped = left !== null && Math.max(left, 0) < envelopeRemaining;
+    const remaining = capped ? Math.max(left, 0) : envelopeRemaining;
     const weekDays = Math.min(8 - isoWeekday(today), daysLeft);
-    return { perDay: Math.floor(remaining / daysLeft), perWeek: Math.floor((remaining * weekDays) / daysLeft), weekDays, remaining, daysLeft };
+    return {
+      perDay: Math.floor(remaining / daysLeft),
+      perWeek: Math.floor((remaining * weekDays) / daysLeft),
+      weekDays, remaining, envelopeRemaining, capped, left, saved: summary ? summary.saved : 0, daysLeft,
+    };
   }
 
   /** N-ésimo dia útil do mês (segunda a sexta; feriados não entram na conta). */
@@ -347,10 +359,11 @@
   function allowanceUntilPayday(transactions, categories, budgets, today, businessDay) {
     const { start, end, daysLeft } = paydayCycle(today, businessDay);
     const cycleTx = transactions.filter((t) => t.date >= start && t.date < end);
-    const rows = budgetStatus(budgets, summarize(cycleTx, categories), categories, monthKey(today), today);
+    const summary = summarize(cycleTx, categories);
+    const rows = budgetStatus(budgets, summary, categories, monthKey(today), today);
     const variable = rows.filter((r) => r.kind === 'variavel');
     if (!variable.length) return null;
-    return { ...spendingPace(variable, daysLeft, today), nextPayday: end };
+    return { ...spendingPace(variable, daysLeft, today, summary), nextPayday: end };
   }
 
   /**

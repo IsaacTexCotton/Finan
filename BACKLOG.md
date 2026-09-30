@@ -133,3 +133,5 @@ Decisões do Isaac aplicadas (30/09/2026)
 - [ ] Sugestão: limite do envelope Metas sugerido pela soma dos valores mensais das metas
 - [x] Revisão semanal no dia escolhido (padrão domingo), com lembrete no Painel
 - [ ] Visual: a lista da revisão semanal (`.checklist`) mostra marcadores soltos ao lado das caixas de marcar; falta estilo (achado ao conferir a captura)
+- [x] "Pode gastar" limitado ao que sobrou no período (guardar numa meta baixa o valor)
+- [ ] Sugestão: reservar também o que a pessoa ainda pretende guardar no mês (envelope Metas com limite)

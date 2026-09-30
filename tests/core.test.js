@@ -532,3 +532,62 @@ test('dia da revisão nos ajustes: 1 a 7, senão domingo (7)', () => {
     assert.equal(F.normalizeData({ settings: { reviewDay: invalido } }).settings.reviewDay, 7);
   }
 });
+
+test('o "pode gastar" nunca passa do que sobrou no mês (teto pelo Sobrou)', () => {
+  const hoje = '2026-09-20'; // faltam 11 dias
+  const budgets = { mercado: 60000 };
+  const base = [tx('income', 'salario', 300000, '2026-09-07'), tx('expense', 'mercado', 10000, '2026-09-10')];
+  const pace = (extra = [], lista = base) => {
+    const s = F.summarize([...lista, ...extra], cats);
+    return F.dailyAllowance(F.budgetStatus(budgets, s, cats, '2026-09', hoje), '2026-09', hoje, s);
+  };
+  const guardar = (centavos) => [tx('expense', 'metas', centavos, '2026-09-12', { goalId: 'g1' })];
+
+  // sobra mais do que os envelopes têm: vale o envelope
+  const folga = pace(guardar(200000)); // sobrou R$ 900
+  assert.equal(folga.remaining, 50000);
+  assert.equal(folga.capped, false);
+  assert.equal(folga.saved, 200000);
+
+  // guardou tanto que sobrou menos do que os envelopes prometem: vale o que sobrou
+  const justo = pace(guardar(270000)); // sobrou R$ 200
+  assert.equal(justo.remaining, 20000);
+  assert.equal(justo.envelopeRemaining, 50000);
+  assert.equal(justo.left, 20000);
+  assert.equal(justo.capped, true);
+  assert.equal(justo.perDay, Math.floor(20000 / 11));
+
+  // sobra negativa não vira valor negativo
+  const vermelho = pace(guardar(400000));
+  assert.equal(vermelho.remaining, 0);
+  assert.equal(vermelho.perDay, 0);
+  assert.equal(vermelho.capped, true);
+
+  // sem renda registrada não há o que comparar: não limita
+  const semRenda = pace(guardar(270000), [base[1]]);
+  assert.equal(semRenda.remaining, 50000);
+  assert.equal(semRenda.capped, false);
+});
+
+test('allowanceUntilPayday também limita pelo que sobrou no ciclo do salário', () => {
+  const budgets = { mercado: 60000 };
+  const ciclo = [
+    tx('income', 'salario', 300000, '2026-09-07'),
+    tx('expense', 'mercado', 10000, '2026-09-10'),
+    tx('expense', 'metas', 270000, '2026-09-12', { goalId: 'g1' }),
+  ];
+  const r = F.allowanceUntilPayday(ciclo, cats, budgets, '2026-09-20', 5);
+  assert.equal(r.remaining, 20000); // sobrou R$ 200 no ciclo
+  assert.equal(r.envelopeRemaining, 50000);
+  assert.equal(r.capped, true);
+  assert.equal(r.saved, 270000);
+  assert.equal(r.perDay, Math.floor(20000 / 17));
+
+  // antes do pagamento do mês, vale o ciclo anterior: o salário de setembro ainda não entrou
+  const antes = F.allowanceUntilPayday([tx('income', 'salario', 300000, '2026-08-07'), tx('expense', 'mercado', 10000, '2026-08-20')], cats, budgets, '2026-09-04', 5);
+  assert.equal(antes.capped, false);
+  assert.equal(antes.remaining, 50000);
+  // sem renda dentro do ciclo, não limita
+  const semRenda = F.allowanceUntilPayday([tx('expense', 'mercado', 10000, '2026-09-10')], cats, budgets, '2026-09-20', 5);
+  assert.equal(semRenda.capped, false);
+});

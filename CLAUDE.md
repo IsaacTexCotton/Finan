@@ -86,6 +86,12 @@ Só faça o commit quando todas as respostas forem "sim":
   continua por mês de calendário.
   O cartão também mostra quanto dá para gastar **até domingo** (a semana da revisão semanal):
   o mesmo ritmo por dia × os dias que faltam até domingo, nunca além do fim do período.
+- **O "pode gastar" nunca passa do que sobrou** (decisão do Isaac, 30/09/2026, opção A). O valor
+  do cartão é o **menor** entre o que resta nos envelopes variáveis e o Sobrou do período (o mês,
+  ou o ciclo do salário quando o dia de pagamento está informado). Assim guardar numa meta baixa o
+  valor quando o dinheiro que sobrou fica menor que o prometido pelos envelopes, e o cartão diz
+  por quê ("Limitado ao que sobrou…"). Sobra negativa dá R$ 0. Sem renda registrada no período
+  não há o que comparar e valem só os envelopes. O cartão também mostra quanto já foi guardado.
 - **Orçamento base zero:** a soma dos envelopes sugeridos bate exatamente com a renda.
 - **Reserva de emergência:** média dos gastos essenciais × 6 meses (renda estável: CLT,
   servidor, aposentadoria) ou × 12 meses (renda variável: autônomo, freelancer, empresário).

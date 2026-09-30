@@ -220,9 +220,10 @@
     const byPayday = incomeProfile === 'estavel' && paydayBusinessDay > 0 && state.month === F.monthKey(ctx.today);
     const allowance = byPayday
       ? F.allowanceUntilPayday(state.data.transactions, state.data.categories, state.data.budgets, ctx.today, paydayBusinessDay)
-      : F.dailyAllowance(ctx.budgetRows, state.month, ctx.today);
+      : F.dailyAllowance(ctx.budgetRows, state.month, ctx.today, ctx.summary);
     if (!allowance) return '';
     const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
+    const periodo = byPayday ? 'desde o último pagamento' : 'no mês';
     const ate = byPayday ? `, até o próximo pagamento (${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)})` : '';
     return `
       <div class="allowance">
@@ -231,7 +232,9 @@
           <span class="allowance-value">${money(allowance.perDay)}</span>
         </div>
         <p>Nesta semana, até domingo (${allowance.weekDays} ${allowance.weekDays === 1 ? 'dia' : 'dias'}): <strong>${money(allowance.perWeek)}</strong>.</p>
-        <p>${money(allowance.remaining)} livres nos envelopes variáveis para os próximos ${dias}${ate}.</p>
+        <p>${allowance.capped ? `Limitado ao que sobrou ${periodo} (${money(allowance.left)})` : `${money(allowance.remaining)} livres nos envelopes variáveis`} para os próximos ${dias}${ate}.</p>
+        ${allowance.capped ? `<p>Os envelopes ainda têm ${money(allowance.envelopeRemaining)}, mas esse dinheiro já foi gasto ou guardado.</p>` : ''}
+        ${allowance.saved > 0 ? `<p class="muted">Você já guardou ${money(allowance.saved)} ${byPayday ? 'desde o último pagamento' : 'neste mês'}.</p>` : ''}
       </div>`;
   }
 
