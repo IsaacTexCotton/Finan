@@ -934,3 +934,111 @@ input[name="amount"] {
   font-weight: 700;
   vertical-align: middle;
 }
+
+/* ---------- Orçamento (envelopes) ---------- */
+
+.notice {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 6px solid currentcolor;
+  border-radius: var(--radius);
+  background: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.notice.ok {
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+}
+
+.notice.warn {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+}
+
+.notice.danger {
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+}
+
+.budget-group {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--border);
+}
+
+.budget-group h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.budget-sum {
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.budget-row {
+  display: grid;
+  gap: 0.5rem 1.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.budget-row:last-child {
+  border-bottom: 0;
+}
+
+.budget-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.budget-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.5rem;
+}
+
+.budget-head .cat-name {
+  font-weight: 700;
+}
+
+.budget-detail {
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.budget-limit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.budget-limit-label {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.budget-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (min-width: 48rem) {
+  .budget-row {
+    grid-template-columns: minmax(0, 1fr) 14rem;
+    align-items: center;
+  }
+
+  .budget-limit {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+  }
+}

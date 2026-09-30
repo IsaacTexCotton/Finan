@@ -29,7 +29,8 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] `css/styles.css`: visual base (cores, tipografia, botões, campos, cartões e Painel),
       celular primeiro, com testes de acessibilidade (`tests/css.test.js`) e auditoria axe-core
 - [x] Visual da tela Lançamentos: formulário para o polegar e lista por dia
-- [ ] Visual das telas Orçamento (envelopes), Metas e Método
+- [x] Visual da tela Orçamento (envelopes)
+- [ ] Visual das telas Metas e Método
 - [ ] Tema escuro (segue a configuração do celular)
 - [ ] Sugestão (opcional): barra de navegação fixa embaixo no celular, que o polegar alcança
       melhor. As abas em duas linhas já resolvem o problema de ficarem escondidas
@@ -98,7 +99,7 @@ Prioridade baixa
 - [ ] Tela vazia mostra três selos "Sem renda" que só fazem ruído até existir renda
 - [ ] "Guardar valor" usa janela nativa `prompt()` e excluir usa `confirm()`; funciona, mas
       destoa do app e não há "desfazer" ao excluir
-- [ ] Títulos dos grupos do Orçamento colados na lista anterior (visual ainda não feito)
+- [x] Títulos dos grupos do Orçamento colados na lista anterior (resolvido no visual do Orçamento)
 
 Verificado e funcionando: lançar, editar, excluir, parcelar, lançamentos fixos (sem duplicar),
 backup e restauração, "Apagar tudo", CSV, teclado (tecla N, Enter para salvar), zoom 200% e

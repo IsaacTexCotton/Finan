@@ -409,7 +409,8 @@
       const share = summary.income > 0 ? ` · ${F.formatPercent(bucketBudget / summary.income)} da renda` : '';
       return `
         <div class="budget-group">
-          <h3>${esc(F.BUCKETS[bucketId].label)} <span class="muted">${money(bucketBudget)}${esc(share)} (meta ${plan[bucketId]}%)</span></h3>
+          <h3>${esc(F.BUCKETS[bucketId].label)}</h3>
+          <p class="budget-sum">${money(bucketBudget)}${esc(share)} (meta ${plan[bucketId]}%)</p>
           ${cats.map((c) => {
             const r = rows[c.id];
             const limit = state.data.budgets[c.id] || 0;
@@ -420,12 +421,15 @@
             return `
               <div class="budget-row">
                 <div class="budget-info">
-                  <span class="cat-name">${esc(c.icon)} ${esc(c.name)} <span class="tag">${esc(TIPO_DA_CATEGORIA[c.kind] || c.kind)}</span></span>
+                  <div class="budget-head">
+                    <span class="cat-name">${esc(c.icon)} ${esc(c.name)} <span class="tag">${esc(TIPO_DA_CATEGORIA[c.kind] || c.kind)}</span></span>
+                    ${r ? `<span class="badge status-${esc(r.status)}">${esc(STATUS_LABEL[r.status])}</span>` : ''}
+                  </div>
                   ${r ? bar(r.ratio, r.status) : ''}
-                  <span class="muted small">${detail}</span>
+                  <span class="budget-detail">${detail}</span>
                 </div>
-                <div class="budget-side">
-                  ${r ? `<span class="badge status-${esc(r.status)}">${esc(STATUS_LABEL[r.status])}</span>` : ''}
+                <div class="budget-limit">
+                  <span class="budget-limit-label" aria-hidden="true">Limite mensal (R$)</span>
                   <input class="budget-input" data-category="${esc(c.id)}" inputmode="decimal" aria-label="Limite para ${esc(c.name)}" placeholder="Limite" value="${limit ? esc(centsToInput(limit)) : ''}">
                 </div>
               </div>`;
