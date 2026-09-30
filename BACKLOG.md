@@ -80,7 +80,7 @@ Prioridade média
       página sem título principal (h1); abas fora de uma região identificada (axe)
 - [x] Lista de categorias: cada opção começava com emoji, então digitar "Mer" não escolhia
       "Mercado". Agora o nome vem primeiro e o emoji depois ("Mercado 🛒")
-- [ ] Limite do Orçamento salva sem nenhum aviso de "salvo"
+- [x] Limite do Orçamento salvava sem aviso. Agora diz "Limite de Mercado salvo: R$ 500,00" (ou "removido")
 - [ ] Palavras de finanças sem explicação no Painel e no Orçamento: baldes, envelopes, taxa de
       poupança, "orçamento base zero", fixa/variável. Explicar em linguagem simples
 - [ ] Metas e Método escondidas à direita no celular (ver barra de navegação fixa abaixo)

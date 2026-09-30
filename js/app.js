@@ -803,6 +803,9 @@
     if (value > 0) state.data.budgets[id] = value;
     else delete state.data.budgets[id];
     saveData();
+    const categoria = F.indexCategories(state.data.categories)[id];
+    const nome = categoria ? categoria.name : id;
+    toast(value > 0 ? `Limite de ${nome} salvo: ${F.formatBRL(value)}.` : `Limite de ${nome} removido.`);
     // Adia o redesenho: com Tab, o foco ainda está chegando ao campo seguinte quando o "change" dispara.
     setTimeout(redesenhar, 0);
   });
