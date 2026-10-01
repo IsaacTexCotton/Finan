@@ -20,6 +20,9 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ## [Não lançado]
 
+### Corrigido
+- Um backup com dados corrompidos, com nomes especiais no lugar do tipo de renda ou do balde, não faz mais a tela Metas mostrar "undefined meses" nem esconde gastos dos totais
+
 ## [0.1.0] - 2026-10-01
 
 ### Adicionado

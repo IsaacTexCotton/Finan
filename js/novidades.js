@@ -1,6 +1,19 @@
 // GERADO por tools/gerar-novidades.js a partir do CHANGELOG.md. Não edite à mão: rode "node tools/gerar-novidades.js".
 window.FINAN_NOVIDADES = [
   {
+    "versao": null,
+    "rotulo": "Não lançado",
+    "data": null,
+    "secoes": [
+      {
+        "nome": "Corrigido",
+        "itens": [
+          "Um backup com dados corrompidos, com nomes especiais no lugar do tipo de renda ou do balde, não faz mais a tela Metas mostrar \"undefined meses\" nem esconde gastos dos totais"
+        ]
+      }
+    ]
+  },
+  {
     "versao": "0.1.0",
     "rotulo": null,
     "data": "2026-10-01",

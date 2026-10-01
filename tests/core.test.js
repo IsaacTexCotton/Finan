@@ -1117,3 +1117,24 @@ test('normalizeData (revisões): só semanas AAAA-Www, com a lista de itens de t
   const data = F.normalizeData({ reviews: { '2026-W01': 'texto solto', '2026-W02': ['a', 7, 'b'], 'semana-invalida': ['x'] } });
   assert.deepEqual(data.reviews, { '2026-W02': ['a', 'b'] });
 });
+
+// Defeito achado ao ler a normalizeData (item 4 da refatoração): nomes que o próprio JavaScript já tem,
+// como "constructor" e "__proto__", passavam por "este nome existe na lista?". Um backup com tipo de renda
+// "constructor" fazia a tela Metas mostrar "Reserva de undefined meses", e uma categoria com balde
+// "constructor" fazia o gasto sumir dos totais.
+test('normalizeData não aceita como tipo de renda um nome que o JavaScript já tem', () => {
+  for (const nome of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+    assert.equal(F.normalizeData({ settings: { incomeProfile: nome } }).settings.incomeProfile, 'estavel', nome);
+  }
+  assert.equal(F.normalizeData({ settings: { incomeProfile: 'variavel' } }).settings.incomeProfile, 'variavel');
+});
+
+test('normalizeData não aceita como balde um nome que o JavaScript já tem', () => {
+  for (const nome of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+    const data = F.normalizeData({ categories: [{ id: 'mercado', name: 'Mercado', type: 'expense', bucket: nome, kind: 'variavel' }] });
+    assert.equal(data.categories.find((c) => c.id === 'mercado').bucket, 'estilo', nome);
+  }
+  for (const balde of ['essencial', 'estilo', 'futuro']) {
+    assert.equal(F.normalizeData({ categories: [{ id: 'x', name: 'X', type: 'expense', bucket: balde }] }).categories.find((c) => c.id === 'x').bucket, balde);
+  }
+});

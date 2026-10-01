@@ -900,6 +900,11 @@
     return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
   }
 
+  // O nome vem de um backup e pode ser "constructor" ou "__proto__": só vale o que está de fato na lista.
+  function hasOwn(list, name) {
+    return Object.prototype.hasOwnProperty.call(list, name);
+  }
+
   // Normalizadores: cada um valida e limpa um tipo de dado do backup e devolve só o que presta.
   function normalizeCategories(raw) {
     if (!Array.isArray(raw) || !raw.length) return DEFAULT_CATEGORIES.map((c) => ({ ...c }));
@@ -910,7 +915,7 @@
         name: c.name.slice(0, 60),
         type: c.type,
         icon: typeof c.icon === 'string' ? c.icon.slice(0, 4) : '•',
-        ...(c.type === 'expense' ? { bucket: BUCKETS[c.bucket] ? c.bucket : 'estilo', kind: c.kind === 'fixa' ? 'fixa' : 'variavel' } : {}),
+        ...(c.type === 'expense' ? { bucket: hasOwn(BUCKETS, c.bucket) ? c.bucket : 'estilo', kind: c.kind === 'fixa' ? 'fixa' : 'variavel' } : {}),
       }));
     // Categorias padrão criadas depois do backup também passam a existir.
     const known = new Set(categories.map((c) => c.id));
@@ -974,7 +979,7 @@
   function normalizeSettings(raw, categories) {
     const settings = defaultSettings();
     const s = raw || {};
-    if (INCOME_PROFILES[s.incomeProfile]) settings.incomeProfile = s.incomeProfile;
+    if (hasOwn(INCOME_PROFILES, s.incomeProfile)) settings.incomeProfile = s.incomeProfile;
     if (integerInRange(s.reviewDay, 1, 7)) settings.reviewDay = s.reviewDay;
     if (integerInRange(s.paydayBusinessDay, 1, 10)) settings.paydayBusinessDay = s.paydayBusinessDay;
     if (Array.isArray(s.budgetItems)) {
