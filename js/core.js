@@ -274,9 +274,14 @@
     });
   }
 
+  // Primeiro dia do mês em que a previsão de fim de mês passa a valer (decisão do Isaac,
+  // 01/10/2026): com poucos dias, um único gasto multiplicado pelo mês inteiro dava alarme falso.
+  const FIRST_PROJECTION_DAY = 7;
+
   /**
    * Situação de cada envelope (limite por categoria) no mês.
-   * Categorias variáveis ganham projeção de fim de mês pelo ritmo atual de gasto.
+   * Categorias variáveis ganham projeção de fim de mês pelo ritmo atual de gasto,
+   * a partir do 7º dia do mês.
    */
   function budgetStatus(budgets, summary, categories, key, today) {
     const days = daysInMonth(key);
@@ -289,7 +294,7 @@
         const remaining = limit - spent;
         const ratio = spent / limit;
         let projected = spent;
-        if (c.kind === 'variavel' && elapsed > 0 && elapsed < days) projected = Math.round((spent / elapsed) * days);
+        if (c.kind === 'variavel' && elapsed >= FIRST_PROJECTION_DAY && elapsed < days) projected = Math.round((spent / elapsed) * days);
         let status = 'ok';
         if (spent > limit) status = 'estourado';
         else if (projected > limit) status = 'risco';

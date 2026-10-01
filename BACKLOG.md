@@ -173,3 +173,69 @@ do balde e comparação. Uma parte por vez:
       que aparecem por ter limite somem ao apagar o limite)
 - [ ] Sugestão: escolher "fixa" ou "variável" e o ícone ao criar um item
 - [ ] Sugestão: renomear e excluir categorias criadas pela pessoa
+
+## Achados do teste de 6 meses como brasileiro médio (01/10/2026)
+Feito por mim, sozinho, no navegador de celular simulado, com um usuário inventado (Marcos, CLT,
+salário de R$ 3.450, aluguel, iFood, celular parcelado). Tudo abaixo é **sugestão**: o Isaac escolhe
+o que entra e em que ordem. Cada item precisa de teste no navegador antes da correção. Os marcados
+"(visto)" aconteceram na tela; os marcados "(avaliação)" são minha leitura de como a pessoa se
+comporta, sem medição. Não testado: celular de verdade, iPhone, uso real por 6 meses.
+
+Por que ele pararia de usar (do mais provável ao menos)
+- [ ] Esquece de lançar e os números passam a mentir (avaliação). O app não avisa com ele fechado
+      (sem servidor). Ideias: lançar mais rápido (valores e descrições usados com frequência),
+      aviso na abertura quando faz dias que não há lançamentos
+- [ ] Medo de perder tudo (avaliação): trocar de celular ou limpar o navegador apaga o histórico, e o
+      app nunca lembra de fazer backup (visto: só o texto em "Seus dados"). Ligado ao item de backup
+      da Parte 5. Ideia: aviso suave a cada 2 a 4 semanas e botão "Salvar cópia" mais à vista
+- [ ] O app não bate com a vida real (visto na falta dos campos): sem fatura do cartão (a compra
+      entra no dia da compra, mas o dinheiro sai no vencimento); sem vale-alimentação; só um
+      pagamento por mês (sem adiantamento do dia 20); receitas só Salário, Renda extra e Outras
+      (sem 13º, férias, reembolso)
+- [ ] Culpa repetida (visto): todo mês "Você guardou R$ 0,00… faça o aporte"; num mês estourado o
+      Painel mostrou 10 mensagens seguidas. Ideias: no máximo 3 alertas por vez; aviso de "guarde
+      mais" só uma vez por semana
+- [ ] Esforço e palavras difíceis no começo (avaliação): balde, envelope, "80/15/5", "renda
+      estável ou variável", "Essenciais consomem 96%". Explicar no lugar ou trocar por palavras do dia a dia
+
+Defeitos e confusões vistos
+- [x] **Alarme falso no começo do mês** (visto): no dia 2, R$ 80 em iFood geraram "no ritmo atual você
+      vai gastar R$ 1.240 (limite R$ 380). Desacelere". A previsão multiplicava 2 dias pelo mês
+      inteiro. Resolvido: a previsão só vale a partir do 7º dia (decisão do Isaac, 01/10/2026);
+      envelope já estourado continua avisando desde o dia 1
+- [ ] "Sobrou" negativo e baldes "Sem renda" nos primeiros dias, até o salário cair (visto, mesma tela
+      do item acima; fora do que foi resolvido)
+- [ ] "Sobrou" otimista no meio do mês (visto): no dia 8 mostrou R$ 2.850, com aluguel (R$ 1.100) e
+      contas ainda por pagar. Ideia: mostrar ao lado o que ainda vai vencer (fixos do mês)
+- [ ] A sugestão de limites já nasce com alertas (visto): logo depois de "Sugerir pelos meus gastos"
+      apareceram "passa do teto em R$ 180", "Transporte estourado" e "Mercado vai estourar"
+- [ ] O "Você pode gastar hoje" só aparece depois de definir limites (visto: sem limites o Painel
+      não mostra o número, e o Orçamento avisa "Faltam R$ 3.450,00 sem destino"). Ideia: sem
+      limites, mostrar um valor simples a partir da renda e dos gastos
+- [ ] Depois de salvar um gasto nada mostra o efeito (visto): só "Despesa de R$ X lançada", e a
+      pessoa fica em Lançamentos. Ideia: mostrar na mensagem quanto ainda pode gastar hoje
+- [ ] Estilo de vida aparece vazio no Orçamento mesmo com gasto (visto): diz "elas já gastaram
+      R$ 525,70" sem dizer quais categorias; Restaurantes, Compras e Assinaturas só surgem em "Adicionar".
+      Ideia: categorias com gasto no mês aparecem sozinhas
+- [ ] Fixos não vêm sozinhos (visto): todo mês é preciso apertar "Trazer fixos do mês anterior", e
+      os meses futuros não mostram nada previsto (nem parcelas já feitas)
+- [ ] Excluir não tem "desfazer" (visto): uma confirmação apagou 12 parcelas de uma vez, numa janela
+      do navegador. Ligado ao item da Prioridade baixa sobre `confirm()`
+- [ ] Reserva ideal sem prazo (visto): com sobra de uns R$ 500 por mês a tela mostra
+      "R$ 15.700,02" e não diz em quanto tempo a pessoa chegaria lá
+- [ ] O mesmo teto do Futuro com dois valores (visto): R$ 170,00 no Orçamento e R$ 172,50 no Painel
+- [ ] Mensagem de confirmação fica em cima de campos do formulário de Metas, e o "+ Lançar" cobre
+      texto ao rolar (visto, menor)
+
+O que ele sente falta (ideias, sem ordem)
+- [ ] Ver os meses juntos ("estou melhorando?"): hoje cada mês é uma tela isolada
+- [ ] Fatura do cartão e "quanto já está comprometido nos próximos meses" (etapa grande, à parte)
+- [ ] Renomear ou esconder categorias; etiquetas como Pix, dinheiro e cartão
+- [ ] Usar no celular e no computador, e o casal usar junto (hoje cada aparelho tem a sua cópia;
+      exigiria servidor e vai contra "os dados nunca saem do navegador": decisão do Isaac)
+- [ ] Busca em todos os meses (hoje vale só para o mês aberto)
+- [ ] Tema escuro (já está na Parte 4)
+
+O que funciona bem (não mexer)
+- Lançar é rápido; aceita "3200", "3.200", "R$ 3.200,00" e "25,90". Tocar duas vezes em Salvar não
+  duplica. Parcelas, mês estourado e o limite do "pode gastar" fazem as contas certas. Sem erros de JavaScript.

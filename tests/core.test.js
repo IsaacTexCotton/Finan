@@ -102,6 +102,30 @@ test('budgetStatus marca envelope estourado', () => {
   assert.equal(row.remaining, -20000);
 });
 
+// Decisão do Isaac (01/10/2026): a previsão de fim de mês só vale a partir do 7º dia. Antes disso,
+// R$ 80 gastos no dia 2 viravam "vai gastar R$ 1.240" (alarme falso no começo de todo mês).
+test('budgetStatus não prevê o fim do mês nos 6 primeiros dias', () => {
+  const s = F.summarize([tx('expense', 'restaurantes', 8000, '2026-10-02')], cats);
+  const [row] = F.budgetStatus({ restaurantes: 38000 }, s, cats, '2026-10', '2026-10-02');
+  assert.equal(row.projected, 8000); // sem previsão: fica no que já gastou
+  assert.equal(row.status, 'ok');
+});
+
+test('budgetStatus volta a prever o fim do mês a partir do 7º dia', () => {
+  const s = F.summarize([tx('expense', 'restaurantes', 20000, '2026-10-06')], cats);
+  const dia6 = F.budgetStatus({ restaurantes: 38000 }, s, cats, '2026-10', '2026-10-06')[0];
+  assert.equal(dia6.status, 'ok');
+  const dia7 = F.budgetStatus({ restaurantes: 38000 }, s, cats, '2026-10', '2026-10-07')[0];
+  assert.equal(dia7.projected, Math.round((20000 / 7) * 31));
+  assert.equal(dia7.status, 'risco');
+});
+
+test('budgetStatus avisa envelope estourado mesmo nos primeiros dias, porque não é previsão', () => {
+  const s = F.summarize([tx('expense', 'restaurantes', 40000, '2026-10-02')], cats);
+  const [row] = F.budgetStatus({ restaurantes: 38000 }, s, cats, '2026-10', '2026-10-02');
+  assert.equal(row.status, 'estourado');
+});
+
 test('suggestBudgets distribui a renda pelo 50/30/20 respeitando o histórico', () => {
   const sug = F.suggestBudgets(1000000, cats, { moradia: 300000, mercado: 100000 });
   assert.equal(sug.moradia, 375000);
