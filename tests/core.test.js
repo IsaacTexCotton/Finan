@@ -1046,3 +1046,74 @@ test('insights diz "Tudo dentro do plano" quando nenhuma regra se aplica (rede d
   const s = resumo(tx('income', 'salario', 100000, '2026-09-05'), tx('expense', 'reserva', 22000, '2026-09-06'));
   assert.deepEqual(avisos(s, { plan: { futuro: 25 } }), [{ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' }]);
 });
+
+// Refatoração da `normalizeData` (item 4): ela é a barreira dos backups ("descarta o que for inválido").
+// Uma varredura que desligava cada regra mostrou que 28 de 51 não tinham teste que percebesse. Estes
+// testes fixam as regras como são hoje, para a troca por um normalizador por tipo de dado.
+test('normalizeData (categorias): descarta o inválido, apara os textos e completa o que falta', () => {
+  const data = F.normalizeData({ categories: [
+    null, 7,
+    { id: 1, name: 'id numérico', type: 'expense' },
+    { id: 'c2', name: 42, type: 'expense' },
+    { id: 'c3', name: 'tipo errado', type: 'transfer' },
+    { id: 'longa', name: 'N'.repeat(80), type: 'expense', bucket: 'essencial', kind: 'fixa', icon: '12345678' },
+    { id: 'estranha', name: 'Estranha', type: 'expense', bucket: 'inventado', kind: 'qualquer', icon: 42 },
+    { id: 'entrada', name: 'Entrada', type: 'income', bucket: 'essencial', kind: 'fixa' },
+  ] });
+  const por = (id) => data.categories.find((c) => c.id === id);
+  for (const nome of ['id numérico', 'tipo errado']) assert.equal(data.categories.some((c) => c.name === nome), false, nome);
+  assert.equal(data.categories.some((c) => c.name === 42), false);
+  assert.equal(por('longa').name.length, 60);
+  assert.equal(por('longa').icon, '1234'); // ícone: até 4 caracteres
+  assert.deepEqual([por('longa').bucket, por('longa').kind], ['essencial', 'fixa']);
+  assert.deepEqual([por('estranha').bucket, por('estranha').kind, por('estranha').icon], ['estilo', 'variavel', '•']);
+  assert.equal('bucket' in por('entrada'), false); // receita não tem balde nem tipo fixa/variável
+  assert.equal('kind' in por('entrada'), false);
+  assert.ok(por('mercado'), 'as categorias padrão que faltam voltam');
+});
+
+test('normalizeData (lançamentos): descarta o inválido e limpa os campos', () => {
+  const base = { id: 'ok', type: 'expense', amount: 100, date: '2026-09-01', categoryId: 'mercado' };
+  const data = F.normalizeData({ transactions: [
+    null, 7,
+    { ...base, id: 5 },
+    { ...base, id: 'tipo', type: 'transfer' },
+    { ...base, id: 'longa', description: 'D'.repeat(200), recurring: 'sim', createdAt: 'ontem', goalId: 'G'.repeat(200) },
+    { ...base, id: 'simples', description: 42, recurring: 0, createdAt: 123 },
+  ] });
+  assert.deepEqual(data.transactions.map((t) => t.id), ['longa', 'simples']);
+  const [longa, simples] = data.transactions;
+  assert.equal(longa.description.length, 120);
+  assert.equal(longa.recurring, true); // sempre verdadeiro ou falso
+  assert.equal(longa.createdAt, 0); // não é número: vira 0
+  assert.equal(longa.goalId.length, 80);
+  assert.deepEqual([simples.description, simples.recurring, simples.createdAt], ['', false, 123]);
+});
+
+test('normalizeData (limites): só valores inteiros e maiores que zero, de categorias que existem', () => {
+  const data = F.normalizeData({ budgets: { mercado: 50000, lazer: 12.5, moradia: '300', transporte: 0, saude: -5, naoExiste: 100 } });
+  assert.deepEqual(data.budgets, { mercado: 50000 });
+});
+
+test('normalizeData (metas): descarta o inválido, apara o nome e limpa valor guardado e prazo', () => {
+  const data = F.normalizeData({ goals: [
+    null, 8,
+    { id: 5, name: 'id numérico', target: 1000 },
+    { id: 'g2', name: 42, target: 1000 },
+    { id: 'g3', name: 'valor quebrado', target: 10.5 },
+    { id: 'g4', name: 'valor zero', target: 0 },
+    { id: 'g5', name: 'N'.repeat(80), target: 5000, saved: 1.5, deadline: '31/12/2026' },
+    { id: 'g6', name: 'Boa', target: 5000, saved: 1200, deadline: '2026-12-31' },
+    { id: 'g7', name: 'Sem guardado', target: 5000, saved: -50 },
+  ] });
+  assert.deepEqual(data.goals.map((g) => g.id), ['g5', 'g6', 'g7']);
+  const [g5, g6, g7] = data.goals;
+  assert.deepEqual([g5.name.length, g5.saved, g5.deadline], [60, 0, '']); // nome até 60; guardado quebrado vira 0; prazo fora do formato some
+  assert.deepEqual([g6.saved, g6.deadline], [1200, '2026-12-31']);
+  assert.equal(g7.saved, 0);
+});
+
+test('normalizeData (revisões): só semanas AAAA-Www, com a lista de itens de texto', () => {
+  const data = F.normalizeData({ reviews: { '2026-W01': 'texto solto', '2026-W02': ['a', 7, 'b'], 'semana-invalida': ['x'] } });
+  assert.deepEqual(data.reviews, { '2026-W02': ['a', 'b'] });
+});
