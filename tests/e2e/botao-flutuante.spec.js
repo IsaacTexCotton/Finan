@@ -86,6 +86,9 @@ test('a mensagem de confirmação aparece acima do "+ Lançar", sem cobri-lo', a
   await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
   const aviso = page.locator('#toast.show');
   await expect(aviso).toBeVisible();
+  // O aviso sobe ao aparecer (transição de 0,2 s): só se mede depois que ele parou, senão a
+  // CI, mais lenta, pega o aviso no meio do movimento (erro de 1,45 px em 01/10/2026).
+  await aviso.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
   const botao = await caixaDoBotao(page);
   const caixaAviso = await aviso.boundingBox();
   expect(caixaAviso.y + caixaAviso.height, 'o aviso termina acima do botão').toBeLessThanOrEqual(botao.y);
