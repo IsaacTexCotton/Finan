@@ -57,6 +57,12 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
       (no GitHub Pages, todas as páginas de uma conta dividem o mesmo armazenamento do navegador)
 - [ ] Sugestão: fixar as Actions de `ci.yml` e `publicar.yml` por código exato (SHA); o Dependabot atualiza
 - [ ] Sugestão (grátis): ligar o CodeQL do GitHub em Settings > Security > Code scanning (padrão)
+- [ ] Sugestão: deixar a CI mais resistente quando a instalação do navegador de teste (Chromium) trava.
+      Em 01/10/2026 o passo "Instalar o navegador do teste" levou 9 min 38 s no `main` (run 74) e
+      estourou o limite de 10 minutos (`timeout-minutes: 10` em `.github/workflows/ci.yml`); os testes
+      foram cancelados e a publicação do site foi pulada, sem nenhum erro no código. Ideias: guardar o
+      navegador entre execuções (cache), e/ou aumentar o limite do passo de instalação. Não mexer na CI
+      sem decisão do Isaac
 - [x] Revisão de segurança automática por API: avaliada e descartada por custo (decisão do Isaac, 01/10/2026)
 - [ ] README com o método e como usar
 - [x] Revisão de segurança antes de publicar: nenhum segredo ou dado pessoal no repositório;
