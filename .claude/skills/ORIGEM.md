@@ -15,3 +15,9 @@ Em `systematic-debugging` ficaram só o `SKILL.md` e os três guias; os scripts 
 teste da skill original foram deixados de fora. Referências a eles no texto (ex.:
 `find-polluter.sh`) e a outras skills do superpowers ficam sem efeito. Em conflito, o
 `CLAUDE.md` do projeto manda.
+
+## Skills próprias
+
+| Skill | Origem |
+|---|---|
+| `passagem` | Adaptada de um comando de passagem de contexto de outro projeto do Isaac (conferências do repositório, marcas `[VERIFICADO]`, `[USUÁRIO]`, `[HIPÓTESE]` e `[DESCARTADO]`, relatório em `passagens/`). Trocados os itens específicos daquele projeto pelos do Finan: `npm run check`, `npm run test:e2e`, `CLAUDE.md`, `BACKLOG.md`, CI e publicação no GitHub Pages, branch da sessão e a regra de nunca registrar dados reais. |
