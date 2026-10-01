@@ -140,7 +140,9 @@ Decisões do Isaac aplicadas (30/09/2026)
       que apagar, montar e editar um lançamento, metas, soma dos limites e "bateu a meta de guardar".
       Sem mudança para a pessoa; o aviso do `submitTx` saiu (7 → 6 avisos)
 - [ ] `insights` (complexidade 34): quebrar em uma função por tipo de alerta
-- [ ] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações
+- [x] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações (`ACTIONS`); as
+      janelas nativas (`confirm` e `prompt`) passaram por `confirmar()` e `perguntar()`, um ponto só
+      para trocar por janela própria ou ganhar o "desfazer ao excluir" (7 → 4 avisos do lint)
 - [ ] `parseAmount` (complexidade 19): separar detecção de separador decimal
 - [ ] `normalizeData` (complexidade 22): um normalizador por coleção
 
