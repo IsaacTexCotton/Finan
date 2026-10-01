@@ -53,6 +53,11 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [ ] Sugestão: o primeiro parágrafo de "Seus dados" e a linha de proteção repetem o conselho de fazer backup; enxugar
 - [ ] Backup: decidir o que fazer (cópias internas automáticas, lembrete de backup externo ou os dois)
 - [ ] Ícone definitivo do app (hoje é uma letra F provisória; não é prioridade)
+- [ ] Sugestão: endereço próprio (domínio) para o produto vendido, separado de outros sites do GitHub Pages
+      (no GitHub Pages, todas as páginas de uma conta dividem o mesmo armazenamento do navegador)
+- [ ] Sugestão: fixar as Actions de `ci.yml` e `publicar.yml` por código exato (SHA); o Dependabot atualiza
+- [ ] Sugestão (grátis): ligar o CodeQL do GitHub em Settings > Security > Code scanning (padrão)
+- [x] Revisão de segurança automática por API: avaliada e descartada por custo (decisão do Isaac, 01/10/2026)
 - [ ] README com o método e como usar
 - [x] Revisão de segurança antes de publicar: nenhum segredo ou dado pessoal no repositório;
       testes no navegador provam que texto malicioso (digitado ou vindo de backup) aparece

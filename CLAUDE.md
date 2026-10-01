@@ -233,6 +233,13 @@ Só faça o commit quando todas as respostas forem "sim":
 - **Todo texto vindo do usuário ou de backup passa por `esc()` antes de ir para `innerHTML`.**
 - Dados importados passam por `normalizeData` (valida e descarta o que for inválido).
 - CSV exportado neutraliza fórmulas (`=`, `+`, `-`, `@`).
+- **Custo zero** (decisão do Isaac, 01/10/2026): o projeto não usa serviços pagos. A revisão de
+  segurança automática por API (Action da Anthropic) foi **descartada** por exigir chave paga. Em
+  vez dela: `/security-review` local, o Dependabot, o `npm audit` na CI e a revisão manual por
+  intervalo de commits. O `/security-review` só enxerga o que ainda **não foi enviado** ao GitHub e
+  precisa da referência local `origin/HEAD` (`git remote set-head origin main` a cria). O CodeQL do
+  GitHub (grátis em repositório público) é opcional e se liga nas configurações do repositório.
+  Qualquer serviço pago ou chave de API entra só com decisão do Isaac, e a chave nunca vai ao chat.
 - Antes de publicar, faça uma revisão de segurança do código. `tests/e2e/seguranca.spec.js`
   garante que HTML digitado ou vindo de backup nunca executa e que o app não faz requisição
   de rede. Mudou como algo é desenhado na tela? Esses testes têm que continuar passando.
