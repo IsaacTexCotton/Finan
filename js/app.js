@@ -176,6 +176,16 @@
     return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   }
 
+  // Único ponto das janelas nativas do navegador (confirm e prompt): trocar por uma janela própria,
+  // ou ganhar um "desfazer", muda só aqui. Hoje abrem a mesma janela de sempre.
+  function confirmar(texto) {
+    return window.confirm(texto);
+  }
+
+  function perguntar(texto) {
+    return window.prompt(texto);
+  }
+
   function money(cents) {
     return esc(F.formatBRL(cents));
   }
@@ -740,8 +750,8 @@
   function deleteTransaction(id) {
     const t = state.data.transactions.find((x) => x.id === id);
     if (!t) return;
-    const todasAsParcelas = Boolean(t.installment) && confirm(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`);
-    if (!todasAsParcelas && !confirm(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) return;
+    const todasAsParcelas = Boolean(t.installment) && confirmar(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`);
+    if (!todasAsParcelas && !confirmar(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) return;
     const ids = F.idsToDelete(state.data.transactions, id, todasAsParcelas);
     const remove = new Set(ids);
     state.data.transactions = state.data.transactions.filter((x) => !remove.has(x.id));
@@ -772,7 +782,7 @@
       return;
     }
     const hasBudget = Object.keys(state.data.budgets).length > 0;
-    if (hasBudget && !confirm('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
+    if (hasBudget && !confirmar('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
     state.data.budgets = result.budgets;
     commit(`Orçamento sugerido pela média dos últimos ${result.months} ${result.months === 1 ? 'mês' : 'meses'}. Ajuste os valores à sua realidade.`);
   }
@@ -824,7 +834,7 @@
     $('#quiz-error').textContent = '';
     const answers = readQuizAnswers();
     if (!answers) return;
-    if (Object.keys(state.data.budgets).length > 0 && !confirm('Substituir os limites atuais pelos valores que você informou?')) return;
+    if (Object.keys(state.data.budgets).length > 0 && !confirmar('Substituir os limites atuais pelos valores que você informou?')) return;
     const income = F.referenceIncome(state.data.transactions, state.data.categories, state.month);
     state.data.budgets = F.budgetsFromAnswers(answers, state.data.categories, income, monthContext().plan);
     closeQuiz();
@@ -837,7 +847,7 @@
     const resumo = F.summarize(F.transactionsOfMonth(state.data.transactions, mes), state.data.categories);
     const depois = F.leftAfterSaving(resumo, valor);
     if (depois === null || depois >= 0) return true;
-    return confirm(`Guardar ${F.formatBRL(valor)} deixa ${F.monthLabel(mes)} no vermelho: depois de guardar, faltariam ${F.formatBRL(-depois)}. Quer guardar mesmo assim?`);
+    return confirmar(`Guardar ${F.formatBRL(valor)} deixa ${F.monthLabel(mes)} no vermelho: depois de guardar, faltariam ${F.formatBRL(-depois)}. Quer guardar mesmo assim?`);
   }
 
   function guardaDinheiro(entry) {
@@ -848,7 +858,7 @@
   function depositGoal(id) {
     const goal = state.data.goals.find((g) => g.id === id);
     if (!goal) return;
-    const input = prompt(`Quanto você guardou para "${goal.name}"? (R$)`);
+    const input = perguntar(`Quanto você guardou para "${goal.name}"? (R$)`);
     if (input == null) return;
     const amount = F.parseAmount(input);
     if (!(amount > 0)) {
@@ -886,7 +896,7 @@
     reader.onload = () => {
       try {
         const data = F.normalizeData(JSON.parse(reader.result));
-        if (!confirm(`Restaurar backup com ${data.transactions.length} lançamento(s)? Os dados atuais serão substituídos.`)) return;
+        if (!confirmar(`Restaurar backup com ${data.transactions.length} lançamento(s)? Os dados atuais serão substituídos.`)) return;
         state.data = data;
         commit('Backup restaurado.');
       } catch (e) {
@@ -990,7 +1000,7 @@
         depositGoal(el.dataset.id);
         break;
       case 'delete-goal':
-        if (confirm('Excluir esta meta?')) {
+        if (confirmar('Excluir esta meta?')) {
           state.data.goals = state.data.goals.filter((g) => g.id !== el.dataset.id);
           commit('Meta excluída.');
         }
@@ -999,14 +1009,14 @@
         download(`finan-backup-${F.todayISO()}.json`, JSON.stringify(state.data, null, 2), 'application/json');
         break;
       case 'load-demo':
-        if (state.data.transactions.length && !confirm('Substituir seus dados pelos dados de exemplo?')) return;
+        if (state.data.transactions.length && !confirmar('Substituir seus dados pelos dados de exemplo?')) return;
         state.data = demoData();
         state.month = F.monthKey(F.todayISO());
         state.tab = 'painel';
         commit('Dados de exemplo carregados. Use "Apagar tudo" para começar do zero.');
         break;
       case 'reset':
-        if (confirm('Apagar TODOS os lançamentos, orçamentos e metas deste navegador? Não dá para desfazer.')) {
+        if (confirmar('Apagar TODOS os lançamentos, orçamentos e metas deste navegador? Não dá para desfazer.')) {
           state.data = F.emptyData();
           resetTxForm();
           commit('Dados apagados.');
