@@ -38,7 +38,7 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Navegação inferior com 4 itens (Painel, Lançamentos, Orçamento, Mais), por decisão do Isaac
       (01/10/2026); os testes de abas foram atualizados com a autorização dele
 - [x] Visual da tela Metas (reserva em destaque, metas em cartões)
-- [ ] Visual da tela Método (passos em cartões numerados)
+- [x] Visual da tela Método (passos em cartões numerados, texto sobre dívidas recolhido)
 - [ ] Tema escuro (segue a configuração do celular)
 - [x] Barra de navegação fixa embaixo no celular (feita: ver "Navegação inferior" abaixo)
 - [ ] Sugestão: `scrollIntoView` em `app.js` ignora "reduzir movimento"; trocar por `behavior: auto`

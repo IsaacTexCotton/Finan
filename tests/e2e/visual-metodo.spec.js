@@ -41,3 +41,37 @@ test('os itens da revisão ficam separados por um filete e não há recuo do mar
   const filete = await itens.first().evaluate((li) => parseFloat(getComputedStyle(li).borderBottomWidth));
   expect(filete, 'filete entre os itens').toBeGreaterThanOrEqual(1);
 });
+
+test('os 5 passos do Método são cartões numerados, com o título numa linha e a explicação embaixo', async ({ page }) => {
+  const passos = page.locator('.steps > li');
+  await expect(passos).toHaveCount(5);
+  for (let i = 0; i < 5; i++) {
+    const passo = passos.nth(i);
+    const estilo = await passo.evaluate((li) => {
+      const s = getComputedStyle(li);
+      return { borda: parseFloat(s.borderTopWidth), raio: parseFloat(s.borderTopLeftRadius), marcador: s.listStyleType, numero: getComputedStyle(li, '::before').content, conta: s.counterIncrement };
+    });
+    expect(estilo.borda, `passo ${i + 1}: cartão com borda`).toBeGreaterThanOrEqual(1);
+    expect(estilo.raio, `passo ${i + 1}: cantos arredondados`).toBeGreaterThan(0);
+    expect(estilo.marcador, `passo ${i + 1}: sem marcador do navegador`).toBe('none');
+    expect(estilo.numero, `passo ${i + 1}: mostra o número do passo`).toBe('counter(passo)'); // o navegador não resolve o contador aqui
+    expect(estilo.conta, `passo ${i + 1}: o contador avança`).toContain('passo');
+    const titulo = await passo.locator('strong').first().boundingBox();
+    const caixa = await passo.boundingBox();
+    expect(caixa.width - titulo.width, `passo ${i + 1}: o título ocupa a linha`).toBeLessThan(80);
+  }
+  const a = await passos.nth(0).boundingBox();
+  const b = await passos.nth(1).boundingBox();
+  expect(b.y - (a.y + a.height), 'espaço entre os cartões').toBeGreaterThanOrEqual(8);
+});
+
+test('a lista de passos continua sendo lista para o leitor de tela', async ({ page }) => {
+  await expect(page.locator('.steps')).toHaveAttribute('role', 'list');
+});
+
+test('o texto sobre dívidas fica recolhido num "Como funciona" que abre ao tocar', async ({ page }) => {
+  const texto = page.getByText(/Coloque quitação de dívidas como prioridade/);
+  await expect(texto).toBeHidden();
+  await page.locator('details.how').filter({ hasText: 'Tem dívidas com juros altos?' }).locator('summary').click();
+  await expect(texto).toBeVisible();
+});
