@@ -97,3 +97,15 @@ test('a barra de baixo, com a lista do "Mais" aberta, não tem violações do ax
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
   }
 });
+
+test('a janela escondida das novidades, aberta, não tem violações do axe', async ({ page }) => {
+  for (const largura of [320, 1280]) {
+    await page.setViewportSize({ width: largura, height: 800 });
+    await page.goto(APP);
+    const toque = largura < 480 ? page.locator('#month-label') : page.locator('.brand'); // no celular o nome Finan fica escondido da vista
+    for (let i = 0; i < 5; i++) await toque.click();
+    await expect(page.getByRole('dialog', { name: 'Novidades' })).toBeVisible();
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});

@@ -217,7 +217,18 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <!-- Histórico de atualizações: escondido, abre com 5 toques na barra do topo (js/app.js) -->
+  <dialog id="novidades" aria-labelledby="novidades-titulo">
+    <div class="dialog-head">
+      <h2 id="novidades-titulo">Novidades</h2>
+      <form method="dialog"><button class="btn small">Fechar</button></form>
+    </div>
+    <p class="muted" id="novidades-versao"></p>
+    <div id="novidades-lista"></div>
+  </dialog>
+
   <script src="js/core.js"></script>
+  <script src="js/novidades.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

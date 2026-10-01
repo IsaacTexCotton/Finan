@@ -174,6 +174,13 @@ do balde e comparação. Uma parte por vez:
 - [ ] Sugestão: escolher "fixa" ou "variável" e o ícone ao criar um item
 - [ ] Sugestão: renomear e excluir categorias criadas pela pessoa
 
+## Histórico de atualizações (01/10/2026)
+- [x] `CHANGELOG.md` (Keep a Changelog + SemVer, em português simples), versão 0.1.0, janela
+      "Novidades" escondida (5 toques na barra do topo) e testes de consistência
+- [ ] Sugestão: marcar cada versão lançada no GitHub (tag `v0.1.0`), para o histórico do código
+      acompanhar o `CHANGELOG.md`
+- [ ] Sugestão: mostrar a versão em uso em algum lugar à vista (hoje só aparece na janela escondida)
+
 ## Achados do teste de 6 meses como brasileiro médio (01/10/2026)
 Feito por mim, sozinho, no navegador de celular simulado, com um usuário inventado (Marcos, CLT,
 salário de R$ 3.450, aluguel, iFood, celular parcelado). Tudo abaixo é **sugestão**: o Isaac escolhe

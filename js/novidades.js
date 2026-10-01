@@ -13,7 +13,8 @@ window.FINAN_NOVIDADES = [
           "Barra de navegação embaixo da tela, com Painel, Lançamentos, Orçamento e Mais (Metas e Método ficam no Mais)",
           "Botão \"+ Lançar\" flutuante, sempre no mesmo canto",
           "Lançar mais rápido: valor, categoria e Salvar à vista; data, descrição, parcelas e lançamento fixo ficam em \"Mais detalhes\"",
-          "Visual novo nas telas Metas e Método e na revisão semanal, com itens fáceis de tocar"
+          "Visual novo nas telas Metas e Método e na revisão semanal, com itens fáceis de tocar",
+          "Este histórico de atualizações, escondido: 5 toques seguidos na barra verde do topo (fora das setinhas de mês) abrem a janela \"Novidades\", com a versão em uso"
         ]
       },
       {
