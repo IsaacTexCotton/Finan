@@ -22,7 +22,8 @@ test('no domingo (padrão) o Painel lembra e o botão leva à revisão', async (
   await abrir(page, '27');
   await expect(lembrete(page)).toContainText('Hoje é o seu dia de revisão semanal');
   await lembrete(page).getByRole('button', { name: 'Fazer a revisão' }).click();
-  await expect(page.getByRole('tab', { name: 'Método' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel', { name: 'Método' })).toBeVisible(); // Método fica dentro do "Mais"
+  await expect(page.getByRole('button', { name: 'Mais' })).toHaveAttribute('aria-current', 'true');
   await expect(page.getByRole('heading', { name: /Revisão semanal/ })).toBeFocused();
 });
 

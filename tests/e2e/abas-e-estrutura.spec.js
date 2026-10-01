@@ -1,9 +1,10 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, irParaAba } = require('./ajuda');
 
 // As abas seguem o padrão que teclado e leitor de tela conhecem: setas trocam de aba, só a
 // aba atual é parada do Tab, cada aba controla um painel com nome. A página tem título
-// principal e um atalho para pular direto ao conteúdo.
+// principal e um atalho para pular direto ao conteúdo. Metas e Método ficam dentro do "Mais"
+// (a navegação inferior é testada em navegacao-inferior.spec.js).
 
 const ABAS = ['Painel', 'Lançamentos', 'Orçamento', 'Metas', 'Método'];
 
@@ -11,8 +12,9 @@ test.beforeEach(async ({ page }) => {
   await page.goto(APP);
 });
 
-test('as setas, Home e End trocam de aba e levam o foco junto', async ({ page }) => {
+test('as setas, Home e End percorrem a barra: as abas trocam, o "Mais" só recebe o foco', async ({ page }) => {
   const aba = (nome) => page.getByRole('tab', { name: nome });
+  const mais = page.getByRole('button', { name: 'Mais' });
   await aba('Painel').focus();
 
   await page.keyboard.press('ArrowRight');
@@ -21,11 +23,12 @@ test('as setas, Home e End trocam de aba e levam o foco junto', async ({ page })
   await expect(page.getByRole('tabpanel', { name: 'Lançamentos' })).toBeVisible();
 
   await page.keyboard.press('End');
-  await expect(aba('Método')).toBeFocused();
-  await page.keyboard.press('ArrowRight'); // depois da última, volta à primeira
+  await expect(mais).toBeFocused();
+  await expect(page.getByRole('tabpanel', { name: 'Lançamentos' })).toBeVisible(); // o foco no "Mais" não troca de tela
+  await page.keyboard.press('ArrowRight'); // depois do último, volta ao primeiro
   await expect(aba('Painel')).toBeFocused();
-  await page.keyboard.press('ArrowLeft'); // antes da primeira, vai à última
-  await expect(aba('Método')).toBeFocused();
+  await page.keyboard.press('ArrowLeft'); // antes do primeiro, vai ao último
+  await expect(mais).toBeFocused();
   await page.keyboard.press('Home');
   await expect(aba('Painel')).toBeFocused();
 });
@@ -40,9 +43,9 @@ test('só a aba atual é parada do Tab: o Tab vai direto ao conteúdo', async ({
 
 test('cada aba controla um painel que tem o nome da aba', async ({ page }) => {
   for (const nome of ABAS) {
-    await page.getByRole('tab', { name: nome }).click();
+    await irParaAba(page, nome);
     await expect(page.getByRole('tabpanel', { name: nome })).toBeVisible();
-    const controla = await page.getByRole('tab', { name: nome }).getAttribute('aria-controls');
+    const controla = await page.locator('[role="tab"]').filter({ hasText: nome }).getAttribute('aria-controls');
     await expect(page.locator(`#${controla}`)).toBeVisible();
   }
 });

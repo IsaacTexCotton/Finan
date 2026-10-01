@@ -17,11 +17,12 @@ for (const largura of [320, 390, 1280]) {
     await page.goto(APP);
     let primeira;
     for (const aba of ABAS) {
-      await page.getByRole('tab', { name: aba }).click();
+      await irParaAba(page, aba);
       const caixa = await caixaDoBotao(page);
       primeira = primeira || caixa;
-      expect(800 - (caixa.y + caixa.height), `${aba}: perto do rodapé`).toBeLessThanOrEqual(32);
-      expect(800 - (caixa.y + caixa.height), `${aba}: não cola na borda`).toBeGreaterThanOrEqual(8);
+      const topoDaBarra = (await page.getByRole('navigation', { name: 'Seções do app' }).boundingBox()).y;
+      expect(topoDaBarra - (caixa.y + caixa.height), `${aba}: logo acima da barra`).toBeLessThanOrEqual(32);
+      expect(topoDaBarra - (caixa.y + caixa.height), `${aba}: não cola na barra`).toBeGreaterThanOrEqual(8);
       expect(largura - (caixa.x + caixa.width), `${aba}: perto da borda direita`).toBeLessThanOrEqual(32);
       expect(caixa.height, `${aba}: alvo de toque`).toBeGreaterThanOrEqual(44);
       expect(Math.abs(caixa.x - primeira.x) + Math.abs(caixa.y - primeira.y), `${aba}: mesmo lugar nas abas`).toBeLessThanOrEqual(1);

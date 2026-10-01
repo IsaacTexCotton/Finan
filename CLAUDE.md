@@ -175,13 +175,20 @@ Só faça o commit quando todas as respostas forem "sim":
   mas a definição curta de cada palavra continua visível (no Orçamento: envelope, fixa e
   variável). Decisão do Isaac, 30/09/2026: o primeiro balde tem que aparecer na primeira tela
   do celular (`tests/e2e/como-funciona.spec.js`).
-- Nenhuma aba pode ficar escondida: no celular as 5 aparecem em duas linhas (3 + 2), sem
-  deslizar, e o tamanho delas não muda ao trocar de aba (`tests/e2e/abas-visiveis.spec.js`,
-  de 320 a 1280px).
-- As abas seguem o padrão ARIA (setas trocam de aba, só a atual é parada do Tab, cada aba
-  controla um painel com nome). A página tem um título principal (h1) e o atalho "Pular para
-  o conteúdo". `tests/e2e/acessibilidade.spec.js` (axe-core) precisa continuar com zero
-  violações em todas as telas; tela ou controle novo entra nesse teste.
+- **Navegação na barra de baixo** (decisão do Isaac, 01/10/2026): fixa no fim da tela, com
+  Painel, Lançamentos, Orçamento e "Mais" (Metas e Método ficam dentro do "Mais", que abre uma
+  lista acima da barra). Os 4 itens aparecem sempre inteiros, sem deslizar e sem mudar de tamanho
+  ao trocar de aba, de 320 a 1280px (`tests/e2e/abas-visiveis.spec.js`). Com Metas ou Método
+  aberta, o "Mais" é o item atual (`aria-current`). O "+ Lançar" e a mensagem de confirmação
+  ficam acima da barra, e o fim do conteúdo nunca fica atrás dela
+  (`tests/e2e/navegacao-inferior.spec.js`).
+- As abas seguem o padrão ARIA: Painel, Lançamentos e Orçamento são abas; Metas e Método são abas
+  de um segundo grupo ("Mais seções"). Só o item atual da barra é parada do Tab; setas, Home e End
+  percorrem a barra (nas abas a seleção acompanha o foco; no "Mais", Enter abre a lista); Esc fecha
+  a lista e devolve o foco ao "Mais". Cada aba controla um painel com nome. A página tem um título
+  principal (h1) e o atalho "Pular para o conteúdo". `tests/e2e/acessibilidade.spec.js` (axe-core)
+  precisa continuar com zero violações em todas as telas, inclusive com o "Mais" aberto; tela ou
+  controle novo entra nesse teste. Nos testes, `irParaAba(page, 'Metas')` abre o "Mais" sozinho.
 - Em listas de escolha (`<select>`), o texto de cada opção começa pelo nome, nunca por emoji:
   o navegador acha a opção pelas primeiras letras digitadas.
 - Botões que se repetem numa lista (Editar, Excluir, Guardar valor) têm `aria-label` com o

@@ -52,6 +52,7 @@
 
   /* Medidas */
   --tap: 2.75rem;
+  --nav-h: calc(var(--tap) + var(--space-3)); /* altura da barra de baixo */
   --radius: 0.75rem;
   /* Tamanhos de fonte: corpo e título são os principais; pequeno é texto de apoio;
      número e display são para valores em destaque */
@@ -74,6 +75,7 @@
 html {
   font-size: 100%;
   scroll-padding-top: 4.5rem;
+  scroll-padding-bottom: calc(var(--nav-h) + var(--space-4)); /* o foco não fica atrás da barra */
   -webkit-text-size-adjust: 100%;
 }
 
@@ -236,28 +238,31 @@ main:focus-visible {
   color: var(--on-primary);
 }
 
+/* Barra de baixo (polegar): Painel, Lançamentos, Orçamento e "Mais" (Metas e Método). */
 .tabs {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
   display: flex;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   background: var(--surface);
-  scrollbar-width: thin;
 }
 
-/* Celular: as 5 abas ficam todas à vista, em duas linhas (3 + 2), sem precisar deslizar. */
 .tablist {
-  display: grid;
+  display: flex;
   flex: 1 1 auto;
-  grid-template-columns: repeat(6, 1fr);
 }
 
+/* Largura pelo conteúdo, dividindo o que sobra: "Lançamentos" cabe inteiro até em 320px. */
 .tabs button {
-  grid-column: span 2;
-  min-width: 0;
-  min-height: var(--tap);
-  padding: 0;
+  flex: 1 1 auto;
+  min-width: var(--tap);
+  min-height: var(--nav-h);
+  padding: 0 var(--space-1);
   border: 0;
-  border-bottom: 4px solid transparent;
+  border-top: 4px solid transparent;
   background: none;
   color: var(--muted);
   font: inherit;
@@ -266,19 +271,47 @@ main:focus-visible {
   cursor: pointer;
 }
 
-.tabs button:nth-child(n + 4) {
-  grid-column: span 3;
+.tabs button.active {
+  border-top-color: var(--primary);
+  color: var(--primary-strong);
 }
 
-.tabs button.active {
-  border-bottom-color: var(--primary);
-  color: var(--primary-strong);
+.tabs .more-btn {
+  flex: 0 0 auto;
+  padding-inline: var(--space-2);
+}
+
+/* Lista do "Mais": abre acima da barra, no canto do botão. */
+.sheet {
+  position: absolute;
+  right: var(--space-2);
+  bottom: calc(100% + var(--space-2));
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.tabs .sheet button {
+  padding-inline: var(--space-4);
+  border-top: 0;
+  border-left: 4px solid transparent;
+  font-size: var(--fs-body);
+  text-align: left;
+}
+
+.tabs .sheet button.active {
+  border-left-color: var(--primary);
 }
 
 main {
   max-width: 60rem;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-3) calc(var(--space-5) * 4);
+  padding: var(--space-4) var(--space-3) calc(var(--nav-h) + var(--space-5) * 4);
 }
 
 .panel {
@@ -320,19 +353,6 @@ main {
 }
 
 @media (min-width: 30rem) {
-  .tablist {
-    display: flex;
-    flex: 1 0 auto;
-  }
-
-  .tabs button,
-  .tabs button:nth-child(n + 4) {
-    flex: 1 0 auto;
-    grid-column: auto;
-    padding: 0 var(--space-4);
-    font-size: var(--fs-body);
-  }
-
   .brand {
     position: static;
     width: auto;
@@ -410,7 +430,7 @@ main {
 .fab {
   position: fixed;
   right: var(--space-4);
-  bottom: var(--space-4);
+  bottom: calc(var(--nav-h) + var(--space-4));
   z-index: 20;
   min-height: calc(var(--tap) + var(--space-2));
   padding-inline: var(--space-4);
@@ -854,7 +874,7 @@ select:disabled {
   position: fixed;
   right: var(--space-3);
   /* acima do botão "+ Lançar" (que fica no canto, com a mesma folga do rodapé) */
-  bottom: calc(var(--space-4) + var(--tap) + var(--space-2) + var(--space-2));
+  bottom: calc(var(--nav-h) + var(--space-4) + var(--tap) + var(--space-2) + var(--space-2));
   left: var(--space-3);
   z-index: 20;
   max-width: 28rem;

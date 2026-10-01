@@ -21,10 +21,13 @@
   </header>
 
   <nav class="tabs" aria-label="Seções do app">
-    <div class="tablist" role="tablist">
+    <div class="tablist" role="tablist" aria-label="Seções principais">
       <button type="button" role="tab" id="aba-painel" aria-controls="tab-painel" data-tab="painel">Painel</button>
       <button type="button" role="tab" id="aba-lancamentos" aria-controls="tab-lancamentos" data-tab="lancamentos">Lançamentos</button>
       <button type="button" role="tab" id="aba-orcamento" aria-controls="tab-orcamento" data-tab="orcamento">Orçamento</button>
+    </div>
+    <button type="button" id="mais" class="more-btn" aria-expanded="false" aria-controls="mais-menu">Mais</button>
+    <div class="sheet" id="mais-menu" role="tablist" aria-label="Mais seções" hidden>
       <button type="button" role="tab" id="aba-metas" aria-controls="tab-metas" data-tab="metas">Metas</button>
       <button type="button" role="tab" id="aba-metodo" aria-controls="tab-metodo" data-tab="metodo">Método</button>
     </div>

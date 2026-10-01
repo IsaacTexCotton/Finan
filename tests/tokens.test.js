@@ -47,10 +47,10 @@ test('a escala de espaçamento (4, 8, 12, 16 e 24 px) é definida no :root', () 
 test('margens, preenchimentos e vãos usam só a escala (ou 0, auto e traços de 1px)', () => {
   const spacing = valuesOf('(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?');
   assert.ok(spacing.length > 60, 'esperava achar as declarações de espaçamento');
-  const allowed = /^(?:0|auto|-?1px|var\(--space-[1-5]\))$/;
+  const allowed = /^(?:0|auto|-?1px|var\(--space-[1-5]\)|var\(--nav-h\))$/; // --nav-h: altura da barra de baixo
   const loose = spacing
     .map((d) => ({ ...d, parts: d.value.replace(/calc\((.*)\)/, '$1').split(/\s+/) }))
-    .filter((d) => d.parts.some((p) => !allowed.test(p) && !/^[*]$|^\d+$/.test(p)));
+    .filter((d) => d.parts.some((p) => !allowed.test(p) && !/^[*+]$|^\d+$/.test(p)));
   assert.deepEqual(loose.map((d) => `${d.property}: ${d.value}`), [], 'espaçamento fora da escala');
 });
 

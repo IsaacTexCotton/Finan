@@ -35,12 +35,11 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Painel: os 4 números e o "pode gastar hoje" cabem na primeira tela do celular (teste de proteção)
 - [x] Formulário rápido: só Despesa/Receita, Valor, Categoria e Salvar à vista; o resto em "Mais detalhes"
 - [x] Mensagem de confirmação acima do botão "+ Lançar", com os tokens de espaçamento
-- [ ] Navegação inferior com 4 itens (Painel, Lançamentos, Orçamento, Mais): decisão do Isaac
-      (01/10/2026); exige trocar os testes `abas-visiveis` e `acessibilidade`, que ele precisa autorizar
+- [x] Navegação inferior com 4 itens (Painel, Lançamentos, Orçamento, Mais), por decisão do Isaac
+      (01/10/2026); os testes de abas foram atualizados com a autorização dele
 - [ ] Visual das telas Metas e Método
 - [ ] Tema escuro (segue a configuração do celular)
-- [ ] Sugestão (opcional): barra de navegação fixa embaixo no celular, que o polegar alcança
-      melhor. As abas em duas linhas já resolvem o problema de ficarem escondidas
+- [x] Barra de navegação fixa embaixo no celular (feita: ver "Navegação inferior" abaixo)
 - [ ] Sugestão: `scrollIntoView` em `app.js` ignora "reduzir movimento"; trocar por `behavior: auto`
       quando `prefers-reduced-motion: reduce`
 - [ ] Teste manual no navegador de cada tela (Painel, Lançamentos, Orçamento, Metas, Método)

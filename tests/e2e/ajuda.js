@@ -6,6 +6,7 @@ const APP = pathToFileURL(path.join(__dirname, '..', '..', 'index.html')).href;
 
 /** Vai para uma aba do app, como a pessoa faz (toca no nome dela). */
 async function irParaAba(page, nome) {
+  if (nome === 'Metas' || nome === 'Método') await page.getByRole('button', { name: 'Mais' }).click(); // ficam dentro do "Mais"
   await page.getByRole('tab', { name: nome }).click();
 }
 

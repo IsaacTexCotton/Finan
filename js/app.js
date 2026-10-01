@@ -8,6 +8,8 @@
   const WEEKDAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
   const TAB_KEY = 'finan:tab';
   const TABS = ['painel', 'lancamentos', 'orcamento', 'metas', 'metodo'];
+  const MAIS_TABS = ['metas', 'metodo']; // ficam dentro do "Mais", na barra de baixo
+  const BARRA = ['painel', 'lancamentos', 'orcamento', 'mais'];
 
   const REVIEW_ITEMS = [
     { id: 'registrar', text: 'Conferi se todos os gastos da semana foram lançados (extrato e cartão).' },
@@ -206,6 +208,11 @@
       b.setAttribute('aria-selected', String(active));
       b.tabIndex = active ? 0 : -1; // só a aba atual é parada do Tab; as setas trocam de aba
     });
+    const noMais = MAIS_TABS.includes(state.tab);
+    $('#mais').classList.toggle('active', noMais);
+    $('#mais').tabIndex = noMais ? 0 : -1; // com Metas ou Método aberta, o "Mais" é o item atual da barra
+    if (noMais) $('#mais').setAttribute('aria-current', 'true');
+    else $('#mais').removeAttribute('aria-current');
     TABS.forEach((t) => { $(`#tab-${t}`).hidden = t !== state.tab; });
     $('.fab').hidden = state.tab === 'lancamentos'; // o formulário já está nessa aba
 
@@ -979,26 +986,60 @@
 
   // ---------- Eventos ----------
 
-  function abrirAba(tab) {
+  function abrirAba(tab, { manterMais = false } = {}) {
     state.tab = tab;
     try { localStorage.setItem(TAB_KEY, state.tab); } catch (e) { /* preferência opcional */ }
+    if (!manterMais) fecharMais(false);
     render();
   }
 
-  // Padrão de abas do teclado: setas, Home e End trocam de aba e levam o foco junto.
-  $('[role="tablist"]').addEventListener('keydown', (event) => {
-    const atual = TABS.indexOf(state.tab);
-    const destino = { ArrowRight: (atual + 1) % TABS.length, ArrowLeft: (atual + TABS.length - 1) % TABS.length, Home: 0, End: TABS.length - 1 }[event.key];
-    if (destino === undefined) return;
+  // "Mais": lista com Metas e Método, aberta acima da barra.
+  function maisAberto() { return !$('#mais-menu').hidden; }
+
+  function abrirMais() {
+    $('#mais-menu').hidden = false;
+    $('#mais').setAttribute('aria-expanded', 'true');
+    $(`[data-tab="${MAIS_TABS.includes(state.tab) ? state.tab : MAIS_TABS[0]}"]`).focus();
+  }
+
+  function fecharMais(devolverFoco) {
+    $('#mais-menu').hidden = true;
+    $('#mais').setAttribute('aria-expanded', 'false');
+    if (devolverFoco) $('#mais').focus();
+  }
+
+  $('#mais').addEventListener('click', () => (maisAberto() ? fecharMais(false) : abrirMais()));
+
+  // Teclado: setas, Home e End percorrem a barra (Painel, Lançamentos, Orçamento, Mais) e, aberta a
+  // lista, Metas e Método. Nas abas a seleção acompanha o foco; no "Mais" o Enter abre a lista.
+  $('.tabs').addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && maisAberto()) {
+      event.preventDefault();
+      fecharMais(true);
+      return;
+    }
+    const naLista = Boolean(event.target.closest('#mais-menu'));
+    const itens = naLista ? MAIS_TABS : BARRA;
+    const atual = itens.indexOf(event.target.id === 'mais' ? 'mais' : event.target.dataset.tab);
+    const n = itens.length;
+    const destino = { ArrowRight: (atual + 1) % n, ArrowLeft: (atual + n - 1) % n, Home: 0, End: n - 1 }[event.key];
+    if (atual < 0 || destino === undefined) return;
     event.preventDefault();
-    abrirAba(TABS[destino]);
-    $(`[data-tab="${TABS[destino]}"]`).focus();
+    const alvo = itens[destino];
+    if (alvo === 'mais') {
+      $('#mais').focus();
+      return;
+    }
+    abrirAba(alvo, { manterMais: naLista });
+    $(`[data-tab="${alvo}"]`).focus();
   });
 
   document.addEventListener('click', (event) => {
+    if (maisAberto() && !event.target.closest('.tabs')) fecharMais(false); // tocou fora da lista
     const tabBtn = event.target.closest('[data-tab]');
     if (tabBtn) {
       abrirAba(tabBtn.dataset.tab);
+      if (MAIS_TABS.includes(tabBtn.dataset.tab)) $('#mais').focus();
       return;
     }
     const actionEl = event.target.closest('[data-action]');

@@ -56,7 +56,7 @@ test('backup com texto malicioso é importado como texto e não executa', async 
 
   // Percorre todas as telas que desenham os dados importados
   for (const aba of ['Painel', 'Lançamentos', 'Orçamento', 'Metas']) {
-    await page.getByRole('tab', { name: aba }).click();
+    await irParaAba(page, aba);
     await expect(page.locator('main img, main script')).toHaveCount(0);
   }
   await page.getByRole('tab', { name: 'Painel' }).click();
@@ -73,7 +73,7 @@ test('o app não faz nenhuma requisição de rede, nem ao exportar os dados', as
   await page.goto(APP);
   await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
   for (const aba of ['Painel', 'Lançamentos', 'Orçamento', 'Metas', 'Método']) {
-    await page.getByRole('tab', { name: aba }).click();
+    await irParaAba(page, aba);
   }
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Baixar backup' }).click()]);
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
