@@ -207,6 +207,7 @@
       b.tabIndex = active ? 0 : -1; // só a aba atual é parada do Tab; as setas trocam de aba
     });
     TABS.forEach((t) => { $(`#tab-${t}`).hidden = t !== state.tab; });
+    $('.fab').hidden = state.tab === 'lancamentos'; // o formulário já está nessa aba
 
     const ctx = monthContext();
     renderDashboard(ctx);

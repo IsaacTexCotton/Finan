@@ -157,7 +157,8 @@ Só faça o commit quando todas as respostas forem "sim":
   Nada de `rem` solto em `font-size`, `padding`, `margin` ou `gap` (`tests/tokens.test.js`).
   Sem kit de componentes: CSS puro, seguindo os padrões do Material 3 (privacidade, sem build).
 - **Ação principal sempre no mesmo lugar** (decisão do Isaac, 01/10/2026): o botão "+ Lançar"
-  é flutuante (`.fab`), fixo no canto inferior direito, em todas as abas e na rolagem. O fim
+  é flutuante (`.fab`), fixo no canto inferior direito e na rolagem, em todas as abas **menos
+  Lançamentos**, onde o formulário já está e o botão some (decisão do Isaac, 01/10/2026). O fim
   do conteúdo nunca fica escondido atrás dele (`tests/e2e/botao-flutuante.spec.js`).
 - **Lançar rápido** (decisão do Isaac, 01/10/2026): no formulário ficam à vista só Despesa/Receita,
   Valor, Categoria e Salvar, que cabem juntos num celular de 360×640. Data (hoje por padrão),

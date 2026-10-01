@@ -2,16 +2,17 @@ const { test, expect } = require('@playwright/test');
 const { APP } = require('./ajuda');
 
 // A ação mais usada ("+ Lançar") fica sempre no mesmo canto, ao alcance do polegar,
-// em qualquer aba e em qualquer ponto da rolagem.
+// em qualquer aba e em qualquer ponto da rolagem. Só não aparece em Lançamentos (decisão do
+// Isaac, 01/10/2026): o formulário já está ali, então o botão não faria sentido.
 
-const ABAS = ['Painel', 'Lançamentos', 'Orçamento', 'Metas', 'Método'];
+const ABAS = ['Painel', 'Orçamento', 'Metas', 'Método'];
 
 async function caixaDoBotao(page) {
   return page.getByRole('button', { name: '+ Lançar' }).boundingBox();
 }
 
 for (const largura of [320, 390, 1280]) {
-  test(`o "+ Lançar" fica no canto inferior direito, em todas as abas, em ${largura}px`, async ({ page }) => {
+  test(`o "+ Lançar" fica no canto inferior direito, nas abas em que aparece, em ${largura}px`, async ({ page }) => {
     await page.setViewportSize({ width: largura, height: 800 });
     await page.goto(APP);
     let primeira;
@@ -63,4 +64,18 @@ test('tocar no "+ Lançar" de qualquer aba abre o formulário em Despesa', async
   await page.getByRole('button', { name: '+ Lançar' }).click();
   await expect(page.locator('#tx-form')).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Despesa' })).toBeChecked();
+});
+
+test('na aba Lançamentos o "+ Lançar" não aparece, porque o formulário já está ali', async ({ page }) => {
+  await page.goto(APP);
+  const botao = page.getByRole('button', { name: '+ Lançar' });
+  await expect(botao).toBeVisible();
+  await page.getByRole('tab', { name: 'Lançamentos' }).click();
+  await expect(botao).toBeHidden();
+  await page.getByRole('tab', { name: 'Orçamento' }).click();
+  await expect(botao).toBeVisible();
+  // tocar nele em outra aba leva ao formulário, onde ele some
+  await botao.click();
+  await expect(page.locator('#tx-form').getByLabel('Valor (R$)')).toBeFocused();
+  await expect(botao).toBeHidden();
 });
