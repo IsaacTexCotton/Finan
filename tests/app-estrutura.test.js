@@ -22,3 +22,23 @@ test('confirmar() e perguntar() existem e são os únicos que chamam as janelas 
   assert.equal((app.match(/window\.confirm\(/g) || []).length, 1);
   assert.equal((app.match(/window\.prompt\(/g) || []).length, 1);
 });
+
+const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+// Nomes (chaves) de uma tabela de ações do app.js: `const NOME = {` com uma chave por linha, recuo de 4 espaços.
+function chavesDa(tabela) {
+  const m = new RegExp(`const ${tabela} = \\{([\\s\\S]*?)\\n  \\};`).exec(app);
+  assert.ok(m, `falta a tabela ${tabela} no app.js`);
+  return [...m[1].matchAll(/^ {4}'?([a-z-]+)'?:/gm)].map((x) => x[1]);
+}
+
+test('todo data-action usado na tela tem uma função registrada (ACTIONS ou ADD_ACTIONS), sem esquecer nenhum', () => {
+  const usados = new Set([...(app + html).matchAll(/data-action="([a-z-]+)"/g)].map((m) => m[1]));
+  const registradas = new Set([...chavesDa('ACTIONS'), ...chavesDa('ADD_ACTIONS'), 'open-review']); // open-review tem ouvinte próprio
+  assert.deepEqual([...usados].filter((a) => !registradas.has(a)).sort(), []);
+});
+
+test('handleAction consulta a tabela de ações, em vez de um switch com todas as ações', () => {
+  assert.doesNotMatch(app, /switch \(action\)/);
+  assert.match(app, /ACTIONS\[action\]/);
+});

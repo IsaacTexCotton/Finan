@@ -949,82 +949,89 @@
     return data;
   }
 
+  function mudarMes(delta) {
+    state.month = F.shiftMonth(state.month, delta);
+    if (!state.editingId) $('#tx-form').elements.date.value = defaultDate();
+    render();
+  }
+
+  function lancarRapido(el) {
+    state.tab = 'lancamentos';
+    if (el && el.dataset.type) $('#tx-form').elements.type.value = el.dataset.type;
+    render();
+    showTxForm();
+    $('#tx-form').elements.amount.focus();
+  }
+
+  function exportarCsv() {
+    download(`finan-${state.month}.csv`, '\ufeff' + F.toCSV(F.transactionsOfMonth(state.data.transactions, state.month), state.data.categories), 'text/csv;charset=utf-8');
+  }
+
+  function cancelarQuestionario() {
+    closeQuiz();
+    $('[data-action="suggest-budget"]').focus();
+  }
+
+  function criarReserva(el) {
+    state.data.goals.unshift(F.createEmergencyGoal(Number(el.dataset.target), newId()));
+    commit('Meta de reserva criada.');
+  }
+
+  function atualizarReserva(el) {
+    const goal = state.data.goals.find((g) => g.id === el.dataset.id);
+    if (goal) goal.target = Number(el.dataset.target);
+    commit('Meta de reserva atualizada.');
+  }
+
+  function excluirMeta(el) {
+    if (!confirmar('Excluir esta meta?')) return;
+    state.data.goals = state.data.goals.filter((g) => g.id !== el.dataset.id);
+    commit('Meta excluída.');
+  }
+
+  function exportarBackup() {
+    download(`finan-backup-${F.todayISO()}.json`, JSON.stringify(state.data, null, 2), 'application/json');
+  }
+
+  function carregarExemplo() {
+    if (state.data.transactions.length && !confirmar('Substituir seus dados pelos dados de exemplo?')) return;
+    state.data = demoData();
+    state.month = F.monthKey(F.todayISO());
+    state.tab = 'painel';
+    commit('Dados de exemplo carregados. Use "Apagar tudo" para começar do zero.');
+  }
+
+  function apagarTudo() {
+    if (!confirmar('Apagar TODOS os lançamentos, orçamentos e metas deste navegador? Não dá para desfazer.')) return;
+    state.data = F.emptyData();
+    resetTxForm();
+    commit('Dados apagados.');
+  }
+
+  // Cada botão com data-action chama a função daqui; o clique chega por handleAction (e a tecla "n" por 'quick-add').
+  const ACTIONS = {
+    'prev-month': () => mudarMes(-1),
+    'next-month': () => mudarMes(1),
+    'quick-add': (el) => lancarRapido(el),
+    'cancel-edit': () => resetTxForm(),
+    'edit-tx': (el) => startEdit(el.dataset.id),
+    'delete-tx': (el) => deleteTransaction(el.dataset.id),
+    'copy-recurring': () => copyRecurring(),
+    'export-csv': () => exportarCsv(),
+    'suggest-budget': () => suggestBudget(),
+    'cancel-quiz': () => cancelarQuestionario(),
+    'create-emergency': (el) => criarReserva(el),
+    'update-emergency': (el) => atualizarReserva(el),
+    'deposit-goal': (el) => depositGoal(el.dataset.id),
+    'delete-goal': (el) => excluirMeta(el),
+    'export-json': () => exportarBackup(),
+    'load-demo': () => carregarExemplo(),
+    'reset': () => apagarTudo(),
+  };
+
   function handleAction(action, el) {
-    switch (action) {
-      case 'prev-month':
-      case 'next-month':
-        state.month = F.shiftMonth(state.month, action === 'prev-month' ? -1 : 1);
-        if (!state.editingId) $('#tx-form').elements.date.value = defaultDate();
-        render();
-        break;
-      case 'quick-add':
-        state.tab = 'lancamentos';
-        if (el && el.dataset.type) $('#tx-form').elements.type.value = el.dataset.type;
-        render();
-        showTxForm();
-        $('#tx-form').elements.amount.focus();
-        break;
-      case 'cancel-edit':
-        resetTxForm();
-        break;
-      case 'edit-tx':
-        startEdit(el.dataset.id);
-        break;
-      case 'delete-tx':
-        deleteTransaction(el.dataset.id);
-        break;
-      case 'copy-recurring':
-        copyRecurring();
-        break;
-      case 'export-csv':
-        download(`finan-${state.month}.csv`, '﻿' + F.toCSV(F.transactionsOfMonth(state.data.transactions, state.month), state.data.categories), 'text/csv;charset=utf-8');
-        break;
-      case 'suggest-budget':
-        suggestBudget();
-        break;
-      case 'cancel-quiz':
-        closeQuiz();
-        $('[data-action="suggest-budget"]').focus();
-        break;
-      case 'create-emergency':
-        state.data.goals.unshift(F.createEmergencyGoal(Number(el.dataset.target), newId()));
-        commit('Meta de reserva criada.');
-        break;
-      case 'update-emergency': {
-        const goal = state.data.goals.find((g) => g.id === el.dataset.id);
-        if (goal) goal.target = Number(el.dataset.target);
-        commit('Meta de reserva atualizada.');
-        break;
-      }
-      case 'deposit-goal':
-        depositGoal(el.dataset.id);
-        break;
-      case 'delete-goal':
-        if (confirmar('Excluir esta meta?')) {
-          state.data.goals = state.data.goals.filter((g) => g.id !== el.dataset.id);
-          commit('Meta excluída.');
-        }
-        break;
-      case 'export-json':
-        download(`finan-backup-${F.todayISO()}.json`, JSON.stringify(state.data, null, 2), 'application/json');
-        break;
-      case 'load-demo':
-        if (state.data.transactions.length && !confirmar('Substituir seus dados pelos dados de exemplo?')) return;
-        state.data = demoData();
-        state.month = F.monthKey(F.todayISO());
-        state.tab = 'painel';
-        commit('Dados de exemplo carregados. Use "Apagar tudo" para começar do zero.');
-        break;
-      case 'reset':
-        if (confirmar('Apagar TODOS os lançamentos, orçamentos e metas deste navegador? Não dá para desfazer.')) {
-          state.data = F.emptyData();
-          resetTxForm();
-          commit('Dados apagados.');
-        }
-        break;
-      default:
-        break;
-    }
+    const acao = ACTIONS[action];
+    if (acao) acao(el);
   }
 
   // ---------- Eventos ----------
