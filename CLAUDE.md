@@ -152,6 +152,10 @@ Só faça o commit quando todas as respostas forem "sim":
 - Celular primeiro; o app precisa permitir lançar e consultar rápido, com uma mão.
 - Cores só pelas variáveis do `:root` em `css/styles.css`. Contraste mínimo WCAG AA: 4,5:1
   para texto e 3:1 para bordas, foco e barras. Cor nova entra no teste de pares.
+- **Tamanhos de fonte e espaçamentos só pelos tokens do `:root`** (decisão do Isaac, 01/10/2026):
+  fonte `--fs-small|body|title|number|display`; espaçamento `--space-1…5` (4, 8, 12, 16, 24 px).
+  Nada de `rem` solto em `font-size`, `padding`, `margin` ou `gap` (`tests/tokens.test.js`).
+  Sem kit de componentes: CSS puro, seguindo os padrões do Material 3 (privacidade, sem build).
 - Alvos de toque com pelo menos 44px (`--tap`), inclusive botões "pequenos".
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
   Em campos de texto e de escolha o foco pinta a própria borda de azul e o contorno cola nela

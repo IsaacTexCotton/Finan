@@ -35,3 +35,21 @@ test('só existem os tokens de fonte definidos', () => {
   const used = new Set([...outsideRoot.matchAll(/var\(--(fs-[a-z]+)\)/g)].map((m) => m[1]));
   for (const name of used) assert.ok(FONT_TOKENS.includes(name), `--${name} não existe na escala`);
 });
+
+const SPACE_TOKENS = { 'space-1': '0.25rem', 'space-2': '0.5rem', 'space-3': '0.75rem', 'space-4': '1rem', 'space-5': '1.5rem' };
+
+test('a escala de espaçamento (4, 8, 12, 16 e 24 px) é definida no :root', () => {
+  for (const [name, value] of Object.entries(SPACE_TOKENS)) {
+    assert.match(rootBlock, new RegExp(`--${name}:\\s*${value.replace('.', '\\.')}\\s*;`), `falta --${name}: ${value}`);
+  }
+});
+
+test('margens, preenchimentos e vãos usam só a escala (ou 0, auto e traços de 1px)', () => {
+  const spacing = valuesOf('(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?');
+  assert.ok(spacing.length > 60, 'esperava achar as declarações de espaçamento');
+  const allowed = /^(?:0|auto|-?1px|var\(--space-[1-5]\))$/;
+  const loose = spacing
+    .map((d) => ({ ...d, parts: d.value.replace(/calc\((.*)\)/, '$1').split(/\s+/) }))
+    .filter((d) => d.parts.some((p) => !allowed.test(p) && !/^[*]$|^\d+$/.test(p)));
+  assert.deepEqual(loose.map((d) => `${d.property}: ${d.value}`), [], 'espaçamento fora da escala');
+});
