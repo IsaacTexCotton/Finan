@@ -937,3 +937,40 @@ test('applyEdit troca os campos, mantém a identidade e cuida do vínculo com a 
   const depositoReserva = { ...atual, categoryId: 'reserva', goalId: 'g1' };
   assert.equal(F.applyEdit(depositoReserva, { ...novo, categoryId: 'reserva' }).goalId, 'g1'); // reserva continua ligada
 });
+
+// Refatoração, passo 3: metas e duas contas que a tela repetia.
+test('isReserveGoal reconhece a meta de reserva pelo nome, e o depósito usa a mesma regra', () => {
+  assert.equal(F.isReserveGoal({ name: 'Reserva de emergência' }), true);
+  assert.equal(F.isReserveGoal({ name: 'Minha RESERVA' }), true);
+  assert.equal(F.isReserveGoal({ name: 'Viagem' }), false);
+  assert.equal(F.createGoalDeposit({ id: 'g1', name: 'Minha reserva' }, 1000, '2026-10-01', 'd1').categoryId, 'reserva');
+  assert.equal(F.createGoalDeposit({ id: 'g2', name: 'Viagem' }, 1000, '2026-10-01', 'd2').categoryId, F.GOALS_CATEGORY);
+});
+
+test('createEmergencyGoal cria a meta de reserva com o valor ideal', () => {
+  const meta = F.createEmergencyGoal(1570002, 'g9');
+  assert.deepEqual(meta, { id: 'g9', name: 'Reserva de emergência', target: 1570002, saved: 0, deadline: '' });
+  assert.equal(F.isReserveGoal(meta), true);
+});
+
+test('createGoal limpa o nome, usa "Meta" se vier vazio e converte o prazo (mês) em data', () => {
+  assert.deepEqual(F.createGoal({ name: '  Viagem  ', target: 600000, saved: 1000, deadline: '2027-05' }, 'g1'), { id: 'g1', name: 'Viagem', target: 600000, saved: 1000, deadline: '2027-05-01' });
+  assert.equal(F.createGoal({ name: '   ', target: 100, saved: 0, deadline: '' }, 'g2').name, 'Meta');
+  assert.equal(F.createGoal({ name: 'N'.repeat(80), target: 100, saved: 0, deadline: '' }, 'g3').name.length, 60);
+  assert.equal(F.createGoal({ name: 'x', target: 100, saved: 0, deadline: '' }, 'g4').deadline, '');
+});
+
+test('budgetTotal soma só os limites das categorias de despesa', () => {
+  assert.equal(F.budgetTotal({ mercado: 50000, lazer: 20000, salario: 99999 }, cats), 70000); // salário é receita: não entra
+  assert.equal(F.budgetTotal({}, cats), 0);
+  assert.equal(F.budgetTotal({ naoExiste: 500 }, cats), 0);
+});
+
+test('savingsGoalReached: bateu a meta de guardar só com renda e com taxa igual ou maior que a do plano', () => {
+  const plano = { futuro: 20 };
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.2 }, plano), true);
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.19 }, plano), false);
+  assert.equal(F.savingsGoalReached({ income: 0, savingsRate: 0.5 }, plano), false); // sem renda não há o que comparar
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.2 }, undefined), true); // sem plano, vale o 20% padrão
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.1 }, { futuro: 5 }), true);
+});

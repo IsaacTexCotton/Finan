@@ -303,6 +303,11 @@
       });
   }
 
+  /** Soma dos limites (envelopes) definidos nas categorias de despesa, em centavos. */
+  function budgetTotal(budgets, categories) {
+    return categories.filter((c) => c.type === 'expense').reduce((sum, c) => sum + (budgets[c.id] || 0), 0);
+  }
+
   /**
    * Quanto dá para gastar por dia, até o fim do mês, nas categorias variáveis
    * sem estourar nenhum envelope nem passar do que sobrou (`summary` do mês).
@@ -648,12 +653,33 @@
     return updated;
   }
 
+  /** A meta de reserva de emergência é reconhecida pelo nome ("reserva"). */
+  function isReserveGoal(goal) {
+    return /reserva/i.test(goal.name);
+  }
+
+  /** Meta nova a partir do formulário: nome aparado em 60 letras ("Meta" se vier vazio) e prazo (mês) como data do dia 1. */
+  function createGoal(fields, id) {
+    return {
+      id,
+      name: String(fields.name || '').trim().slice(0, 60) || 'Meta',
+      target: fields.target,
+      saved: fields.saved,
+      deadline: fields.deadline ? `${fields.deadline}-01` : '',
+    };
+  }
+
+  /** Meta de reserva de emergência, com o valor ideal calculado e nada guardado ainda. */
+  function createEmergencyGoal(target, id) {
+    return { id, name: 'Reserva de emergência', target, saved: 0, deadline: '' };
+  }
+
   /** Depósito numa meta = lançamento do balde Futuro ligado a ela (a reserva vai para "Reserva de emergência"). */
   function createGoalDeposit(goal, amount, date, id) {
     return {
       id,
       type: 'expense',
-      categoryId: /reserva/i.test(goal.name) ? 'reserva' : GOALS_CATEGORY,
+      categoryId: isReserveGoal(goal) ? 'reserva' : GOALS_CATEGORY,
       amount,
       date,
       description: `Meta: ${goal.name}`.slice(0, 120),
@@ -774,6 +800,12 @@
     return { level: 'info', text: `Seu plano está em ${split} porque os essenciais somaram ${pct} da renda nos últimos meses. Conforme eles caírem, o plano volta sozinho para 50/30/20.` };
   }
 
+  /** Bateu a meta de guardar: tem renda e a taxa de poupança chegou à parte do Futuro do plano (20% sem plano). */
+  function savingsGoalReached(summary, plan) {
+    const goal = (plan ? plan.futuro : DEFAULT_TARGETS.futuro) / 100;
+    return summary.income > 0 && summary.savingsRate >= goal;
+  }
+
   function insights({ summary, buckets, budgetRows, previousSummary, categories, commitments, plan }) {
     const list = [];
     const cats = indexCategories(categories);
@@ -813,8 +845,7 @@
     }
     const planMessage = planInsight(plan);
     if (planMessage) list.push(planMessage);
-    const savingsGoal = (plan ? plan.futuro : DEFAULT_TARGETS.futuro) / 100;
-    if (summary.income > 0 && summary.savingsRate >= savingsGoal) {
+    if (savingsGoalReached(summary, plan)) {
       list.push({ level: 'bom', text: `Excelente! Você guardou ${formatPercent(summary.savingsRate)} da renda.` });
     }
     if (!list.length) list.push({ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' });
@@ -979,6 +1010,11 @@
     recurringForMonth,
     MAX_INSTALLMENTS,
     GOALS_CATEGORY,
+    isReserveGoal,
+    createGoal,
+    createEmergencyGoal,
+    budgetTotal,
+    savingsGoalReached,
     isISODate,
     buildEntry,
     requestedInstallments,

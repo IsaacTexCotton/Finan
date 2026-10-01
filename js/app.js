@@ -344,7 +344,7 @@
   function renderCards(summary, plan) {
     const temRenda = summary.income > 0;
     const sobrouClasse = summary.balance < 0 ? 'negative' : 'positive';
-    const guardadoClasse = temRenda && summary.savingsRate >= plan.futuro / 100 ? 'positive' : '';
+    const guardadoClasse = F.savingsGoalReached(summary, plan) ? 'positive' : '';
     const taxa = temRenda ? `${esc(F.formatPercent(summary.savingsRate))} da renda` : 'sem renda ainda';
     $('#summary-cards').innerHTML = `
       <div class="card"><span class="card-label">Receitas</span><span class="card-value">${money(summary.income)}</span></div>
@@ -466,7 +466,7 @@
   function renderBudget(ctx) {
     const { summary, budgetRows, plan } = ctx;
     const rows = Object.fromEntries(budgetRows.map((r) => [r.categoryId, r]));
-    const totalBudget = expenseCategories().reduce((sum, c) => sum + (state.data.budgets[c.id] || 0), 0);
+    const totalBudget = F.budgetTotal(state.data.budgets, state.data.categories);
     const unassigned = summary.income - totalBudget;
 
     let zb;
@@ -562,7 +562,7 @@
     const profileId = state.data.settings.incomeProfile;
     const months = F.INCOME_PROFILES[profileId].months;
     const target = F.emergencyFundTarget(state.data.transactions, state.data.categories, state.month, profileId);
-    const saved = state.data.goals.find((g) => /reserva/i.test(g.name));
+    const saved = state.data.goals.find(F.isReserveGoal);
     let goalAction = '';
     if (target > 0 && !saved) goalAction = `<button type="button" class="btn primary" data-action="create-emergency" data-target="${target}">Criar meta de reserva</button>`;
     else if (target > 0 && saved.target !== target) goalAction = `<button type="button" class="btn" data-action="update-emergency" data-id="${esc(saved.id)}" data-target="${target}">Atualizar minha meta para ${money(target)}</button>`;
@@ -875,14 +875,7 @@
       error.textContent = 'Valor guardado inválido.';
       return;
     }
-    const month = form.elements.deadline.value;
-    state.data.goals.push({
-      id: newId(),
-      name: form.elements.name.value.trim().slice(0, 60) || 'Meta',
-      target,
-      saved,
-      deadline: month ? `${month}-01` : '',
-    });
+    state.data.goals.push(F.createGoal({ name: form.elements.name.value, target, saved, deadline: form.elements.deadline.value }, newId()));
     form.reset();
     error.textContent = '';
     commit('Meta criada.');
@@ -984,7 +977,7 @@
         $('[data-action="suggest-budget"]').focus();
         break;
       case 'create-emergency':
-        state.data.goals.unshift({ id: newId(), name: 'Reserva de emergência', target: Number(el.dataset.target), saved: 0, deadline: '' });
+        state.data.goals.unshift(F.createEmergencyGoal(Number(el.dataset.target), newId()));
         commit('Meta de reserva criada.');
         break;
       case 'update-emergency': {
