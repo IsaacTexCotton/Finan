@@ -48,6 +48,10 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Teste no navegador: receita e despesa continuam lá depois de recarregar a página
 
 ## Parte 5 — Publicar
+- [x] App instalável e que abre sem internet (manifesto, ícones, service worker de rede primeiro)
+- [ ] Dados protegidos: pedir armazenamento persistente ao navegador e mostrar o estado em "Seus dados"
+- [ ] Backup: decidir o que fazer (cópias internas automáticas, lembrete de backup externo ou os dois)
+- [ ] Ícone definitivo do app (hoje é uma letra F provisória; não é prioridade)
 - [ ] README com o método e como usar
 - [x] Revisão de segurança antes de publicar: nenhum segredo ou dado pessoal no repositório;
       testes no navegador provam que texto malicioso (digitado ou vindo de backup) aparece

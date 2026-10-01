@@ -13,8 +13,13 @@ module.exports = [
     },
   },
   {
-    files: ['tests/**/*.js', 'eslint.config.js', 'playwright.config.js'],
+    files: ['tests/**/*.js', 'tools/**/*.js', 'eslint.config.js', 'playwright.config.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: globals.node },
+  },
+  {
+    // O service worker roda num contexto próprio (self, caches, clients), não na página.
+    files: ['sw.js'],
+    languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: globals.serviceworker },
   },
   {
     // Os testes no navegador têm funções (page.evaluate) que rodam dentro da página.

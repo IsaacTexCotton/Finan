@@ -198,6 +198,18 @@ Só faça o commit quando todas as respostas forem "sim":
 - Ao mudar o visual ou o comportamento de uma tela, rodar `npm run test:e2e` (navegador de
   celular de verdade) e olhar a captura.
 
+# App instalável (PWA)
+- O Finan é instalável e abre sem internet (decisão do Isaac, 01/10/2026: entrega por link de
+  acesso, instalado no celular). `manifest.webmanifest`, `sw.js` e `icons/` (PNG gerados de
+  `icons/icon.svg` por `node tools/gerar-icones.js`; o ícone, uma letra F, é provisório).
+- O service worker usa **rede primeiro**: com internet entrega sempre a versão mais nova; sem
+  internet, a cópia guardada. Nunca fica preso numa versão antiga. Só mexe em arquivos do próprio
+  site e **nunca chama endereço externo**. Só é registrado em http(s), não ao abrir o arquivo.
+- Service worker não roda em `file://`: os testes em `tests/e2e/pwa.spec.js` usam um servidor
+  local que entrega só o que a publicação entrega.
+- O site publicado de hoje (completo e grátis) é o ambiente de teste do Isaac; o app que for
+  vendido ficará em outro endereço (decisão a tomar quando chegar a hora).
+
 # Segurança e privacidade (inegociável)
 - Os dados **nunca saem do navegador**: nada de APIs externas, analytics, CDNs com rastreio
   ou envio de dados. Persistência só em `localStorage` e backups baixados pelo usuário.
@@ -210,7 +222,8 @@ Só faça o commit quando todas as respostas forem "sim":
   garante que HTML digitado ou vindo de backup nunca executa e que o app não faz requisição
   de rede. Mudou como algo é desenhado na tela? Esses testes têm que continuar passando.
 - Publicação (GitHub Pages): `.github/workflows/publicar.yml` publica só `index.html`,
-  `css/` e `js/`. Arquivo novo que o app precise em produção tem que entrar nesse `cp`.
+  `manifest.webmanifest`, `sw.js`, `css/`, `js/` e `icons/`. Arquivo novo que o app precise em
+  produção tem que entrar nesse `cp` (`tests/pwa.test.js` confere).
   Publica sozinho depois que a CI passa num push no `main` (nunca em PR de fork), e também
   pode ser disparado à mão. Endereço: https://isaactexcotton.github.io/Finan/
 

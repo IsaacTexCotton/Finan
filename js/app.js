@@ -1189,6 +1189,11 @@
     }
   });
 
+  // App instalável e que abre sem internet. Só em http(s): ao abrir o arquivo direto (file://) não vale.
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* sem service worker o app continua funcionando */ });
+  }
+
   resetTxForm();
   render();
 })();
