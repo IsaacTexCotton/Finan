@@ -523,6 +523,33 @@ select:disabled {
   margin-bottom: var(--space-3);
 }
 
+/* Revisão semanal: cada item é uma linha tocável, sem marcadores soltos. */
+.checklist {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  border-bottom: 1px solid var(--border);
+}
+
+.checklist li:last-child {
+  border-bottom: 0;
+}
+
+.checklist .check {
+  display: flex;
+  width: 100%;
+  padding-block: var(--space-2);
+}
+
+.checklist input[type="checkbox"] {
+  flex: none;
+  width: var(--space-5);
+  height: var(--space-5);
+}
+
 .check {
   flex-direction: row;
   align-items: center;
