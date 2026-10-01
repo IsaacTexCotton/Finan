@@ -53,3 +53,12 @@ test('margens, preenchimentos e vãos usam só a escala (ou 0, auto e traços de
     .filter((d) => d.parts.some((p) => !allowed.test(p) && !/^[*]$|^\d+$/.test(p)));
   assert.deepEqual(loose.map((d) => `${d.property}: ${d.value}`), [], 'espaçamento fora da escala');
 });
+
+test('a mensagem de confirmação (.toast) posiciona-se só pelos tokens de espaçamento', () => {
+  const regra = css.match(/\.toast\s*\{([^}]*)\}/);
+  assert.ok(regra, 'esperava achar a regra .toast');
+  const posicoes = [...regra[1].matchAll(/(?:^|[;\s])(right|bottom|left|top):\s*([^;]+)/g)].map((m) => `${m[1]}: ${m[2].trim()}`);
+  assert.ok(posicoes.length >= 3, 'esperava right, bottom e left');
+  const soltos = posicoes.filter((v) => /(?<![\w-])\d*\.?\d+rem/.test(v.replace(/var\([^)]*\)/g, '')));
+  assert.deepEqual(soltos, [], '.toast com rem solto');
+});

@@ -79,3 +79,13 @@ test('na aba Lançamentos o "+ Lançar" não aparece, porque o formulário já e
   await expect(page.locator('#tx-form').getByLabel('Valor (R$)')).toBeFocused();
   await expect(botao).toBeHidden();
 });
+
+test('a mensagem de confirmação aparece acima do "+ Lançar", sem cobri-lo', async ({ page }) => {
+  await page.goto(APP);
+  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  const aviso = page.locator('#toast.show');
+  await expect(aviso).toBeVisible();
+  const botao = await caixaDoBotao(page);
+  const caixaAviso = await aviso.boundingBox();
+  expect(caixaAviso.y + caixaAviso.height, 'o aviso termina acima do botão').toBeLessThanOrEqual(botao.y);
+});

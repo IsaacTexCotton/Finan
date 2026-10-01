@@ -852,9 +852,10 @@ select:disabled {
 
 .toast {
   position: fixed;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  left: 0.75rem;
+  right: var(--space-3);
+  /* acima do botão "+ Lançar" (que fica no canto, com a mesma folga do rodapé) */
+  bottom: calc(var(--space-4) + var(--tap) + var(--space-2) + var(--space-2));
+  left: var(--space-3);
   z-index: 20;
   max-width: 28rem;
   margin: 0 auto;

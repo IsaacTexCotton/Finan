@@ -34,6 +34,7 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Botão "+ Lançar" flutuante, sempre no mesmo canto (substitui o do topo)
 - [x] Painel: os 4 números e o "pode gastar hoje" cabem na primeira tela do celular (teste de proteção)
 - [x] Formulário rápido: só Despesa/Receita, Valor, Categoria e Salvar à vista; o resto em "Mais detalhes"
+- [x] Mensagem de confirmação acima do botão "+ Lançar", com os tokens de espaçamento
 - [ ] Navegação inferior com 4 itens (Painel, Lançamentos, Orçamento, Mais): decisão do Isaac
       (01/10/2026); exige trocar os testes `abas-visiveis` e `acessibilidade`, que ele precisa autorizar
 - [ ] Visual das telas Metas e Método
