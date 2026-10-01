@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, irParaAba } = require('./ajuda');
 
 // A pessoa escolhe o dia da revisão semanal (padrão: domingo). No dia, e depois dele, o Painel
 // lembra enquanto a revisão da semana não estiver completa. Qualquer dia continua valendo para fazê-la.
@@ -28,7 +28,7 @@ test('no domingo (padrão) o Painel lembra e o botão leva à revisão', async (
 
 test('completar a revisão tira o lembrete', async ({ page }) => {
   await abrir(page, '27');
-  await page.getByRole('tab', { name: 'Método' }).click();
+  await irParaAba(page, 'Método');
   for (const caixa of await page.locator('#review-list input[type=checkbox]').all()) await caixa.check();
   await page.getByRole('tab', { name: 'Painel' }).click();
   await expect(lembrete(page)).toBeEmpty();
@@ -38,7 +38,7 @@ test('antes do dia escolhido não lembra; depois dele, avisa que está atrasada'
   await abrir(page, '26'); // sábado, com o domingo de padrão
   await expect(lembrete(page)).toBeEmpty();
 
-  await page.getByRole('tab', { name: 'Método' }).click();
+  await irParaAba(page, 'Método');
   await page.getByLabel('Meu dia de revisão').selectOption({ label: 'Sexta-feira' });
   await expect(page.getByRole('status')).toContainText('Dia da revisão atualizado');
   await page.getByRole('tab', { name: 'Painel' }).click();
@@ -47,7 +47,7 @@ test('antes do dia escolhido não lembra; depois dele, avisa que está atrasada'
 
 test('escolher o próprio dia de hoje faz o lembrete aparecer', async ({ page }) => {
   await abrir(page, '26');
-  await page.getByRole('tab', { name: 'Método' }).click();
+  await irParaAba(page, 'Método');
   await page.getByLabel('Meu dia de revisão').selectOption({ label: 'Sábado' });
   await page.getByRole('tab', { name: 'Painel' }).click();
   await expect(lembrete(page)).toContainText('Hoje é o seu dia de revisão semanal');

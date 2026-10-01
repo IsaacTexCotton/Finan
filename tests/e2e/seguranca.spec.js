@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar } = require('./ajuda');
+const { APP, lancar, irParaAba } = require('./ajuda');
 
 // Se algum destes textos virar HTML de verdade, o navegador executa o código
 // e a variável window.__xss deixa de ser 0.
@@ -20,7 +20,7 @@ test('texto digitado com HTML aparece como texto e não executa', async ({ page 
   await expect(lista.locator('.tx').filter({ hasText: '<img src=x onerror' })).toBeVisible();
   await expect(lista.locator('img, script')).toHaveCount(0);
 
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.locator('#goal-form').getByLabel('Nome').fill('<b>Viagem</b>');
   await page.locator('#goal-form').getByLabel('Valor total (R$)').fill('1000');
   await page.getByRole('button', { name: 'Criar meta' }).click();
@@ -50,7 +50,7 @@ test('backup com texto malicioso é importado como texto e não executa', async 
     settings: { incomeProfile: '<script>window.__xss=3</script>' },
   };
 
-  await page.getByRole('tab', { name: 'Método' }).click();
+  await irParaAba(page, 'Método');
   await page.locator('#import-file').setInputFiles({ name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
   await expect(page.getByRole('status')).toContainText('Backup restaurado');
 

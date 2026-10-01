@@ -4,6 +4,11 @@ const { pathToFileURL } = require('node:url');
 /** Endereço do app, aberto direto do arquivo (ele não precisa de servidor). */
 const APP = pathToFileURL(path.join(__dirname, '..', '..', 'index.html')).href;
 
+/** Vai para uma aba do app, como a pessoa faz (toca no nome dela). */
+async function irParaAba(page, nome) {
+  await page.getByRole('tab', { name: nome }).click();
+}
+
 /** Abre o "Mais detalhes" do formulário (data, descrição, parcelas e fixo ficam recolhidos). */
 async function abrirDetalhes(formulario) {
   const detalhes = formulario.locator('details.more');
@@ -25,4 +30,4 @@ async function lancar(page, { tipo, valor, categoria, descricao }) {
   await formulario.getByRole('button', { name: 'Salvar' }).click();
 }
 
-module.exports = { APP, lancar, abrirDetalhes };
+module.exports = { APP, lancar, abrirDetalhes, irParaAba };

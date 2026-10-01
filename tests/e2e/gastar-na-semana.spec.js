@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, irParaAba } = require('./ajuda');
 
 // Junto do "Você pode gastar hoje", o cartão diz quanto dá para gastar até domingo.
 // Hoje fixo em segunda-feira, 14/09/2026: a semana tem 7 dias.
@@ -28,7 +28,7 @@ test('mostra o que dá para gastar hoje e até domingo, contando até o fim do m
 });
 
 test('com o dia de pagamento informado, a semana usa o valor até o próximo pagamento', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.getByLabel('Em que dia útil você recebe?').selectOption('5');
   await page.getByRole('tab', { name: 'Painel' }).click();
   await expect(cartao(page)).toContainText(/R\$\s21,73/); // (600 − 100) ÷ 23 dias

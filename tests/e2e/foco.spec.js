@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar } = require('./ajuda');
+const { APP, lancar, irParaAba } = require('./ajuda');
 
 // Quem usa teclado ou leitor de tela precisa continuar no mesmo lugar depois de cada ação.
 // Antes, a tela era redesenhada e o foco voltava para o início da página.
@@ -23,7 +23,7 @@ test.describe('o controle continua lá depois do redesenho', () => {
   });
 
   test('Método: marcar um item da revisão semanal com Espaço mantém o foco nele', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Método' }).click();
+    await irParaAba(page, 'Método');
     const item = page.getByLabel(/Conferi se todos os gastos/);
     await item.focus();
     await page.keyboard.press('Space');
@@ -32,7 +32,7 @@ test.describe('o controle continua lá depois do redesenho', () => {
   });
 
   test('Metas: "Guardar valor" mantém o foco no mesmo botão', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Metas' }).click();
+    await irParaAba(page, 'Metas');
     const botao = page.locator('#goal-list .goal').first().getByRole('button', { name: 'Guardar valor' });
     await botao.focus();
     await page.keyboard.press('Enter');
@@ -50,7 +50,7 @@ test.describe('o controle continua lá depois do redesenho', () => {
   });
 
   test('Metas: trocar o tipo de renda com as setas mantém o foco na lista', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Metas' }).click();
+    await irParaAba(page, 'Metas');
     const lista = page.getByLabel('Seu tipo de renda');
     await lista.focus();
     await page.keyboard.press('ArrowDown');
@@ -70,7 +70,7 @@ test.describe('o controle em que a pessoa estava some', () => {
 
   test('criar a meta de reserva (o botão some) leva o foco ao título da reserva', async ({ page }) => {
     await lancar(page, { tipo: 'Despesa', valor: '1000', categoria: 'moradia', descricao: 'Aluguel' });
-    await page.getByRole('tab', { name: 'Metas' }).click();
+    await irParaAba(page, 'Metas');
     await page.getByRole('button', { name: 'Criar meta de reserva' }).focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('#goal-list .goal')).toHaveCount(1);

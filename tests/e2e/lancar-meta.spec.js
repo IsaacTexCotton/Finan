@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, abrirDetalhes } = require('./ajuda');
+const { APP, abrirDetalhes, irParaAba } = require('./ajuda');
 
 // No formulário de lançamento, o balde Futuro tem a categoria "Metas". Ao escolhê-la, abre a lista
 // das metas da pessoa ("Para qual meta?"). Sem nenhuma meta, a categoria nem aparece.
@@ -40,7 +40,7 @@ test.describe('com metas', () => {
 
     // vira lançamento do Futuro com a descrição padrão da meta
     await expect(page.locator('#tx-list .tx').filter({ hasText: 'Meta: Viagem de férias' })).toContainText(/R\$\s300,00/);
-    await page.getByRole('tab', { name: 'Metas' }).click();
+    await irParaAba(page, 'Metas');
     await expect(meta(page, 'Viagem de férias')).toContainText(/R\$\s1\.500,00 de R\$\s6\.000,00/);
     await page.getByRole('tab', { name: 'Painel' }).click();
     await expect(page.locator('#summary-cards .card').filter({ hasText: 'Guardado' })).toContainText(/R\$\s1\.200,00/);
@@ -67,7 +67,7 @@ test.describe('com metas', () => {
     await formulario(page).getByLabel('Categoria').selectOption('mercado');
     await formulario(page).getByRole('button', { name: 'Salvar alterações' }).click();
 
-    await page.getByRole('tab', { name: 'Metas' }).click();
+    await irParaAba(page, 'Metas');
     await expect(meta(page, 'Viagem de férias')).toContainText(/R\$\s1\.200,00 de R\$\s6\.000,00/);
   });
 });

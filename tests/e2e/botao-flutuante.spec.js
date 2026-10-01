@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, irParaAba } = require('./ajuda');
 
 // A ação mais usada ("+ Lançar") fica sempre no mesmo canto, ao alcance do polegar,
 // em qualquer aba e em qualquer ponto da rolagem. Só não aparece em Lançamentos (decisão do
@@ -32,7 +32,7 @@ for (const largura of [320, 390, 1280]) {
 test('o "+ Lançar" não sai do lugar quando a página rola', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 600 });
   await page.goto(APP);
-  await page.getByRole('tab', { name: 'Método' }).click();
+  await irParaAba(page, 'Método');
   const antes = await caixaDoBotao(page);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   const depois = await caixaDoBotao(page);
@@ -43,7 +43,7 @@ test('o "+ Lançar" não sai do lugar quando a página rola', async ({ page }) =
 test('o "+ Lançar" não esconde o fim do conteúdo: dá para rolar até ele ficar livre', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 600 });
   await page.goto(APP);
-  await page.getByRole('tab', { name: 'Método' }).click();
+  await irParaAba(page, 'Método');
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   const botao = await caixaDoBotao(page);
   const fimDoConteudo = await page.evaluate(() => {
@@ -60,7 +60,7 @@ test('o topo não tem mais o "+ Lançar": só o título e o mês', async ({ page
 
 test('tocar no "+ Lançar" de qualquer aba abre o formulário em Despesa', async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.getByRole('button', { name: '+ Lançar' }).click();
   await expect(page.locator('#tx-form')).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Despesa' })).toBeChecked();

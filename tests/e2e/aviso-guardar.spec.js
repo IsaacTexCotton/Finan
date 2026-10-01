@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar } = require('./ajuda');
+const { APP, lancar, irParaAba } = require('./ajuda');
 
 // Decisão do Isaac (30/09/2026): "Sobrou" pode ficar negativo, mas o app avisa ANTES de deixar
 // guardar mais do que sobrou, e a pessoa escolhe se guarda mesmo assim.
@@ -64,7 +64,7 @@ test('guardar dentro do que sobrou não avisa nada', async ({ page }) => {
 
 test('o mesmo aviso vale para "Guardar valor" numa meta', async ({ page }) => {
   await mesComSobraDe200(page);
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.getByRole('button', { name: 'Criar meta de reserva' }).click();
   avisos = [];
   aceitar = false;
@@ -74,7 +74,7 @@ test('o mesmo aviso vale para "Guardar valor" numa meta', async ({ page }) => {
   await expect(page.locator('#tx-list .tx').filter({ hasText: 'Meta: Reserva de emergência' })).toHaveCount(0);
 
   aceitar = true;
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.getByRole('button', { name: /Guardar valor/ }).click();
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
   await expect(page.locator('#tx-list .tx').filter({ hasText: 'Meta: Reserva de emergência' })).toHaveCount(1);

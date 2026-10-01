@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, irParaAba } = require('./ajuda');
 
 // "Você pode gastar hoje": por padrão conta até o fim do mês. Quem tem renda estável e recebe
 // no N-ésimo dia útil informa esse dia e o valor passa a durar até o próximo pagamento.
@@ -29,7 +29,7 @@ test('sem informar o dia de pagamento, conta até o fim do mês', async ({ page 
 });
 
 test('com o 5º dia útil, dura até o próximo pagamento e só conta os gastos do ciclo', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.getByLabel('Em que dia útil você recebe?').selectOption('5');
   await expect(page.getByRole('status')).toContainText('Dia de pagamento atualizado');
 
@@ -41,7 +41,7 @@ test('com o 5º dia útil, dura até o próximo pagamento e só conta os gastos 
 });
 
 test('renda variável continua contando até o fim do mês', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.getByLabel('Em que dia útil você recebe?').selectOption('5');
   await page.getByLabel('Seu tipo de renda').selectOption('variavel');
   await expect(page.getByLabel('Em que dia útil você recebe?')).toHaveCount(0);

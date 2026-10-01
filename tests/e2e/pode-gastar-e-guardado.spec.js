@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, irParaAba } = require('./ajuda');
 
 // O "Você pode gastar hoje" nunca passa do que sobrou no mês: guardar muito baixa o valor.
 // Hoje fixo em 20/09/2026 (11 dias até o fim do mês). Salário R$ 3.000, envelope de mercado
@@ -40,7 +40,7 @@ test('guardando tanto que sobra menos do que os envelopes, vale o que sobrou e o
 
 test('com o dia de pagamento informado, o teto vale para o ciclo do salário', async ({ page }) => {
   await abrir(page, 270000);
-  await page.getByRole('tab', { name: 'Metas' }).click();
+  await irParaAba(page, 'Metas');
   await page.getByLabel('Em que dia útil você recebe?').selectOption('5');
   await page.getByRole('tab', { name: 'Painel' }).click();
   await expect(cartao(page)).toContainText(/R\$\s11,76/); // R$ 200 ÷ 17 dias
