@@ -47,40 +47,56 @@
   }
 
   function saveData() {
+    let gravou = true;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
     } catch (e) {
+      gravou = false;
       toast('Não foi possível salvar neste navegador. Faça um backup.');
     }
-    protegerDados();
+    protegerDados({ pedir: true, gravou });
   }
 
   // ---------- Proteção dos dados ----------
-  // Pede ao navegador para não apagar os dados sozinho (uma vez por visita, e só quando há o que
-  // proteger) e mostra em "Seus dados" o que de fato foi conseguido, sem prometer o que não dá.
+  // Pede ao navegador para não apagar os dados sozinho quando faltar espaço e mostra em "Seus
+  // dados" o que de fato foi conseguido, sem prometer o que não dá. O pedido só acontece depois
+  // de um salvamento (nunca ao abrir o app, porque em alguns navegadores ele abre um aviso), uma
+  // vez por visita, e só quando há lançamentos. Limpar os dados do navegador continua apagando tudo.
   const PROTECAO = {
-    protegido: 'Seus dados estão protegidos: o navegador não os apaga sozinho.',
+    protegido: 'Proteção ativada: o navegador não apaga estes dados sozinho quando falta espaço. Limpar os dados do navegador ainda os apaga: baixe um backup de vez em quando.',
     'nao-garantido': 'O navegador ainda pode apagar estes dados se o aparelho ficar sem espaço. Baixe um backup de vez em quando.',
     indisponivel: 'Este navegador não garante a proteção dos dados. Baixe um backup de vez em quando.',
     aguardando: 'Assim que você lançar algo, o app pede ao navegador para proteger os seus dados.',
+    'sem-gravar': 'Não foi possível salvar os seus dados neste navegador. Baixe um backup agora, para não perder o que você lançou.',
   };
   let pediuPersistencia = false;
+  let jaProtegido = false;
+  let filaProtecao = Promise.resolve();
 
-  async function protegerDados() {
-    let estado = 'indisponivel';
-    try {
-      const armazenamento = navigator.storage;
-      if (armazenamento && armazenamento.persisted && armazenamento.persist) {
-        const temDados = state.data.transactions.length > 0;
-        let protegido = await armazenamento.persisted();
-        if (!protegido && temDados && !pediuPersistencia) {
-          pediuPersistencia = true;
-          protegido = await armazenamento.persist();
-        }
-        estado = protegido ? 'protegido' : temDados ? 'nao-garantido' : 'aguardando';
-      }
-    } catch (e) { /* sem confirmação do navegador: fica "indisponível" */ }
-    $('#storage-status').textContent = PROTECAO[estado];
+  async function estadoDaProtecao(pedir) {
+    const armazenamento = navigator.storage;
+    if (!armazenamento || !armazenamento.persisted || !armazenamento.persist) return 'indisponivel';
+    const temDados = state.data.transactions.length > 0;
+    let protegido = jaProtegido || await armazenamento.persisted();
+    if (!protegido && pedir && temDados && !pediuPersistencia) {
+      pediuPersistencia = true;
+      protegido = await Promise.resolve().then(() => armazenamento.persist()).catch(() => false);
+    }
+    jaProtegido = protegido;
+    if (protegido) return 'protegido';
+    return temDados || pediuPersistencia ? 'nao-garantido' : 'aguardando';
+  }
+
+  // As consultas entram numa fila, uma de cada vez: uma resposta antiga nunca cobre uma nova.
+  function protegerDados({ pedir = false, gravou = true } = {}) {
+    filaProtecao = filaProtecao
+      .then(() => (gravou ? estadoDaProtecao(pedir) : 'sem-gravar'))
+      .catch(() => 'indisponivel')
+      .then((estado) => {
+        const texto = PROTECAO[estado];
+        const el = $('#storage-status');
+        if (el.textContent !== texto) el.textContent = texto;
+      });
   }
 
   function loadTab() {

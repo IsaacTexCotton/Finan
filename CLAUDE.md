@@ -208,11 +208,14 @@ Só faça o commit quando todas as respostas forem "sim":
 - Service worker não roda em `file://`: os testes em `tests/e2e/pwa.spec.js` usam um servidor
   local que entrega só o que a publicação entrega.
 - **Dados protegidos** (decisão do Isaac, 01/10/2026): o app pede ao navegador o armazenamento
-  persistente (`navigator.storage.persist()`), **uma vez por visita e só quando há lançamentos**
-  (no Firefox isso abre um aviso, então não se insiste). Em "Seus dados" (`#storage-status`) o app
-  diz a verdade sobre o que conseguiu: protegido, ainda pode ser apagado (manda baixar o backup),
-  sem garantia neste navegador, ou aguardando o primeiro lançamento. Nunca promete o que o
-  navegador não confirmou. Testes em `tests/e2e/dados-protegidos.spec.js`.
+  persistente (`navigator.storage.persist()`) **depois de um salvamento**, uma vez por visita e só
+  quando há lançamentos. Nunca ao abrir o app, porque no Firefox o pedido abre um aviso. Em "Seus
+  dados" (`#storage-status`) o app diz a verdade sobre o que conseguiu: proteção ativada (só vale
+  contra apagar sozinho quando falta espaço; **limpar os dados do navegador ainda apaga tudo**, e o
+  texto diz isso), ainda pode ser apagado, sem garantia neste navegador, aguardando o primeiro
+  lançamento, ou "não foi possível salvar" (manda baixar o backup agora; nunca diz "protegido" depois
+  de uma gravação que falhou). As consultas entram numa fila (`protegerDados`), então uma resposta
+  antiga nunca cobre uma nova. Testes em `tests/e2e/dados-protegidos.spec.js`.
 - O site publicado de hoje (completo e grátis) é o ambiente de teste do Isaac; o app que for
   vendido ficará em outro endereço (decisão a tomar quando chegar a hora).
 
