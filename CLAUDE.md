@@ -23,8 +23,13 @@
   Faça o commit só se o comando terminar com sucesso (código de saída 0).
 - **Explique em português o que mudou e por quê** ao final de cada tarefa.
 - Ao terminar uma história, marque-a no `BACKLOG.md`.
-- **Fluxo Git:** commits pequenos direto no `main`, em português, no imperativo. Se a CI
-  falhar no GitHub, corrigir é a prioridade. PRs só para contribuições externas e Dependabot.
+- **Fluxo Git: toda mudança vai por pull request** (decisão do Isaac, 01/10/2026, para ter a
+  revisão de segurança automática). Um branch por tarefa, commits pequenos em português no
+  imperativo, PR para o `main` com o modelo de `.github/pull_request_template.md` preenchido. O PR
+  só entra no `main` com a CI verde (`Lint, segurança e testes`) e a revisão de segurança
+  (`seguranca-pr.yml`) sem achados abertos. **Quem integra (merge) é o Isaac**; ninguém integra o
+  próprio PR sem ele pedir. Se a CI falhar, corrigir é a prioridade. Dependabot e contribuições
+  externas seguem por PR como antes (a revisão automática só olha PRs de dentro do repositório).
 
 ## Antes de cada commit
 Só faça o commit quando todas as respostas forem "sim":
@@ -233,6 +238,13 @@ Só faça o commit quando todas as respostas forem "sim":
 - **Todo texto vindo do usuário ou de backup passa por `esc()` antes de ir para `innerHTML`.**
 - Dados importados passam por `normalizeData` (valida e descarta o que for inválido).
 - CSV exportado neutraliza fórmulas (`=`, `+`, `-`, `@`).
+- **Revisão de segurança automática em todo PR** (`.github/workflows/seguranca-pr.yml`, Action
+  `anthropics/claude-code-security-review` fixada por SHA). Ela **não é protegida contra instruções
+  maliciosas escondidas no código**, então só roda em PRs de branches do próprio repositório
+  (nunca de forks nem do Dependabot, que não recebem a chave) e com `pull_request` (nunca
+  `pull_request_target`). A chave `CLAUDE_API_KEY` fica só nos segredos do GitHub: **nunca no
+  chat nem no código**. Sem a chave, o fluxo falha com aviso, não passa em silêncio. O código
+  alterado do PR é enviado à API da Anthropic. Travas testadas em `tests/workflows.test.js`.
 - Antes de publicar, faça uma revisão de segurança do código. `tests/e2e/seguranca.spec.js`
   garante que HTML digitado ou vindo de backup nunca executa e que o app não faz requisição
   de rede. Mudou como algo é desenhado na tela? Esses testes têm que continuar passando.

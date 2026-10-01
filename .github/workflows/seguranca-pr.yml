@@ -1,0 +1,58 @@
+name: Revisão de segurança do PR
+
+# Uma IA examina o que mudou no pull request e comenta as linhas com problema de segurança.
+# (Action oficial da Anthropic: anthropics/claude-code-security-review.)
+#
+# Travas, porque a própria Action avisa que NÃO é protegida contra instruções maliciosas
+# escondidas no código (por isso só olha PRs de confiança):
+#   - gatilho `pull_request`, nunca `pull_request_target` (que entregaria a chave a PR de fora);
+#   - só PRs de branches deste repositório, e não os do Dependabot;
+#   - permissões mínimas: ler o código e comentar no PR;
+#   - Actions fixadas por código exato (SHA); o Dependabot propõe as atualizações;
+#   - sem a chave cadastrada, o fluxo FALHA com aviso (nunca "passa" sem ter revisado).
+# Uma vez só, feito pelo dono do repositório:
+#   1. Criar uma chave da API da Anthropic (com limite de gasto) e cadastrá-la em
+#      Settings > Secrets and variables > Actions > New repository secret, com o nome CLAUDE_API_KEY.
+#      A chave nunca vai para o chat nem para o código.
+#   2. Settings > Actions > General > "Fork pull request workflows" > exigir aprovação de todos
+#      os colaboradores externos.
+# Os testes desta trava estão em tests/workflows.test.js.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: seguranca-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  seguranca:
+    name: Revisão de segurança
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    steps:
+      - name: Conferir que a chave está cadastrada
+        env:
+          CHAVE: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          if [ -z "$CHAVE" ]; then
+            echo "::error::A chave CLAUDE_API_KEY não está cadastrada: a revisão de segurança NÃO rodou. Cadastre em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - uses: anthropics/claude-code-security-review@0c6a49f1fa56a1d472575da86a94dbc1edb78eda
+        with:
+          comment-pr: true
+          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+          claude-model: claude-sonnet-5-5
+          exclude-directories: tests,docs,passagens
+          claudecode-timeout: 20

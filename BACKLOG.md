@@ -53,6 +53,12 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [ ] Sugestão: o primeiro parágrafo de "Seus dados" e a linha de proteção repetem o conselho de fazer backup; enxugar
 - [ ] Backup: decidir o que fazer (cópias internas automáticas, lembrete de backup externo ou os dois)
 - [ ] Ícone definitivo do app (hoje é uma letra F provisória; não é prioridade)
+- [x] Revisão de segurança automática em pull requests (Action da Anthropic) e fluxo "toda mudança por PR"
+- [ ] Isaac: cadastrar o segredo `CLAUDE_API_KEY` (com limite de gasto) e exigir aprovação de colaboradores externos
+- [ ] Isaac (opcional): proteger o `main` para só aceitar PR com os checks verdes (Settings > Branches)
+- [ ] Sugestão: fixar também as Actions de `ci.yml` e `publicar.yml` por SHA (o Dependabot atualiza)
+- [ ] Sugestão: endereço próprio (domínio) para o produto vendido, separado de outros sites do GitHub Pages
+- [ ] Sugestão: política de segurança de conteúdo (CSP) no `index.html`, com testes
 - [ ] README com o método e como usar
 - [x] Revisão de segurança antes de publicar: nenhum segredo ou dado pessoal no repositório;
       testes no navegador provam que texto malicioso (digitado ou vindo de backup) aparece
