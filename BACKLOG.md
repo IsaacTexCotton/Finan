@@ -135,17 +135,29 @@ Decisões do Isaac aplicadas (30/09/2026)
       (formulário e "Guardar valor" nas metas); a pessoa escolhe se guarda mesmo assim
 - [ ] Sugestão: o aviso também ao editar um lançamento do Futuro para um valor maior
 
-## Refatorações (avisos do ESLint)
-- [x] Regras de negócio que moravam na tela voltaram ao núcleo (`core.js`): divisão em parcelas e o
+## Refatorações (parecer do tech lead, 01/10/2026)
+Ordem escolhida: só refatorar o que destrava algo que o Isaac quer. Critério de aceite de todas: **nenhum
+teste existente muda, todos continuam passando e a pessoa não vê diferença** (por isso não entram no
+`CHANGELOG.md`). Hoje o lint tem 3 avisos: `parseAmount` e `normalizeData` (2 avisos).
+- [x] 1. Regras de negócio que moravam na tela voltaram ao núcleo (`core.js`): divisão em parcelas e o
       que apagar, montar e editar um lançamento, metas, soma dos limites e "bateu a meta de guardar".
-      Sem mudança para a pessoa; o aviso do `submitTx` saiu (7 → 6 avisos)
-- [x] `insights` (complexidade 34): quebrar em uma função por tipo de alerta (lista `INSIGHT_RULES`,
-      na ordem de prioridade; facilita o item "no máximo 3 alertas por vez"; 4 → 3 avisos do lint)
-- [x] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações (`ACTIONS`); as
+      Prepara o "desfazer ao excluir" e a fatura do cartão (7 → 6 avisos)
+- [x] 2. `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações (`ACTIONS`); as
       janelas nativas (`confirm` e `prompt`) passaram por `confirmar()` e `perguntar()`, um ponto só
-      para trocar por janela própria ou ganhar o "desfazer ao excluir" (7 → 4 avisos do lint)
-- [ ] `parseAmount` (complexidade 19): separar detecção de separador decimal
-- [ ] `normalizeData` (complexidade 22): um normalizador por coleção
+      para trocar por janela própria ou ganhar o "desfazer ao excluir" (6 → 4 avisos)
+- [x] 3. `insights` (complexidade 34): quebrar em uma função por tipo de alerta (lista `INSIGHT_RULES`,
+      na ordem de prioridade; facilita o item "no máximo 3 alertas por vez"; 4 → 3 avisos)
+- [ ] 4. `normalizeData` (complexidade 32, 64 linhas): um normalizador por coleção. É a porta de entrada
+      dos backups (área de risco do `CLAUDE.md`: vai por PR com `/security-review`, e só o Isaac manda
+      integrar). Fazer antes de mudar o formato dos dados (fatura do cartão, novos campos)
+- [ ] 5. `parseAmount` (complexidade 19): separar detecção de separador decimal. **Baixa prioridade:** é
+      a função mais crítica do app (lê o dinheiro digitado) e passa só um pouco do limite; só mexer
+      quando outro motivo levar a ela
+
+Decidido **não** refatorar agora: `demoData` (só dados de exemplo), dividir `app.js` e `core.js` em
+vários arquivos (sem etapa de build, cada arquivo novo exige mexer em `sw.js` e na publicação; o sinal
+para fazer é passar de uns 1.500 linhas ou duas funcionalidades se atropelarem), o CSS (já vigiado
+por testes) e as 5 funções do núcleo sem teste direto (triviais).
 
 ## Ideias futuras (não priorizadas)
 - Importar extrato do banco (OFX/CSV)
