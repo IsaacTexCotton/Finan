@@ -714,7 +714,7 @@
       if (!entry.description) entry.description = `Meta: ${goal.name}`.slice(0, 120);
     }
     const installments = entry.type === 'expense' && !goal ? Number(form.elements.installments.value) || 1 : 1;
-    const doMes = installments > 1 ? Math.ceil(amount / installments) : amount; // o que cai no mês da compra
+    const doMes = F.installmentAmounts(amount, installments)[0]; // o que cai no mês da compra
     if (!state.editingId && guardaDinheiro(entry) && !confirmarGuardar(doMes, F.monthKey(date))) return;
     let message;
     if (state.editingId) {
@@ -750,12 +750,9 @@
   function deleteTransaction(id) {
     const t = state.data.transactions.find((x) => x.id === id);
     if (!t) return;
-    let ids = [id];
-    if (t.installment && confirm(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`)) {
-      ids = state.data.transactions.filter((x) => x.installment && x.installment.group === t.installment.group).map((x) => x.id);
-    } else if (!confirm(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) {
-      return;
-    }
+    const todasAsParcelas = Boolean(t.installment) && confirm(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`);
+    if (!todasAsParcelas && !confirm(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) return;
+    const ids = F.idsToDelete(state.data.transactions, id, todasAsParcelas);
     const remove = new Set(ids);
     state.data.transactions = state.data.transactions.filter((x) => !remove.has(x.id));
     if (remove.has(state.editingId)) resetTxForm();

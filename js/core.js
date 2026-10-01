@@ -662,25 +662,46 @@
   const MAX_INSTALLMENTS = 48;
 
   /**
+   * Valor de cada parcela, em centavos inteiros (de 1 a 48 parcelas). Os centavos que sobram da
+   * divisão vão para as primeiras parcelas, então a soma bate com o total. Regra única: a criação
+   * das parcelas e o "quanto cai no mês da compra" usam esta função.
+   */
+  function installmentAmounts(total, count) {
+    const n = Math.max(1, Math.min(Math.floor(count) || 1, MAX_INSTALLMENTS));
+    const base = Math.floor(total / n);
+    const remainder = total - base * n;
+    return Array.from({ length: n }, (_, i) => base + (i < remainder ? 1 : 0));
+  }
+
+  /**
+   * Ids a apagar ao excluir o lançamento `id`: só ele ou, se for uma parcela e `allInstallments`,
+   * todas as parcelas da mesma compra. Id desconhecido não apaga nada.
+   */
+  function idsToDelete(transactions, id, allInstallments) {
+    const t = transactions.find((x) => x.id === id);
+    if (!t) return [];
+    if (!allInstallments || !t.installment) return [id];
+    return transactions.filter((x) => x.installment && x.installment.group === t.installment.group).map((x) => x.id);
+  }
+
+  /**
    * Divide uma compra parcelada em um lançamento por mês, começando no mês da compra.
    * Centavos que sobram da divisão vão para as primeiras parcelas (a soma bate com o total).
    */
   function createInstallments(entry, count, makeId) {
-    const n = Math.max(1, Math.min(Math.floor(count) || 1, MAX_INSTALLMENTS));
-    const base = Math.floor(entry.amount / n);
-    const remainder = entry.amount - base * n;
+    const amounts = installmentAmounts(entry.amount, count);
     const group = makeId();
     const day = Number(entry.date.slice(8, 10));
     const firstMonth = monthKey(entry.date);
-    return Array.from({ length: n }, (_, i) => {
+    return amounts.map((amount, i) => {
       const key = shiftMonth(firstMonth, i);
       return {
         ...entry,
         id: makeId(),
-        amount: base + (i < remainder ? 1 : 0),
+        amount,
         date: `${key}-${pad(Math.min(day, daysInMonth(key)))}`,
         recurring: false,
-        installment: { group, n: i + 1, of: n },
+        installment: { group, n: i + 1, of: amounts.length },
         createdAt: Date.now(),
       };
     });
@@ -920,6 +941,8 @@
     goalProgress,
     recurringForMonth,
     MAX_INSTALLMENTS,
+    installmentAmounts,
+    idsToDelete,
     createInstallments,
     installmentCommitments,
     installmentLabel,

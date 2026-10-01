@@ -842,3 +842,42 @@ test('cada tipo de renda tem um nome curto e os exemplos separados', () => {
     assert.ok(!('label' in perfil), `${id}: o texto longo duplicado (label) foi removido: vale name + examples`);
   }
 });
+
+// Refatoração (decisão do Isaac, 01/10/2026): a regra da divisão em parcelas e a de "quais lançamentos
+// apagar" moravam na tela (app.js); agora têm um lugar só, no núcleo.
+test('installmentAmounts divide em centavos inteiros: as primeiras parcelas levam o que sobra', () => {
+  assert.deepEqual(F.installmentAmounts(100000, 3), [33334, 33333, 33333]);
+  assert.deepEqual(F.installmentAmounts(10000, 4), [2500, 2500, 2500, 2500]);
+  assert.deepEqual(F.installmentAmounts(1000, 1), [1000]);
+  assert.equal(F.installmentAmounts(99999, 7).reduce((a, v) => a + v, 0), 99999);
+});
+
+test('installmentAmounts usa o mesmo limite do núcleo: no mínimo 1 e no máximo 48 parcelas', () => {
+  assert.equal(F.installmentAmounts(10000, 999).length, F.MAX_INSTALLMENTS);
+  assert.deepEqual(F.installmentAmounts(10000, 0), [10000]);
+  assert.deepEqual(F.installmentAmounts(10000, NaN), [10000]);
+  assert.deepEqual(F.installmentAmounts(10000, 2.9), [5000, 5000]);
+});
+
+test('createInstallments e installmentAmounts nunca discordam sobre o valor de cada parcela', () => {
+  for (const [total, count] of [[100000, 3], [99999, 7], [1, 5], [250, 48], [250, 60]]) {
+    let n = 0;
+    const parcelas = F.createInstallments({ amount: total, date: '2026-01-10' }, count, () => `i${++n}`);
+    assert.deepEqual(parcelas.map((p) => p.amount), F.installmentAmounts(total, count));
+  }
+});
+
+test('idsToDelete: um lançamento comum, uma parcela só ou todas as parcelas da mesma compra', () => {
+  let n = 0;
+  const compra = F.createInstallments({ type: 'expense', categoryId: 'compras', amount: 30000, date: '2026-01-10' }, 3, () => `c${++n}`);
+  const outraCompra = F.createInstallments({ type: 'expense', categoryId: 'compras', amount: 20000, date: '2026-01-10' }, 2, () => `d${++n}`);
+  const comum = tx('expense', 'mercado', 5000, '2026-01-12');
+  const lista = [...compra, comum, ...outraCompra];
+  const idsDaCompra = compra.map((p) => p.id);
+
+  assert.deepEqual(F.idsToDelete(lista, comum.id, false), [comum.id]);
+  assert.deepEqual(F.idsToDelete(lista, comum.id, true), [comum.id]); // não é parcela: "todas" não muda nada
+  assert.deepEqual(F.idsToDelete(lista, compra[1].id, false), [compra[1].id]);
+  assert.deepEqual(F.idsToDelete(lista, compra[1].id, true), idsDaCompra); // só as da mesma compra
+  assert.deepEqual(F.idsToDelete(lista, 'nao-existe', true), []);
+});
