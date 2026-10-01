@@ -23,6 +23,16 @@
   Faça o commit só se o comando terminar com sucesso (código de saída 0).
 - **Explique em português o que mudou e por quê** ao final de cada tarefa.
 - Ao terminar uma história, marque-a no `BACKLOG.md`.
+- **Histórico de atualizações** (decisão do Isaac, 01/10/2026): toda mudança que a pessoa nota
+  entra em "Não lançado" no `CHANGELOG.md`, em português simples (blocos Adicionado, Alterado,
+  Corrigido, Removido, Segurança), e `node tools/gerar-novidades.js` copia o texto para
+  `js/novidades.js`. **Só o Isaac manda lançar**: aí a seção ganha número e data e o
+  `package.json` acompanha. Numeração SemVer: correção sobe o último número, novidade sobe o do
+  meio, e o `1.0.0` fica para quando o app for vendido. `tests/novidades.test.js` confere.
+  O Isaac consulta o histórico numa janela **escondida** ("Novidades", `#novidades`): sem botão à
+  vista, abre com **5 toques seguidos (até 1,5 s entre eles) na barra verde do topo**, fora das
+  setinhas de mês. No celular o nome "Finan" fica escondido da vista, por isso ali se toca no mês.
+  Não é segredo de segurança: o texto fica no site publicado. Testes em `tests/e2e/novidades.spec.js`.
 - **Fluxo Git:** commits pequenos direto no `main`, em português, no imperativo. Se a CI
   falhar no GitHub, corrigir é a prioridade. PRs só para contribuições externas e Dependabot.
 

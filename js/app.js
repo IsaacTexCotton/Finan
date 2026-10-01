@@ -206,6 +206,11 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  function formatLongDay(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
   function formatDay(iso) {
     const [y, m, d] = iso.split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
@@ -1238,6 +1243,40 @@
     if (event.key === 'n' && !event.ctrlKey && !event.metaKey && !event.altKey && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
       event.preventDefault();
       handleAction('quick-add');
+    }
+  });
+
+  // Histórico de atualizações, escondido: 5 toques seguidos na barra do topo, fora das setinhas de mês
+  // (decisão do Isaac, 01/10/2026). No celular o nome "Finan" fica escondido da vista, então ali se toca no mês.
+  const TOQUES_PARA_ABRIR = 5;
+  const PAUSA_MAXIMA_ENTRE_TOQUES = 1500; // ms
+  let toquesNoTopo = 0;
+  let ultimoToque = 0;
+
+  function novidadesHtml(entradas) {
+    return entradas.map((e) => `<section class="novidade">
+      <h3>${esc(e.versao ? `Versão ${e.versao}` : e.rotulo)}${e.data ? ` <span class="muted">· ${esc(formatLongDay(e.data))}</span>` : ''}</h3>
+      ${e.secoes.map((s) => `<h4>${esc(s.nome)}</h4><ul>${s.itens.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>`).join('')}
+    </section>`).join('');
+  }
+
+  function abrirNovidades() {
+    const entradas = window.FINAN_NOVIDADES || [];
+    const atual = entradas.find((e) => e.versao);
+    $('#novidades-versao').textContent = atual ? `Você está na versão ${atual.versao}.` : '';
+    $('#novidades-lista').innerHTML = entradas.length ? novidadesHtml(entradas) : '<p class="muted">Ainda não há histórico.</p>';
+    $('#novidades').showModal();
+    $('#novidades').scrollTop = 0;
+  }
+
+  $('.topbar').addEventListener('click', (event) => {
+    if (event.target.closest('button')) return; // as setinhas de mês não contam
+    const agora = Date.now();
+    toquesNoTopo = agora - ultimoToque <= PAUSA_MAXIMA_ENTRE_TOQUES ? toquesNoTopo + 1 : 1;
+    ultimoToque = agora;
+    if (toquesNoTopo >= TOQUES_PARA_ABRIR) {
+      toquesNoTopo = 0;
+      abrirNovidades();
     }
   });
 
