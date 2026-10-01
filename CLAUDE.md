@@ -159,6 +159,10 @@ Só faça o commit quando todas as respostas forem "sim":
 - **Ação principal sempre no mesmo lugar** (decisão do Isaac, 01/10/2026): o botão "+ Lançar"
   é flutuante (`.fab`), fixo no canto inferior direito, em todas as abas e na rolagem. O fim
   do conteúdo nunca fica escondido atrás dele (`tests/e2e/botao-flutuante.spec.js`).
+- **Lançar rápido** (decisão do Isaac, 01/10/2026): no formulário ficam à vista só Despesa/Receita,
+  Valor, Categoria e Salvar, que cabem juntos num celular de 360×640. Data (hoje por padrão),
+  Descrição, Parcelas e Lançamento fixo ficam em "Mais detalhes" (`details.more`). Ao editar um
+  lançamento os detalhes já abrem; ao salvar, voltam a fechar (`tests/e2e/lancar-rapido.spec.js`).
 - Alvos de toque com pelo menos 44px (`--tap`), inclusive botões "pequenos".
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
   Em campos de texto e de escolha o foco pinta a própria borda de azul e o contorno cola nela

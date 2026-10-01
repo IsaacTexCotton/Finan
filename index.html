@@ -75,18 +75,23 @@
               <select name="goalId"></select>
               <span class="hint">O valor entra no que você já guardou nessa meta.</span>
             </label>
-            <label>Data
-              <input name="date" type="date" required>
-            </label>
-            <label>Descrição
-              <input name="description" maxlength="120" placeholder="Ex.: padaria, aluguel…">
-            </label>
-            <label id="installments-field">Parcelas
-              <input name="installments" type="number" min="1" max="48" step="1" value="1" inputmode="numeric">
-              <span class="hint">Parcelado no cartão? Informe o valor total e o número de parcelas.</span>
-            </label>
           </div>
-          <label class="check"><input type="checkbox" name="recurring"> Lançamento fixo (repete todo mês)</label>
+          <details class="more">
+            <summary>Mais detalhes</summary>
+            <div class="form-grid">
+              <label>Data
+                <input name="date" type="date" required>
+              </label>
+              <label>Descrição
+                <input name="description" maxlength="120" placeholder="Ex.: padaria, aluguel…">
+              </label>
+              <label id="installments-field">Parcelas
+                <input name="installments" type="number" min="1" max="48" step="1" value="1" inputmode="numeric">
+                <span class="hint">Parcelado no cartão? Informe o valor total e o número de parcelas.</span>
+              </label>
+            </div>
+            <label class="check"><input type="checkbox" name="recurring"> Lançamento fixo (repete todo mês)</label>
+          </details>
           <p class="form-error" id="tx-error" role="alert"></p>
           <div class="actions">
             <button type="submit" class="btn primary" id="tx-submit">Salvar</button>

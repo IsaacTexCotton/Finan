@@ -23,6 +23,7 @@ test('lançar uma despesa e vê-la no Painel', async ({ page }) => {
   // 3. Preenche e salva uma despesa de R$ 25,90 no Mercado
   await formulario.getByLabel('Valor (R$)').fill('25,90');
   await formulario.getByLabel('Categoria').selectOption('mercado');
+  await formulario.getByText('Mais detalhes').click();
   await formulario.getByLabel('Descrição').fill('Padaria do bairro');
   await formulario.getByRole('button', { name: 'Salvar' }).click();
   await expect(page.getByRole('status')).toContainText(/Despesa de R\$\s25,90 lançada/);

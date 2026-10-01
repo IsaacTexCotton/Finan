@@ -577,11 +577,17 @@
     form.reset();
     state.editingId = null;
     form.elements.date.value = defaultDate();
+    $('#tx-form details.more').open = false;
     $('#form-title').textContent = 'Novo lançamento';
     $('#tx-submit').textContent = 'Salvar';
     $('[data-action="cancel-edit"]').hidden = true;
     $('#tx-error').textContent = '';
     renderCategoryOptions();
+  }
+
+  /** Rola até o bloco do formulário, com o título à vista (o topo fixo não o cobre). */
+  function showTxForm() {
+    $('#form-title').closest('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function defaultDate() {
@@ -606,7 +612,8 @@
     $('#form-title').textContent = 'Editar lançamento';
     $('#tx-submit').textContent = 'Salvar alterações';
     $('[data-action="cancel-edit"]').hidden = false;
-    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('#tx-form details.more').open = true;
+    showTxForm();
     form.elements.amount.focus();
   }
 
@@ -623,6 +630,8 @@
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       error.textContent = 'Informe uma data válida.';
+      $('#tx-form details.more').open = true;
+      form.elements.date.focus();
       return;
     }
     const entry = {
@@ -896,7 +905,7 @@
         state.tab = 'lancamentos';
         if (el && el.dataset.type) $('#tx-form').elements.type.value = el.dataset.type;
         render();
-        $('#tx-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showTxForm();
         $('#tx-form').elements.amount.focus();
         break;
       case 'cancel-edit':

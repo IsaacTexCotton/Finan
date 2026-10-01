@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar } = require('./ajuda');
+const { APP, lancar, abrirDetalhes } = require('./ajuda');
 
 // Um leitor de tela lê só o nome do botão. "Editar" repetido 17 vezes não diz o que editar.
 
@@ -26,6 +26,7 @@ test('lançamento sem descrição usa a categoria, e parcela diz qual é', async
   await expect(page.getByRole('button', { name: /^Editar Lazer, R\$\s40,00$/ })).toHaveCount(1);
 
   await page.locator('#tx-form').getByLabel('Valor (R$)').fill('300');
+  await abrirDetalhes(page.locator('#tx-form'));
   await page.locator('#tx-form').getByLabel('Descrição').fill('Notebook');
   await page.locator('#tx-form').getByLabel('Parcelas').fill('3');
   await page.locator('#tx-form').getByRole('button', { name: 'Salvar' }).click();

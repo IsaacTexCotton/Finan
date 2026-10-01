@@ -384,6 +384,28 @@ main {
   color: var(--on-primary);
 }
 
+/* "Mais detalhes" do formulário de lançar: o que se usa menos fica recolhido. */
+.more {
+  margin: var(--space-3) 0;
+}
+.more summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--primary-strong);
+  font-weight: 700;
+  cursor: pointer;
+}
+.more summary::before {
+  margin-right: var(--space-2);
+  content: "▸";
+  content: "▸" / "";
+}
+.more[open] summary::before {
+  content: "▾";
+  content: "▾" / "";
+}
+
 /* Botão de ação principal: sempre no canto inferior direito, ao alcance do polegar. */
 .fab {
   position: fixed;

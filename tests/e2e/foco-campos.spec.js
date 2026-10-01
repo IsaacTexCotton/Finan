@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, abrirDetalhes } = require('./ajuda');
 
 // Campo focado: a própria borda fica azul e o contorno cola nela, formando um traço único.
 // Antes havia três camadas (borda escura, vão branco, anel azul), o que poluía a tela.
@@ -24,6 +24,7 @@ for (const [nome, achar] of [
 ]) {
   test(`${nome} focado tem borda azul e contorno colado, sem vão`, async ({ page }) => {
     const campo = achar(page);
+    await abrirDetalhes(page.locator('#tx-form'));
     await campo.focus();
     const s = await estilo(campo);
     expect(s.borda, 'borda na cor do foco').toBe(AZUL_DO_FOCO);
@@ -40,6 +41,7 @@ test('sem foco, o campo mantém a borda escura de sempre', async ({ page }) => {
 });
 
 test('botões e caixas de marcar mantêm o anel afastado', async ({ page }) => {
+  await abrirDetalhes(page.locator('#tx-form')); // antes do teclado: um clique do mouse desligaria o anel
   await page.keyboard.press('Shift'); // usa o teclado: só assim o navegador mostra o anel em botões
   const botao = page.locator('#tx-form').getByRole('button', { name: 'Salvar' });
   await botao.focus();

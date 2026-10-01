@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, abrirDetalhes } = require('./ajuda');
 
 // No formulário de lançamento, o balde Futuro tem a categoria "Metas". Ao escolhê-la, abre a lista
 // das metas da pessoa ("Para qual meta?"). Sem nenhuma meta, a categoria nem aparece.
@@ -51,6 +51,7 @@ test.describe('com metas', () => {
     await expect(formulario(page).getByLabel('Para qual meta?')).toBeVisible();
     await formulario(page).getByLabel('Categoria').selectOption('mercado');
     await expect(formulario(page).getByLabel('Para qual meta?')).toBeHidden();
+    await abrirDetalhes(formulario(page));
     await expect(formulario(page).getByLabel('Parcelas')).toBeVisible();
   });
 
