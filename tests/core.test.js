@@ -974,3 +974,69 @@ test('savingsGoalReached: bateu a meta de guardar só com renda e com taxa igual
   assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.2 }, undefined), true); // sem plano, vale o 20% padrão
   assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.1 }, { futuro: 5 }), true);
 });
+
+// Refatoração do `insights` (item 3): estes testes descrevem os avisos do Painel como são hoje, para
+// proteger a troca da função grande por uma lista de regras. Cada aviso e a ORDEM entre eles (que é a
+// prioridade para a pessoa) ficam fixados aqui.
+const resumo = (...lancamentos) => F.summarize(lancamentos, cats);
+const avisos = (s, extra = {}) => F.insights({ summary: s, buckets: F.bucketAnalysis(s), budgetRows: [], previousSummary: null, categories: cats, ...extra });
+
+test('insights sem renda no mês só pede para registrar a renda', () => {
+  assert.deepEqual(avisos(resumo()), [{ level: 'info', text: 'Registre sua renda do mês para ativar a análise dos baldes.' }]);
+});
+
+test('insights avisa envelope estourado (perigo) antes do envelope que vai estourar (alerta)', () => {
+  const s = resumo(tx('income', 'salario', 300000, '2026-09-05'), tx('expense', 'lazer', 70000, '2026-09-08'), tx('expense', 'restaurantes', 40000, '2026-09-08'));
+  const rows = F.budgetStatus({ lazer: 50000, restaurantes: 60000 }, s, cats, '2026-09', '2026-09-10');
+  const lista = avisos(s, { budgetRows: rows });
+  assert.equal(lista[0].level, 'perigo');
+  assert.match(lista[0].text, /^Lazer: envelope estourado em R\$\s200,00\.$/);
+  assert.equal(lista[1].level, 'alerta');
+  assert.match(lista[1].text, /^Restaurantes e delivery: no ritmo atual você vai gastar R\$\s1\.200,00 \(limite R\$\s600,00\)\. Desacelere\.$/);
+  assert.equal(avisos(s).some((m) => /envelope|ritmo atual/.test(m.text)), false); // sem envelopes, sem esses avisos
+});
+
+test('insights aponta a categoria que mais subiu: só acima de R$ 50 e de 20%, e nunca do balde Futuro', () => {
+  const anterior = resumo(tx('expense', 'lazer', 10000, '2026-08-05'), tx('expense', 'mercado', 20000, '2026-08-06'), tx('expense', 'reserva', 10000, '2026-08-07'));
+  const s = resumo(tx('income', 'salario', 900000, '2026-09-05'), tx('expense', 'lazer', 30000, '2026-09-08'), tx('expense', 'mercado', 25000, '2026-09-09'),
+    tx('expense', 'restaurantes', 40000, '2026-09-09'), tx('expense', 'reserva', 60000, '2026-09-10'));
+  const subiu = (atual, antes) => avisos(atual, { previousSummary: antes }).filter((m) => /subiu/.test(m.text));
+  // Restaurantes (novo, +R$ 400) ganha de Lazer (+R$ 200), de Mercado (+R$ 50 exatos: não passa) e da Reserva (Futuro: ignorada, +R$ 500).
+  const principal = subiu(s, anterior);
+  assert.equal(principal.length, 1);
+  assert.equal(principal[0].level, 'info');
+  assert.match(principal[0].text, /^Restaurantes e delivery subiu R\$\s400,00 em relação ao mês passado\.$/);
+
+  const pouco = resumo(tx('income', 'salario', 900000, '2026-09-05'), tx('expense', 'lazer', 15000, '2026-09-08'), tx('expense', 'mercado', 105000, '2026-09-09'));
+  const antes = resumo(tx('expense', 'lazer', 10000, '2026-08-05'), tx('expense', 'mercado', 100000, '2026-08-06'));
+  assert.deepEqual(subiu(pouco, antes), []); // lazer +R$ 50 exatos; mercado +R$ 50 (5%)
+  const proporcional = resumo(tx('income', 'salario', 900000, '2026-09-05'), tx('expense', 'mercado', 115000, '2026-09-09'));
+  assert.deepEqual(subiu(proporcional, antes), []); // +R$ 150, mas só 15%: abaixo de 20%
+  assert.deepEqual(subiu(s, resumo()), []); // mês passado sem nenhuma despesa: não há com o que comparar
+});
+
+test('insights avisa balde acima da meta e Futuro abaixo (ou quase lá) da meta, em ordem de balde', () => {
+  const alto = resumo(tx('income', 'salario', 100000, '2026-09-05'), tx('expense', 'moradia', 60000, '2026-09-06'));
+  assert.deepEqual(avisos(alto).map((m) => m.level), ['alerta', 'alerta']);
+  assert.match(avisos(alto)[0].text, /^Essenciais consomem 60% da renda \(meta: até 50%\)\.$/);
+  assert.match(avisos(alto)[1].text, /^Você guardou R\$\s0,00 para o futuro\. A meta é R\$\s200,00 — faça o aporte logo que a renda cair\.$/);
+
+  const quase = resumo(tx('income', 'salario', 100000, '2026-09-05'), tx('expense', 'reserva', 15000, '2026-09-06'));
+  assert.equal(avisos(quase).length, 1);
+  assert.match(avisos(quase)[0].text, /^Você guardou R\$\s150,00 para o futuro\. A meta é R\$\s200,00/);
+});
+
+test('insights junta tudo na ordem de prioridade: gastou demais, envelopes, baldes, categoria, parcelas, plano', () => {
+  const plano = F.adaptivePlan(0.6);
+  const s = resumo(tx('income', 'salario', 200000, '2026-09-05'), tx('expense', 'moradia', 150000, '2026-09-06'),
+    tx('expense', 'lazer', 90000, '2026-09-08'), tx('expense', 'restaurantes', 60000, '2026-09-08'));
+  const rows = F.budgetStatus({ lazer: 50000, restaurantes: 100000 }, s, cats, '2026-09', '2026-09-10');
+  const anterior = resumo(tx('expense', 'moradia', 150000, '2026-08-06'), tx('expense', 'lazer', 10000, '2026-08-08'));
+  const lista = F.insights({ summary: s, buckets: F.bucketAnalysis(s, plano), budgetRows: rows, previousSummary: anterior, categories: cats,
+    commitments: { total: 90000, months: 3, lastMonth: '2026-12' }, plan: plano });
+  const ordem = [/^Você gastou R\$\s1\.000,00 a mais do que ganhou/, /Lazer: envelope estourado/, /no ritmo atual/, /consomem/, /Você guardou R\$\s0,00 para o futuro/,
+    /Lazer subiu R\$\s800,00/, /Você já tem R\$\s900,00 em parcelas/, /60\/25\/15/];
+  const posicoes = ordem.map((re) => lista.findIndex((m) => re.test(m.text)));
+  assert.ok(posicoes.every((p) => p >= 0), `faltou algum aviso: ${JSON.stringify(posicoes)} em ${JSON.stringify(lista.map((m) => m.text))}`);
+  assert.deepEqual(posicoes, [...posicoes].sort((a, b) => a - b), 'os avisos mudaram de ordem');
+});
