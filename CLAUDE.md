@@ -34,7 +34,15 @@
   setinhas de mês. No celular o nome "Finan" fica escondido da vista, por isso ali se toca no mês.
   Não é segredo de segurança: o texto fica no site publicado. Testes em `tests/e2e/novidades.spec.js`.
 - **Fluxo Git:** commits pequenos direto no `main`, em português, no imperativo. Se a CI
-  falhar no GitHub, corrigir é a prioridade. PRs só para contribuições externas e Dependabot.
+  falhar no GitHub, corrigir é a prioridade. PRs só para contribuições externas, Dependabot e
+  **commits com risco de segurança** (decisão do Isaac, 01/10/2026): o que não tem risco a IA
+  integra direto no `main`, depois do `npm run check`; o que tem risco vai por PR, passa pelo
+  `/security-review` e **só o Isaac manda integrar**. Tem risco de segurança quem mexe em:
+  (1) como texto é desenhado na tela (`innerHTML`, `esc()`); (2) dados de entrada, backup,
+  importação ou armazenamento (`normalizeData`, `importBackup`, `localStorage`, proteção dos
+  dados); (3) rede, service worker, manifesto, publicação ou CI (`sw.js`, `.github/`, endereço
+  externo, política de segurança do navegador); (4) dependências (`package.json`,
+  `package-lock.json`); (5) segredos, credenciais ou dados pessoais. Na dúvida, trate como risco.
 
 ## Antes de cada commit
 Só faça o commit quando todas as respostas forem "sim":
