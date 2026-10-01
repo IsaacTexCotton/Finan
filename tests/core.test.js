@@ -1040,3 +1040,9 @@ test('insights junta tudo na ordem de prioridade: gastou demais, envelopes, bald
   assert.ok(posicoes.every((p) => p >= 0), `faltou algum aviso: ${JSON.stringify(posicoes)} em ${JSON.stringify(lista.map((m) => m.text))}`);
   assert.deepEqual(posicoes, [...posicoes].sort((a, b) => a - b), 'os avisos mudaram de ordem');
 });
+
+test('insights diz "Tudo dentro do plano" quando nenhuma regra se aplica (rede de segurança)', () => {
+  // Na tela os baldes e o plano combinam e o elogio aparece; só com um plano diferente do usado nos baldes a lista fica vazia.
+  const s = resumo(tx('income', 'salario', 100000, '2026-09-05'), tx('expense', 'reserva', 22000, '2026-09-06'));
+  assert.deepEqual(avisos(s, { plan: { futuro: 25 } }), [{ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' }]);
+});

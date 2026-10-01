@@ -806,48 +806,82 @@
     return summary.income > 0 && summary.savingsRate >= goal;
   }
 
-  function insights({ summary, buckets, budgetRows, previousSummary, categories, commitments, plan }) {
-    const list = [];
+  // Cada regra olha o contexto do Painel e devolve zero ou mais avisos. A ordem da lista abaixo é a
+  // prioridade que a pessoa vê: o que é mais urgente vem primeiro.
+  function insightSemRenda({ summary }) {
+    return summary.income <= 0 ? [{ level: 'info', text: 'Registre sua renda do mês para ativar a análise dos baldes.' }] : [];
+  }
+
+  function insightGastouDemais({ summary }) {
+    if (summary.income <= 0) return [];
+    if (summary.consumption > summary.income) {
+      return [{ level: 'perigo', text: `Você gastou ${formatBRL(summary.consumption - summary.income)} a mais do que ganhou este mês. Corte primeiro no balde Estilo de vida.` }];
+    }
+    if (summary.balance < 0) {
+      return [{ level: 'alerta', text: `Gastos mais o que você guardou passam da renda em ${formatBRL(-summary.balance)}. Reveja quanto guardar neste mês.` }];
+    }
+    return [];
+  }
+
+  function insightEnvelopesEstourados({ budgetRows }) {
+    return budgetRows.filter((row) => row.status === 'estourado').map((row) => ({ level: 'perigo', text: `${row.name}: envelope estourado em ${formatBRL(-row.remaining)}.` }));
+  }
+
+  function insightEnvelopesEmRisco({ budgetRows }) {
+    return budgetRows.filter((row) => row.status === 'risco').map((row) => ({ level: 'alerta', text: `${row.name}: no ritmo atual você vai gastar ${formatBRL(row.projected)} (limite ${formatBRL(row.limit)}). Desacelere.` }));
+  }
+
+  function insightBaldes({ buckets }) {
+    return buckets.flatMap((b) => {
+      const avisos = [];
+      if (b.status === 'acima') avisos.push({ level: 'alerta', text: `${b.label} consomem ${formatPercent(b.share)} da renda (meta: até ${formatPercent(b.targetRatio)}).` });
+      if ((b.status === 'abaixo' || b.status === 'atencao') && b.id === 'futuro') {
+        avisos.push({ level: 'alerta', text: `Você guardou ${formatBRL(b.actual)} para o futuro. A meta é ${formatBRL(b.target)} — faça o aporte logo que a renda cair.` });
+      }
+      return avisos;
+    });
+  }
+
+  // Subiu "muito": mais de R$ 50 e, se já havia gasto no mês passado, mais de 20% sobre ele.
+  function subiuMuito(diff, base) {
+    return diff > 5000 && (base === 0 || diff / base > 0.2);
+  }
+
+  function insightCategoriaQueSubiu({ summary, previousSummary, categories }) {
+    if (!previousSummary || !(previousSummary.expense > 0)) return [];
     const cats = indexCategories(categories);
-    if (summary.income <= 0) {
-      list.push({ level: 'info', text: 'Registre sua renda do mês para ativar a análise dos baldes.' });
+    let worst = null;
+    for (const id of Object.keys(summary.byCategory)) {
+      const cat = cats[id];
+      if (!cat || cat.bucket === 'futuro') continue;
+      const base = previousSummary.byCategory[id] || 0;
+      const diff = summary.byCategory[id] - base;
+      if (subiuMuito(diff, base) && (!worst || diff > worst.diff)) worst = { id, diff };
     }
-    if (summary.income > 0 && summary.consumption > summary.income) {
-      list.push({ level: 'perigo', text: `Você gastou ${formatBRL(summary.consumption - summary.income)} a mais do que ganhou este mês. Corte primeiro no balde Estilo de vida.` });
-    } else if (summary.income > 0 && summary.balance < 0) {
-      list.push({ level: 'alerta', text: `Gastos mais o que você guardou passam da renda em ${formatBRL(-summary.balance)}. Reveja quanto guardar neste mês.` });
-    }
-    for (const row of budgetRows) {
-      if (row.status === 'estourado') list.push({ level: 'perigo', text: `${row.name}: envelope estourado em ${formatBRL(-row.remaining)}.` });
-    }
-    for (const row of budgetRows) {
-      if (row.status === 'risco') list.push({ level: 'alerta', text: `${row.name}: no ritmo atual você vai gastar ${formatBRL(row.projected)} (limite ${formatBRL(row.limit)}). Desacelere.` });
-    }
-    for (const b of buckets) {
-      if (b.status === 'acima') list.push({ level: 'alerta', text: `${b.label} consomem ${formatPercent(b.share)} da renda (meta: até ${formatPercent(b.targetRatio)}).` });
-      if (b.status === 'abaixo' || b.status === 'atencao') {
-        if (b.id === 'futuro') list.push({ level: 'alerta', text: `Você guardou ${formatBRL(b.actual)} para o futuro. A meta é ${formatBRL(b.target)} — faça o aporte logo que a renda cair.` });
-      }
-    }
-    if (previousSummary && previousSummary.expense > 0) {
-      let worst = null;
-      for (const id of Object.keys(summary.byCategory)) {
-        const cat = cats[id];
-        if (!cat || cat.bucket === 'futuro') continue;
-        const diff = summary.byCategory[id] - (previousSummary.byCategory[id] || 0);
-        const base = previousSummary.byCategory[id] || 0;
-        if (diff > 5000 && (base === 0 || diff / base > 0.2) && (!worst || diff > worst.diff)) worst = { id, diff };
-      }
-      if (worst) list.push({ level: 'info', text: `${cats[worst.id].name} subiu ${formatBRL(worst.diff)} em relação ao mês passado.` });
-    }
-    if (commitments && commitments.total > 0) {
-      list.push({ level: 'info', text: `Você já tem ${formatBRL(commitments.total)} em parcelas nos próximos ${commitments.months} ${commitments.months === 1 ? 'mês' : 'meses'} (até ${monthLabel(commitments.lastMonth)}).` });
-    }
-    const planMessage = planInsight(plan);
-    if (planMessage) list.push(planMessage);
-    if (savingsGoalReached(summary, plan)) {
-      list.push({ level: 'bom', text: `Excelente! Você guardou ${formatPercent(summary.savingsRate)} da renda.` });
-    }
+    return worst ? [{ level: 'info', text: `${cats[worst.id].name} subiu ${formatBRL(worst.diff)} em relação ao mês passado.` }] : [];
+  }
+
+  function insightParcelas({ commitments }) {
+    if (!commitments || !(commitments.total > 0)) return [];
+    return [{ level: 'info', text: `Você já tem ${formatBRL(commitments.total)} em parcelas nos próximos ${commitments.months} ${commitments.months === 1 ? 'mês' : 'meses'} (até ${monthLabel(commitments.lastMonth)}).` }];
+  }
+
+  function insightPlano({ plan }) {
+    const message = planInsight(plan);
+    return message ? [message] : [];
+  }
+
+  function insightElogio({ summary, plan }) {
+    return savingsGoalReached(summary, plan) ? [{ level: 'bom', text: `Excelente! Você guardou ${formatPercent(summary.savingsRate)} da renda.` }] : [];
+  }
+
+  const INSIGHT_RULES = [
+    insightSemRenda, insightGastouDemais, insightEnvelopesEstourados, insightEnvelopesEmRisco, insightBaldes,
+    insightCategoriaQueSubiu, insightParcelas, insightPlano, insightElogio,
+  ];
+
+  function insights(context) {
+    const list = INSIGHT_RULES.flatMap((rule) => rule(context));
     if (!list.length) list.push({ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' });
     return list;
   }

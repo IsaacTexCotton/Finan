@@ -139,7 +139,8 @@ Decisões do Isaac aplicadas (30/09/2026)
 - [x] Regras de negócio que moravam na tela voltaram ao núcleo (`core.js`): divisão em parcelas e o
       que apagar, montar e editar um lançamento, metas, soma dos limites e "bateu a meta de guardar".
       Sem mudança para a pessoa; o aviso do `submitTx` saiu (7 → 6 avisos)
-- [ ] `insights` (complexidade 34): quebrar em uma função por tipo de alerta
+- [x] `insights` (complexidade 34): quebrar em uma função por tipo de alerta (lista `INSIGHT_RULES`,
+      na ordem de prioridade; facilita o item "no máximo 3 alertas por vez"; 4 → 3 avisos do lint)
 - [x] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações (`ACTIONS`); as
       janelas nativas (`confirm` e `prompt`) passaram por `confirmar()` e `perguntar()`, um ponto só
       para trocar por janela própria ou ganhar o "desfazer ao excluir" (7 → 4 avisos do lint)
