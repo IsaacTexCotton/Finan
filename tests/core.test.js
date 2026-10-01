@@ -810,3 +810,11 @@ test('os itens adicionados ao orçamento são salvos e validados', () => {
   // a categoria criada pela pessoa sobrevive a um backup e continua no catálogo
   assert.ok(data.categories.some((c) => c.id === 'pets' && c.bucket === 'estilo' && c.name === 'Pets'));
 });
+
+test('cada tipo de renda tem um nome curto e os exemplos separados', () => {
+  for (const [id, perfil] of Object.entries(F.INCOME_PROFILES)) {
+    assert.ok(perfil.name && perfil.name.length <= 20, `${id}: nome curto (até 20 letras)`);
+    assert.ok(perfil.examples && perfil.examples.includes(','), `${id}: exemplos`);
+    assert.ok(perfil.label.startsWith(perfil.name), `${id}: o nome completo começa pelo nome curto`);
+  }
+});

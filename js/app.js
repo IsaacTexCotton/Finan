@@ -502,11 +502,11 @@
     return `
       <label>Em que dia útil você recebe?
         <select id="payday">
-          <option value="0" ${atual ? '' : 'selected'}>Não informar (contar até o fim do mês)</option>
+          <option value="0" ${atual ? '' : 'selected'}>Não informar</option>
           ${opcoes}
         </select>
       </label>
-      <p class="muted small">Com o dia informado, o "Você pode gastar hoje" do Painel passa a durar até o seu próximo pagamento. Só sábado e domingo contam como folga; feriados não.</p>`;
+      <p class="muted small">Com o dia informado, o "Você pode gastar hoje" do Painel passa a durar até o seu próximo pagamento. Só sábado e domingo contam como folga; feriados não. Sem informar, ele conta até o fim do mês.</p>`;
   }
 
   function renderGoals(ctx) {
@@ -522,13 +522,16 @@
         <h2>🛟 Reserva de emergência</h2>
         <label>Seu tipo de renda
           <select id="income-profile">
-            ${Object.entries(F.INCOME_PROFILES).map(([id, p]) => `<option value="${esc(id)}" ${id === profileId ? 'selected' : ''}>${esc(p.label)} — ${p.months} meses</option>`).join('')}
+            ${Object.entries(F.INCOME_PROFILES).map(([id, p]) => `<option value="${esc(id)}" ${id === profileId ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
           </select>
         </label>
+        <p class="muted small">Reserva de ${months} meses de gastos essenciais. Exemplos: ${esc(F.INCOME_PROFILES[profileId].examples)}.</p>
         ${renderPayday(profileId)}
         ${target > 0 ? `
-          <p>Com base nos seus gastos essenciais, sua reserva ideal é de <strong>${money(target)}</strong> (${months} meses de custo de vida).</p>
-          ${goalAction}`
+          <div class="reserve-ideal">
+            <p>Com base nos seus gastos essenciais, sua reserva ideal é de <strong>${money(target)}</strong> (${months} meses de custo de vida).</p>
+            ${goalAction}
+          </div>`
         : `<p class="muted">Registre seus gastos essenciais (moradia, mercado, contas…) para calcularmos o valor ideal da sua reserva: ${months} meses de custo de vida.</p>`}
         <p class="muted small">Deixe a reserva em um investimento seguro e com resgate imediato. Ela é o que impede um imprevisto de virar dívida.</p>
       </article>`;

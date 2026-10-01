@@ -37,7 +37,8 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Mensagem de confirmação acima do botão "+ Lançar", com os tokens de espaçamento
 - [x] Navegação inferior com 4 itens (Painel, Lançamentos, Orçamento, Mais), por decisão do Isaac
       (01/10/2026); os testes de abas foram atualizados com a autorização dele
-- [ ] Visual das telas Metas e Método
+- [x] Visual da tela Metas (reserva em destaque, metas em cartões)
+- [ ] Visual da tela Método (passos em cartões numerados)
 - [ ] Tema escuro (segue a configuração do celular)
 - [x] Barra de navegação fixa embaixo no celular (feita: ver "Navegação inferior" abaixo)
 - [ ] Sugestão: `scrollIntoView` em `app.js` ignora "reduzir movimento"; trocar por `behavior: auto`

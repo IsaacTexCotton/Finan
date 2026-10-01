@@ -523,6 +523,76 @@ select:disabled {
   margin-bottom: var(--space-3);
 }
 
+/* Reserva de emergência: o valor ideal em destaque e o botão de largura total. */
+.reserve-ideal {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+}
+
+.reserve-ideal p {
+  margin: 0 0 var(--space-3);
+}
+
+.reserve-ideal strong {
+  display: block;
+  color: var(--primary-strong);
+  font-size: var(--fs-display);
+  line-height: 1.2;
+}
+
+.reserve-ideal .btn {
+  width: 100%;
+}
+
+/* Cada meta é um cartão: nome, valores, barra, progresso e ações em linhas próprias. */
+.goal {
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.goal:last-child {
+  margin-bottom: 0;
+}
+
+.goal-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.goal-head strong {
+  font-size: var(--fs-body);
+}
+
+.goal-head span {
+  font-size: var(--fs-body);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.goal .bar {
+  height: var(--space-3);
+}
+
+.goal-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.goal-foot .actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* Revisão semanal: cada item é uma linha tocável, sem marcadores soltos. */
 .checklist {
   margin: var(--space-3) 0 0;

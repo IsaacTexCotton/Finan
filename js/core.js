@@ -67,8 +67,8 @@
 
   // Meses de gastos essenciais que a reserva de emergência deve cobrir, por tipo de renda.
   const INCOME_PROFILES = {
-    estavel: { label: 'Renda estável (CLT, servidor público, aposentadoria)', months: 6 },
-    variavel: { label: 'Renda variável (autônomo, freelancer, empresário)', months: 12 },
+    estavel: { name: 'Renda estável', examples: 'CLT, servidor público, aposentadoria', label: 'Renda estável (CLT, servidor público, aposentadoria)', months: 6 },
+    variavel: { name: 'Renda variável', examples: 'autônomo, freelancer, empresário', label: 'Renda variável (autônomo, freelancer, empresário)', months: 12 },
   };
 
   const MONTH_NAMES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
