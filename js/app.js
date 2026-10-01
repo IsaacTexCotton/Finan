@@ -4,7 +4,6 @@
 
   const F = window.FinanCore;
   const STORAGE_KEY = 'finan:data';
-  const GOALS_CATEGORY = 'metas';
   const WEEKDAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
   const TAB_KEY = 'finan:tab';
   const TABS = ['painel', 'lancamentos', 'orcamento', 'metas', 'metodo'];
@@ -381,8 +380,8 @@
     const select = form.elements.categoryId;
     const current = select.value;
     const editing = state.data.transactions.find((t) => t.id === state.editingId);
-    const showGoals = state.data.goals.length > 0 || (editing && editing.categoryId === GOALS_CATEGORY);
-    const cats = state.data.categories.filter((c) => c.type === type && (showGoals || c.id !== GOALS_CATEGORY));
+    const showGoals = state.data.goals.length > 0 || (editing && editing.categoryId === F.GOALS_CATEGORY);
+    const cats = state.data.categories.filter((c) => c.type === type && (showGoals || c.id !== F.GOALS_CATEGORY));
     const groups = type === 'income'
       ? [['Receitas', cats]]
       : Object.keys(F.BUCKETS).map((b) => [F.BUCKETS[b].label, cats.filter((c) => c.bucket === b)]);
@@ -394,7 +393,7 @@
   /** "Para qual meta?" só aparece na categoria Metas; e guardar numa meta não se parcela. */
   function renderGoalField() {
     const form = $('#tx-form');
-    const isGoal = form.elements.type.value === 'expense' && form.elements.categoryId.value === GOALS_CATEGORY;
+    const isGoal = form.elements.type.value === 'expense' && form.elements.categoryId.value === F.GOALS_CATEGORY;
     const select = form.elements.goalId;
     const current = select.value;
     select.innerHTML = state.data.goals.map((g) => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('');
@@ -696,35 +695,26 @@
       form.elements.amount.focus();
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    if (!F.isISODate(date)) {
       pedirData(form);
       return;
     }
-    const entry = {
+    const entry = F.buildEntry({
       type: form.elements.type.value,
       amount,
       date,
       categoryId: form.elements.categoryId.value,
-      description: form.elements.description.value.trim().slice(0, 120),
+      description: form.elements.description.value,
       recurring: form.elements.recurring.checked,
-    };
-    const goal = entry.type === 'expense' && entry.categoryId === GOALS_CATEGORY && state.data.goals.find((g) => g.id === form.elements.goalId.value);
-    if (goal) {
-      entry.goalId = goal.id;
-      if (!entry.description) entry.description = `Meta: ${goal.name}`.slice(0, 120);
-    }
-    const installments = entry.type === 'expense' && !goal ? Number(form.elements.installments.value) || 1 : 1;
+      goalId: form.elements.goalId.value,
+    }, state.data.goals);
+    const installments = F.requestedInstallments(entry, form.elements.installments.value);
     const doMes = F.installmentAmounts(amount, installments)[0]; // o que cai no mês da compra
     if (!state.editingId && guardaDinheiro(entry) && !confirmarGuardar(doMes, F.monthKey(date))) return;
     let message;
     if (state.editingId) {
       const idx = state.data.transactions.findIndex((t) => t.id === state.editingId);
-      if (idx > -1) {
-        const current = state.data.transactions[idx];
-        const updated = { ...current, ...entry, recurring: current.installment ? false : entry.recurring };
-        if (!goal && current.categoryId === GOALS_CATEGORY) delete updated.goalId; // saiu da categoria Metas: sai da meta
-        state.data.transactions[idx] = updated;
-      }
+      if (idx > -1) state.data.transactions[idx] = F.applyEdit(state.data.transactions[idx], entry);
       message = 'Lançamento atualizado.';
     } else if (installments > 1) {
       const parcels = F.createInstallments(entry, installments, newId);

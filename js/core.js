@@ -611,12 +611,49 @@
     return goal.saved + transactions.filter((t) => t.goalId === goal.id && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   }
 
+  // Categoria do balde Futuro em que se lança direto numa meta (a reserva usa "Reserva de emergência").
+  const GOALS_CATEGORY = 'metas';
+
+  /**
+   * Monta o lançamento a partir do que a pessoa preencheu: descrição aparada em 120 letras e, só
+   * para despesa na categoria Metas com uma meta que existe, ligado a ela por goalId. Sem descrição,
+   * o lançamento da meta vira "Meta: <nome>".
+   */
+  function buildEntry(fields, goals) {
+    const entry = {
+      type: fields.type,
+      amount: fields.amount,
+      date: fields.date,
+      categoryId: fields.categoryId,
+      description: String(fields.description || '').trim().slice(0, 120),
+      recurring: Boolean(fields.recurring),
+    };
+    const goal = entry.type === 'expense' && entry.categoryId === GOALS_CATEGORY && goals.find((g) => g.id === fields.goalId);
+    if (goal) {
+      entry.goalId = goal.id;
+      if (!entry.description) entry.description = `Meta: ${goal.name}`.slice(0, 120);
+    }
+    return entry;
+  }
+
+  /** Quantas parcelas pedir: só despesa que não é de meta se parcela; o resto é à vista. */
+  function requestedInstallments(entry, raw) {
+    return entry.type === 'expense' && !entry.goalId ? Number(raw) || 1 : 1;
+  }
+
+  /** Lançamento depois de editado: troca os campos e mantém a identidade. Parcela nunca é fixo, e sair da categoria Metas desliga a meta. */
+  function applyEdit(current, entry) {
+    const updated = { ...current, ...entry, recurring: current.installment ? false : entry.recurring };
+    if (!entry.goalId && current.categoryId === GOALS_CATEGORY) delete updated.goalId;
+    return updated;
+  }
+
   /** Depósito numa meta = lançamento do balde Futuro ligado a ela (a reserva vai para "Reserva de emergência"). */
   function createGoalDeposit(goal, amount, date, id) {
     return {
       id,
       type: 'expense',
-      categoryId: /reserva/i.test(goal.name) ? 'reserva' : 'metas',
+      categoryId: /reserva/i.test(goal.name) ? 'reserva' : GOALS_CATEGORY,
       amount,
       date,
       description: `Meta: ${goal.name}`.slice(0, 120),
@@ -941,6 +978,11 @@
     goalProgress,
     recurringForMonth,
     MAX_INSTALLMENTS,
+    GOALS_CATEGORY,
+    isISODate,
+    buildEntry,
+    requestedInstallments,
+    applyEdit,
     installmentAmounts,
     idsToDelete,
     createInstallments,
