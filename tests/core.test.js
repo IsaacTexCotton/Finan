@@ -842,3 +842,135 @@ test('cada tipo de renda tem um nome curto e os exemplos separados', () => {
     assert.ok(!('label' in perfil), `${id}: o texto longo duplicado (label) foi removido: vale name + examples`);
   }
 });
+
+// Refatoração (decisão do Isaac, 01/10/2026): a regra da divisão em parcelas e a de "quais lançamentos
+// apagar" moravam na tela (app.js); agora têm um lugar só, no núcleo.
+test('installmentAmounts divide em centavos inteiros: as primeiras parcelas levam o que sobra', () => {
+  assert.deepEqual(F.installmentAmounts(100000, 3), [33334, 33333, 33333]);
+  assert.deepEqual(F.installmentAmounts(10000, 4), [2500, 2500, 2500, 2500]);
+  assert.deepEqual(F.installmentAmounts(1000, 1), [1000]);
+  assert.equal(F.installmentAmounts(99999, 7).reduce((a, v) => a + v, 0), 99999);
+});
+
+test('installmentAmounts usa o mesmo limite do núcleo: no mínimo 1 e no máximo 48 parcelas', () => {
+  assert.equal(F.installmentAmounts(10000, 999).length, F.MAX_INSTALLMENTS);
+  assert.deepEqual(F.installmentAmounts(10000, 0), [10000]);
+  assert.deepEqual(F.installmentAmounts(10000, NaN), [10000]);
+  assert.deepEqual(F.installmentAmounts(10000, 2.9), [5000, 5000]);
+});
+
+test('createInstallments e installmentAmounts nunca discordam sobre o valor de cada parcela', () => {
+  for (const [total, count] of [[100000, 3], [99999, 7], [1, 5], [250, 48], [250, 60]]) {
+    let n = 0;
+    const parcelas = F.createInstallments({ amount: total, date: '2026-01-10' }, count, () => `i${++n}`);
+    assert.deepEqual(parcelas.map((p) => p.amount), F.installmentAmounts(total, count));
+  }
+});
+
+test('idsToDelete: um lançamento comum, uma parcela só ou todas as parcelas da mesma compra', () => {
+  let n = 0;
+  const compra = F.createInstallments({ type: 'expense', categoryId: 'compras', amount: 30000, date: '2026-01-10' }, 3, () => `c${++n}`);
+  const outraCompra = F.createInstallments({ type: 'expense', categoryId: 'compras', amount: 20000, date: '2026-01-10' }, 2, () => `d${++n}`);
+  const comum = tx('expense', 'mercado', 5000, '2026-01-12');
+  const lista = [...compra, comum, ...outraCompra];
+  const idsDaCompra = compra.map((p) => p.id);
+
+  assert.deepEqual(F.idsToDelete(lista, comum.id, false), [comum.id]);
+  assert.deepEqual(F.idsToDelete(lista, comum.id, true), [comum.id]); // não é parcela: "todas" não muda nada
+  assert.deepEqual(F.idsToDelete(lista, compra[1].id, false), [compra[1].id]);
+  assert.deepEqual(F.idsToDelete(lista, compra[1].id, true), idsDaCompra); // só as da mesma compra
+  assert.deepEqual(F.idsToDelete(lista, 'nao-existe', true), []);
+});
+
+// Refatoração, passo 2: montar e editar um lançamento também moravam na tela.
+test('GOALS_CATEGORY é o id da categoria "Metas", do balde Futuro, e isISODate aceita só AAAA-MM-DD', () => {
+  const metas = cats.find((c) => c.id === F.GOALS_CATEGORY);
+  assert.equal(metas.name, 'Metas');
+  assert.equal(metas.bucket, 'futuro');
+  assert.equal(F.isISODate('2026-10-01'), true);
+  for (const ruim of ['', '2026-1-01', '01/10/2026', null, 20261001]) assert.equal(F.isISODate(ruim), false);
+});
+
+test('buildEntry limpa a descrição e só liga o lançamento a uma meta quando faz sentido', () => {
+  const metas = [{ id: 'g1', name: 'Viagem' }];
+  const base = { type: 'expense', amount: 5000, date: '2026-10-01', categoryId: 'mercado', description: '  padaria  ', recurring: 1, goalId: 'g1' };
+
+  const comum = F.buildEntry(base, metas);
+  assert.deepEqual(comum, { type: 'expense', amount: 5000, date: '2026-10-01', categoryId: 'mercado', description: 'padaria', recurring: true });
+  assert.equal(F.buildEntry({ ...base, description: 'x'.repeat(130) }, metas).description.length, 120);
+
+  const naMeta = F.buildEntry({ ...base, categoryId: 'metas', description: '' }, metas);
+  assert.equal(naMeta.goalId, 'g1');
+  assert.equal(naMeta.description, 'Meta: Viagem'); // sem descrição, vira "Meta: <nome>"
+  assert.equal(F.buildEntry({ ...base, categoryId: 'metas', description: 'Adiantei' }, metas).description, 'Adiantei');
+  assert.equal(F.buildEntry({ ...base, categoryId: 'metas', description: '' }, [{ id: 'g1', name: 'N'.repeat(200) }]).description.length, 120);
+
+  assert.equal('goalId' in F.buildEntry({ ...base, type: 'income', categoryId: 'metas' }, metas), false); // receita não vai para meta
+  assert.equal('goalId' in F.buildEntry({ ...base, categoryId: 'metas', goalId: 'nao-existe' }, metas), false);
+  assert.equal('goalId' in F.buildEntry({ ...base, categoryId: 'metas' }, []), false);
+});
+
+test('requestedInstallments: só despesa que não é de meta se parcela', () => {
+  assert.equal(F.requestedInstallments({ type: 'expense' }, '3'), 3);
+  assert.equal(F.requestedInstallments({ type: 'expense' }, ''), 1);
+  assert.equal(F.requestedInstallments({ type: 'expense' }, 'abc'), 1);
+  assert.equal(F.requestedInstallments({ type: 'income' }, '3'), 1);
+  assert.equal(F.requestedInstallments({ type: 'expense', goalId: 'g1' }, '3'), 1);
+});
+
+test('applyEdit troca os campos, mantém a identidade e cuida do vínculo com a meta', () => {
+  const atual = { id: 'a', createdAt: 7, type: 'expense', amount: 1000, date: '2026-10-01', categoryId: 'mercado', description: 'x', recurring: false };
+  const novo = { type: 'expense', amount: 2000, date: '2026-10-02', categoryId: 'lazer', description: 'y', recurring: true };
+  const editado = F.applyEdit(atual, novo);
+  assert.deepEqual(editado, { ...atual, ...novo });
+  assert.equal(atual.amount, 1000); // não altera o original
+
+  const parcela = { ...atual, installment: { group: 'g', n: 2, of: 3 }, recurring: false };
+  const editadaParcela = F.applyEdit(parcela, novo);
+  assert.equal(editadaParcela.recurring, false); // parcela nunca é lançamento fixo
+  assert.deepEqual(editadaParcela.installment, { group: 'g', n: 2, of: 3 });
+
+  const naMeta = { ...atual, categoryId: 'metas', goalId: 'g1' };
+  assert.equal('goalId' in F.applyEdit(naMeta, novo), false); // saiu da categoria Metas: sai da meta
+  assert.equal(F.applyEdit(naMeta, { ...novo, categoryId: 'metas', goalId: 'g2' }).goalId, 'g2');
+
+  const depositoReserva = { ...atual, categoryId: 'reserva', goalId: 'g1' };
+  assert.equal(F.applyEdit(depositoReserva, { ...novo, categoryId: 'reserva' }).goalId, 'g1'); // reserva continua ligada
+});
+
+// Refatoração, passo 3: metas e duas contas que a tela repetia.
+test('isReserveGoal reconhece a meta de reserva pelo nome, e o depósito usa a mesma regra', () => {
+  assert.equal(F.isReserveGoal({ name: 'Reserva de emergência' }), true);
+  assert.equal(F.isReserveGoal({ name: 'Minha RESERVA' }), true);
+  assert.equal(F.isReserveGoal({ name: 'Viagem' }), false);
+  assert.equal(F.createGoalDeposit({ id: 'g1', name: 'Minha reserva' }, 1000, '2026-10-01', 'd1').categoryId, 'reserva');
+  assert.equal(F.createGoalDeposit({ id: 'g2', name: 'Viagem' }, 1000, '2026-10-01', 'd2').categoryId, F.GOALS_CATEGORY);
+});
+
+test('createEmergencyGoal cria a meta de reserva com o valor ideal', () => {
+  const meta = F.createEmergencyGoal(1570002, 'g9');
+  assert.deepEqual(meta, { id: 'g9', name: 'Reserva de emergência', target: 1570002, saved: 0, deadline: '' });
+  assert.equal(F.isReserveGoal(meta), true);
+});
+
+test('createGoal limpa o nome, usa "Meta" se vier vazio e converte o prazo (mês) em data', () => {
+  assert.deepEqual(F.createGoal({ name: '  Viagem  ', target: 600000, saved: 1000, deadline: '2027-05' }, 'g1'), { id: 'g1', name: 'Viagem', target: 600000, saved: 1000, deadline: '2027-05-01' });
+  assert.equal(F.createGoal({ name: '   ', target: 100, saved: 0, deadline: '' }, 'g2').name, 'Meta');
+  assert.equal(F.createGoal({ name: 'N'.repeat(80), target: 100, saved: 0, deadline: '' }, 'g3').name.length, 60);
+  assert.equal(F.createGoal({ name: 'x', target: 100, saved: 0, deadline: '' }, 'g4').deadline, '');
+});
+
+test('budgetTotal soma só os limites das categorias de despesa', () => {
+  assert.equal(F.budgetTotal({ mercado: 50000, lazer: 20000, salario: 99999 }, cats), 70000); // salário é receita: não entra
+  assert.equal(F.budgetTotal({}, cats), 0);
+  assert.equal(F.budgetTotal({ naoExiste: 500 }, cats), 0);
+});
+
+test('savingsGoalReached: bateu a meta de guardar só com renda e com taxa igual ou maior que a do plano', () => {
+  const plano = { futuro: 20 };
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.2 }, plano), true);
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.19 }, plano), false);
+  assert.equal(F.savingsGoalReached({ income: 0, savingsRate: 0.5 }, plano), false); // sem renda não há o que comparar
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.2 }, undefined), true); // sem plano, vale o 20% padrão
+  assert.equal(F.savingsGoalReached({ income: 100000, savingsRate: 0.1 }, { futuro: 5 }), true);
+});

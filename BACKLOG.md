@@ -136,6 +136,9 @@ Decisões do Isaac aplicadas (30/09/2026)
 - [ ] Sugestão: o aviso também ao editar um lançamento do Futuro para um valor maior
 
 ## Refatorações (avisos do ESLint)
+- [x] Regras de negócio que moravam na tela voltaram ao núcleo (`core.js`): divisão em parcelas e o
+      que apagar, montar e editar um lançamento, metas, soma dos limites e "bateu a meta de guardar".
+      Sem mudança para a pessoa; o aviso do `submitTx` saiu (7 → 6 avisos)
 - [ ] `insights` (complexidade 34): quebrar em uma função por tipo de alerta
 - [ ] `handleAction` (complexidade 24, 72 linhas): trocar `switch` por mapa de ações
 - [ ] `parseAmount` (complexidade 19): separar detecção de separador decimal

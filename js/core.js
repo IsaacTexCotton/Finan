@@ -303,6 +303,11 @@
       });
   }
 
+  /** Soma dos limites (envelopes) definidos nas categorias de despesa, em centavos. */
+  function budgetTotal(budgets, categories) {
+    return categories.filter((c) => c.type === 'expense').reduce((sum, c) => sum + (budgets[c.id] || 0), 0);
+  }
+
   /**
    * Quanto dá para gastar por dia, até o fim do mês, nas categorias variáveis
    * sem estourar nenhum envelope nem passar do que sobrou (`summary` do mês).
@@ -611,12 +616,70 @@
     return goal.saved + transactions.filter((t) => t.goalId === goal.id && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   }
 
+  // Categoria do balde Futuro em que se lança direto numa meta (a reserva usa "Reserva de emergência").
+  const GOALS_CATEGORY = 'metas';
+
+  /**
+   * Monta o lançamento a partir do que a pessoa preencheu: descrição aparada em 120 letras e, só
+   * para despesa na categoria Metas com uma meta que existe, ligado a ela por goalId. Sem descrição,
+   * o lançamento da meta vira "Meta: <nome>".
+   */
+  function buildEntry(fields, goals) {
+    const entry = {
+      type: fields.type,
+      amount: fields.amount,
+      date: fields.date,
+      categoryId: fields.categoryId,
+      description: String(fields.description || '').trim().slice(0, 120),
+      recurring: Boolean(fields.recurring),
+    };
+    const goal = entry.type === 'expense' && entry.categoryId === GOALS_CATEGORY && goals.find((g) => g.id === fields.goalId);
+    if (goal) {
+      entry.goalId = goal.id;
+      if (!entry.description) entry.description = `Meta: ${goal.name}`.slice(0, 120);
+    }
+    return entry;
+  }
+
+  /** Quantas parcelas pedir: só despesa que não é de meta se parcela; o resto é à vista. */
+  function requestedInstallments(entry, raw) {
+    return entry.type === 'expense' && !entry.goalId ? Number(raw) || 1 : 1;
+  }
+
+  /** Lançamento depois de editado: troca os campos e mantém a identidade. Parcela nunca é fixo, e sair da categoria Metas desliga a meta. */
+  function applyEdit(current, entry) {
+    const updated = { ...current, ...entry, recurring: current.installment ? false : entry.recurring };
+    if (!entry.goalId && current.categoryId === GOALS_CATEGORY) delete updated.goalId;
+    return updated;
+  }
+
+  /** A meta de reserva de emergência é reconhecida pelo nome ("reserva"). */
+  function isReserveGoal(goal) {
+    return /reserva/i.test(goal.name);
+  }
+
+  /** Meta nova a partir do formulário: nome aparado em 60 letras ("Meta" se vier vazio) e prazo (mês) como data do dia 1. */
+  function createGoal(fields, id) {
+    return {
+      id,
+      name: String(fields.name || '').trim().slice(0, 60) || 'Meta',
+      target: fields.target,
+      saved: fields.saved,
+      deadline: fields.deadline ? `${fields.deadline}-01` : '',
+    };
+  }
+
+  /** Meta de reserva de emergência, com o valor ideal calculado e nada guardado ainda. */
+  function createEmergencyGoal(target, id) {
+    return { id, name: 'Reserva de emergência', target, saved: 0, deadline: '' };
+  }
+
   /** Depósito numa meta = lançamento do balde Futuro ligado a ela (a reserva vai para "Reserva de emergência"). */
   function createGoalDeposit(goal, amount, date, id) {
     return {
       id,
       type: 'expense',
-      categoryId: /reserva/i.test(goal.name) ? 'reserva' : 'metas',
+      categoryId: isReserveGoal(goal) ? 'reserva' : GOALS_CATEGORY,
       amount,
       date,
       description: `Meta: ${goal.name}`.slice(0, 120),
@@ -662,25 +725,46 @@
   const MAX_INSTALLMENTS = 48;
 
   /**
+   * Valor de cada parcela, em centavos inteiros (de 1 a 48 parcelas). Os centavos que sobram da
+   * divisão vão para as primeiras parcelas, então a soma bate com o total. Regra única: a criação
+   * das parcelas e o "quanto cai no mês da compra" usam esta função.
+   */
+  function installmentAmounts(total, count) {
+    const n = Math.max(1, Math.min(Math.floor(count) || 1, MAX_INSTALLMENTS));
+    const base = Math.floor(total / n);
+    const remainder = total - base * n;
+    return Array.from({ length: n }, (_, i) => base + (i < remainder ? 1 : 0));
+  }
+
+  /**
+   * Ids a apagar ao excluir o lançamento `id`: só ele ou, se for uma parcela e `allInstallments`,
+   * todas as parcelas da mesma compra. Id desconhecido não apaga nada.
+   */
+  function idsToDelete(transactions, id, allInstallments) {
+    const t = transactions.find((x) => x.id === id);
+    if (!t) return [];
+    if (!allInstallments || !t.installment) return [id];
+    return transactions.filter((x) => x.installment && x.installment.group === t.installment.group).map((x) => x.id);
+  }
+
+  /**
    * Divide uma compra parcelada em um lançamento por mês, começando no mês da compra.
    * Centavos que sobram da divisão vão para as primeiras parcelas (a soma bate com o total).
    */
   function createInstallments(entry, count, makeId) {
-    const n = Math.max(1, Math.min(Math.floor(count) || 1, MAX_INSTALLMENTS));
-    const base = Math.floor(entry.amount / n);
-    const remainder = entry.amount - base * n;
+    const amounts = installmentAmounts(entry.amount, count);
     const group = makeId();
     const day = Number(entry.date.slice(8, 10));
     const firstMonth = monthKey(entry.date);
-    return Array.from({ length: n }, (_, i) => {
+    return amounts.map((amount, i) => {
       const key = shiftMonth(firstMonth, i);
       return {
         ...entry,
         id: makeId(),
-        amount: base + (i < remainder ? 1 : 0),
+        amount,
         date: `${key}-${pad(Math.min(day, daysInMonth(key)))}`,
         recurring: false,
-        installment: { group, n: i + 1, of: n },
+        installment: { group, n: i + 1, of: amounts.length },
         createdAt: Date.now(),
       };
     });
@@ -714,6 +798,12 @@
       return { level: 'alerta', text: `Os essenciais consomem ${pct} da sua renda. Prioridade: reduzir custos fixos (moradia, contas, transporte) ou aumentar a renda. Seu plano agora é ${split}.` };
     }
     return { level: 'info', text: `Seu plano está em ${split} porque os essenciais somaram ${pct} da renda nos últimos meses. Conforme eles caírem, o plano volta sozinho para 50/30/20.` };
+  }
+
+  /** Bateu a meta de guardar: tem renda e a taxa de poupança chegou à parte do Futuro do plano (20% sem plano). */
+  function savingsGoalReached(summary, plan) {
+    const goal = (plan ? plan.futuro : DEFAULT_TARGETS.futuro) / 100;
+    return summary.income > 0 && summary.savingsRate >= goal;
   }
 
   function insights({ summary, buckets, budgetRows, previousSummary, categories, commitments, plan }) {
@@ -755,8 +845,7 @@
     }
     const planMessage = planInsight(plan);
     if (planMessage) list.push(planMessage);
-    const savingsGoal = (plan ? plan.futuro : DEFAULT_TARGETS.futuro) / 100;
-    if (summary.income > 0 && summary.savingsRate >= savingsGoal) {
+    if (savingsGoalReached(summary, plan)) {
       list.push({ level: 'bom', text: `Excelente! Você guardou ${formatPercent(summary.savingsRate)} da renda.` });
     }
     if (!list.length) list.push({ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' });
@@ -920,6 +1009,18 @@
     goalProgress,
     recurringForMonth,
     MAX_INSTALLMENTS,
+    GOALS_CATEGORY,
+    isReserveGoal,
+    createGoal,
+    createEmergencyGoal,
+    budgetTotal,
+    savingsGoalReached,
+    isISODate,
+    buildEntry,
+    requestedInstallments,
+    applyEdit,
+    installmentAmounts,
+    idsToDelete,
     createInstallments,
     installmentCommitments,
     installmentLabel,
