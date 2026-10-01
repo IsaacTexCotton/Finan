@@ -76,3 +76,14 @@ test('depois de salvar, os detalhes voltam a ficar recolhidos', async ({ page })
   await formulario.getByRole('button', { name: 'Salvar' }).click();
   await expect(formulario.getByLabel('Descrição')).toBeHidden();
 });
+
+test('sem data, Salvar abre o "Mais detalhes" e leva o foco ao campo (e não fica mudo)', async ({ page }) => {
+  const formulario = page.locator('#tx-form');
+  await formulario.getByText('Mais detalhes').click();
+  await formulario.getByLabel('Data').fill('');
+  await formulario.getByText('Mais detalhes').click(); // recolhe de novo
+  await formulario.getByLabel('Valor (R$)').fill('10');
+  await formulario.getByRole('button', { name: 'Salvar' }).click();
+  await expect(page.locator(DETALHES)).toHaveJSProperty('open', true);
+  await expect(formulario.getByLabel('Data')).toBeFocused();
+});

@@ -618,6 +618,13 @@
     form.elements.amount.focus();
   }
 
+  /** Data vazia: avisa e leva o foco ao campo, abrindo o "Mais detalhes" onde ele fica. */
+  function pedirData(form) {
+    $('#tx-error').textContent = 'Informe uma data válida.';
+    $('#tx-form details.more').open = true;
+    form.elements.date.focus();
+  }
+
   function submitTx(event) {
     event.preventDefault();
     const form = event.target;
@@ -630,9 +637,7 @@
       return;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      error.textContent = 'Informe uma data válida.';
-      $('#tx-form details.more').open = true;
-      form.elements.date.focus();
+      pedirData(form);
       return;
     }
     const entry = {
@@ -1001,6 +1006,11 @@
   });
 
   $('#tx-form').addEventListener('submit', submitTx);
+  // Campo obrigatório vazio dentro do "Mais detalhes" recolhido: abre para o navegador poder avisar e focar.
+  $('#tx-form').addEventListener('invalid', (event) => {
+    const detalhes = event.target.closest('details');
+    if (detalhes) detalhes.open = true;
+  }, true);
   $('#tx-form').addEventListener('change', (event) => {
     if (event.target.name === 'type') renderCategoryOptions();
     else if (event.target.name === 'categoryId') renderGoalField();
