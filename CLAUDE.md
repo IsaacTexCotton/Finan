@@ -222,6 +222,10 @@ Só faça o commit quando todas as respostas forem "sim":
   lançamento, ou "não foi possível salvar" (manda baixar o backup agora; nunca diz "protegido" depois
   de uma gravação que falhou). As consultas entram numa fila (`protegerDados`), então uma resposta
   antiga nunca cobre uma nova. Testes em `tests/e2e/dados-protegidos.spec.js`.
+- **Site instalável primeiro** (decisão do Isaac, 01/10/2026): o produto desta etapa é o site que
+  funciona como app (PWA). Aplicativo de loja (Play Store ou App Store) **fica para depois** do
+  teste com pessoas de verdade; com ele o próprio sistema do celular poderia guardar cópia dos dados,
+  mas custa mais tempo e dinheiro e quebra a regra "sem build". Não construir nada de loja agora.
 - O site publicado de hoje (completo e grátis) é o ambiente de teste do Isaac; o app que for
   vendido ficará em outro endereço (decisão a tomar quando chegar a hora).
 
