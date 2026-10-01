@@ -207,6 +207,12 @@ Só faça o commit quando todas as respostas forem "sim":
   site e **nunca chama endereço externo**. Só é registrado em http(s), não ao abrir o arquivo.
 - Service worker não roda em `file://`: os testes em `tests/e2e/pwa.spec.js` usam um servidor
   local que entrega só o que a publicação entrega.
+- **Dados protegidos** (decisão do Isaac, 01/10/2026): o app pede ao navegador o armazenamento
+  persistente (`navigator.storage.persist()`), **uma vez por visita e só quando há lançamentos**
+  (no Firefox isso abre um aviso, então não se insiste). Em "Seus dados" (`#storage-status`) o app
+  diz a verdade sobre o que conseguiu: protegido, ainda pode ser apagado (manda baixar o backup),
+  sem garantia neste navegador, ou aguardando o primeiro lançamento. Nunca promete o que o
+  navegador não confirmou. Testes em `tests/e2e/dados-protegidos.spec.js`.
 - O site publicado de hoje (completo e grátis) é o ambiente de teste do Isaac; o app que for
   vendido ficará em outro endereço (decisão a tomar quando chegar a hora).
 

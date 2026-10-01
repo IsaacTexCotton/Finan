@@ -49,7 +49,8 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 
 ## Parte 5 — Publicar
 - [x] App instalável e que abre sem internet (manifesto, ícones, service worker de rede primeiro)
-- [ ] Dados protegidos: pedir armazenamento persistente ao navegador e mostrar o estado em "Seus dados"
+- [x] Dados protegidos: pede armazenamento persistente ao navegador e mostra o estado em "Seus dados"
+- [ ] Sugestão: o primeiro parágrafo de "Seus dados" e a linha de proteção repetem o conselho de fazer backup; enxugar
 - [ ] Backup: decidir o que fazer (cópias internas automáticas, lembrete de backup externo ou os dois)
 - [ ] Ícone definitivo do app (hoje é uma letra F provisória; não é prioridade)
 - [ ] README com o método e como usar

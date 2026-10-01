@@ -52,6 +52,35 @@
     } catch (e) {
       toast('Não foi possível salvar neste navegador. Faça um backup.');
     }
+    protegerDados();
+  }
+
+  // ---------- Proteção dos dados ----------
+  // Pede ao navegador para não apagar os dados sozinho (uma vez por visita, e só quando há o que
+  // proteger) e mostra em "Seus dados" o que de fato foi conseguido, sem prometer o que não dá.
+  const PROTECAO = {
+    protegido: 'Seus dados estão protegidos: o navegador não os apaga sozinho.',
+    'nao-garantido': 'O navegador ainda pode apagar estes dados se o aparelho ficar sem espaço. Baixe um backup de vez em quando.',
+    indisponivel: 'Este navegador não garante a proteção dos dados. Baixe um backup de vez em quando.',
+    aguardando: 'Assim que você lançar algo, o app pede ao navegador para proteger os seus dados.',
+  };
+  let pediuPersistencia = false;
+
+  async function protegerDados() {
+    let estado = 'indisponivel';
+    try {
+      const armazenamento = navigator.storage;
+      if (armazenamento && armazenamento.persisted && armazenamento.persist) {
+        const temDados = state.data.transactions.length > 0;
+        let protegido = await armazenamento.persisted();
+        if (!protegido && temDados && !pediuPersistencia) {
+          pediuPersistencia = true;
+          protegido = await armazenamento.persist();
+        }
+        estado = protegido ? 'protegido' : temDados ? 'nao-garantido' : 'aguardando';
+      }
+    } catch (e) { /* sem confirmação do navegador: fica "indisponível" */ }
+    $('#storage-status').textContent = PROTECAO[estado];
   }
 
   function loadTab() {
@@ -1196,4 +1225,5 @@
 
   resetTxForm();
   render();
+  protegerDados();
 })();
