@@ -100,7 +100,12 @@ function bodyOf(selector) {
 
 function remOf(body, prop) {
   const m = body.match(new RegExp(`(?:^|[;\\s])${prop}:\\s*([\\d.]+)rem`));
-  return m ? Number(m[1]) : 0;
+  if (m) return Number(m[1]);
+  // O valor pode vir de um token (var(--fs-display)): procura o valor dele no :root.
+  const token = body.match(new RegExp(`(?:^|[;\\s])${prop}:\\s*var\\(--([\\w-]+)\\)`));
+  const root = css.match(/:root\s*\{([^}]*)\}/);
+  const value = token && root && root[1].match(new RegExp(`--${token[1]}:\\s*([\\d.]+)rem`));
+  return value ? Number(value[1]) : 0;
 }
 
 test('o botão Salvar ocupa a largura toda e é mais alto que o mínimo de toque', () => {

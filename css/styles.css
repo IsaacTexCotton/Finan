@@ -45,6 +45,13 @@
   /* Medidas */
   --tap: 2.75rem;
   --radius: 0.75rem;
+  /* Tamanhos de fonte: corpo e título são os principais; pequeno é texto de apoio;
+     número e display são para valores em destaque */
+  --fs-small: 0.875rem;
+  --fs-body: 1rem;
+  --fs-title: 1.25rem;
+  --fs-number: clamp(1.15rem, 5vw, 1.6rem);
+  --fs-display: 2rem;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -67,7 +74,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 1rem;
+  font-size: var(--fs-body);
   line-height: 1.55;
 }
 
@@ -79,11 +86,11 @@ h3 {
 }
 
 h2 {
-  font-size: 1.25rem;
+  font-size: var(--fs-title);
 }
 
 h3 {
-  font-size: 1.0625rem;
+  font-size: var(--fs-body);
 }
 
 p {
@@ -95,7 +102,7 @@ p {
 }
 
 .small {
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
 }
 
 .positive {
@@ -193,7 +200,7 @@ main:focus-visible {
   padding: 0;
   overflow: hidden;
   clip: rect(0 0 0 0);
-  font-size: 1.125rem;
+  font-size: var(--fs-body);
   white-space: nowrap;
 }
 
@@ -253,7 +260,7 @@ main:focus-visible {
   background: none;
   color: var(--muted);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-small);
   font-weight: 700;
   cursor: pointer;
 }
@@ -322,7 +329,7 @@ main {
     flex: 1 0 auto;
     grid-column: auto;
     padding: 0 1rem;
-    font-size: 1rem;
+    font-size: var(--fs-body);
   }
 
   .brand {
@@ -391,7 +398,7 @@ main {
 
 .btn.small {
   padding-inline: 0.85rem;
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
 }
 
 .icon-btn {
@@ -400,7 +407,7 @@ main {
   border: 2px solid transparent;
   background: transparent;
   color: var(--primary);
-  font-size: 1.375rem;
+  font-size: var(--fs-title);
 }
 
 .icon-btn:hover {
@@ -430,7 +437,7 @@ select {
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--fs-body);
 }
 
 input[type="checkbox"],
@@ -495,7 +502,7 @@ select:disabled {
 
 .hint {
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
   font-weight: 400;
 }
 
@@ -543,12 +550,12 @@ select:disabled {
 
 .card-label {
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
 .card-value {
-  font-size: clamp(1.15rem, 5vw, 1.6rem);
+  font-size: var(--fs-number);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
@@ -556,7 +563,7 @@ select:disabled {
 
 .card-hint {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--fs-small);
 }
 
 .allowance {
@@ -575,7 +582,7 @@ select:disabled {
 .allowance-value {
   display: block;
   color: var(--primary-strong);
-  font-size: 2rem;
+  font-size: var(--fs-display);
   font-weight: 800;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
@@ -602,7 +609,7 @@ select:disabled {
 }
 
 .plan-info strong {
-  font-size: 1.25rem;
+  font-size: var(--fs-title);
 }
 
 .badge {
@@ -610,7 +617,7 @@ select:disabled {
   padding: 0.1rem 0.65rem;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 0.875rem;
+  font-size: var(--fs-small);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -718,7 +725,7 @@ select:disabled {
 
 .bucket-foot {
   margin-top: 0.5rem;
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
   font-variant-numeric: tabular-nums;
 }
 
@@ -835,7 +842,7 @@ select:disabled {
 
 input[name="amount"] {
   min-height: 3.5rem;
-  font-size: 1.75rem;
+  font-size: var(--fs-display);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -851,7 +858,7 @@ input[name="amount"] {
 #tx-submit {
   width: 100%;
   min-height: 3.25rem;
-  font-size: 1.125rem;
+  font-size: var(--fs-body);
 }
 
 .day {
@@ -859,7 +866,7 @@ input[name="amount"] {
   padding-bottom: 0.35rem;
   border-bottom: 2px solid var(--border);
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
   font-weight: 700;
 }
 
@@ -898,7 +905,7 @@ input[name="amount"] {
   height: 2.5rem;
   border-radius: 50%;
   background: var(--primary-soft);
-  font-size: 1.25rem;
+  font-size: var(--fs-title);
 }
 
 .tx-main {
@@ -914,7 +921,7 @@ input[name="amount"] {
 }
 
 .tx-cat {
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
 }
 
 .tx-amount {
@@ -938,7 +945,7 @@ input[name="amount"] {
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-strong);
-  font-size: 0.8125rem;
+  font-size: var(--fs-small);
   font-weight: 700;
   vertical-align: middle;
 }
@@ -977,19 +984,19 @@ input[name="amount"] {
 
 .budget-group h3 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--fs-body);
 }
 
 .budget-sum {
   margin: 0 0 0.25rem;
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
 }
 
 .budget-room {
   margin: 0 0 0.25rem;
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
 }
 
 .budget-room.danger {
@@ -1034,7 +1041,7 @@ input[name="amount"] {
 
 .budget-detail {
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
 }
 
 .budget-limit {
@@ -1046,7 +1053,7 @@ input[name="amount"] {
 .budget-limit-label {
   flex: 0 0 auto;
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: var(--fs-body);
 }
 
 .budget-input {
@@ -1158,7 +1165,7 @@ input[name="amount"] {
 
 .add-panel h4 {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--fs-body);
 }
 
 .add-list {
