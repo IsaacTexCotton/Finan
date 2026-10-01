@@ -81,3 +81,25 @@ test('o app não faz nenhuma requisição de rede, nem ao exportar os dados', as
 
   expect(externas, 'os dados nunca podem sair do navegador').toEqual([]);
 });
+
+test('dados salvos com nomes especiais do JavaScript não quebram os textos nem os totais', async ({ page }) => {
+  // Antes do conserto: tipo de renda "constructor" mostrava "Reserva de undefined meses" em Metas, e uma
+  // categoria com balde "constructor" fazia o gasto sumir do Painel (Gastos R$ 0,00 com R$ 50 lançados).
+  await page.clock.setFixedTime(new Date('2026-09-20T12:00:00'));
+  await page.addInitScript(() => {
+    localStorage.setItem('finan:data', JSON.stringify({
+      version: 1,
+      settings: { incomeProfile: 'constructor' },
+      categories: [{ id: 'mercado', name: 'Mercado', type: 'expense', bucket: 'constructor', kind: 'variavel' }],
+      transactions: [
+        { id: 'r', type: 'income', amount: 300000, date: '2026-09-02', categoryId: 'salario', description: '' },
+        { id: 'g', type: 'expense', amount: 5000, date: '2026-09-05', categoryId: 'mercado', description: 'Feira' },
+      ],
+    }));
+  });
+  await page.goto(APP);
+  await expect(page.locator('#summary-cards .card').filter({ hasText: 'Gastos' })).toContainText(/R\$\s50,00/);
+  await irParaAba(page, 'Metas');
+  await expect(page.locator('#emergency')).toContainText('Reserva de 6 meses de gastos essenciais');
+  await expect(page.locator('#emergency')).not.toContainText('undefined');
+});

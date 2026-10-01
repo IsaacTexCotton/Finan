@@ -888,78 +888,118 @@
 
   // ---------- Importação / exportação ----------
 
+  function defaultSettings() {
+    return { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7, budgetItems: [] };
+  }
+
   function emptyData() {
-    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7, budgetItems: [] } };
+    return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: defaultSettings() };
   }
 
   function isISODate(s) {
     return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
   }
 
+  // O nome vem de um backup e pode ser "constructor" ou "__proto__": só vale o que está de fato na lista.
+  function hasOwn(list, name) {
+    return Object.prototype.hasOwnProperty.call(list, name);
+  }
+
+  // Normalizadores: cada um valida e limpa um tipo de dado do backup e devolve só o que presta.
+  function normalizeCategories(raw) {
+    if (!Array.isArray(raw) || !raw.length) return DEFAULT_CATEGORIES.map((c) => ({ ...c }));
+    const categories = raw
+      .filter((c) => c && typeof c.id === 'string' && typeof c.name === 'string' && (c.type === 'income' || c.type === 'expense'))
+      .map((c) => ({
+        id: c.id,
+        name: c.name.slice(0, 60),
+        type: c.type,
+        icon: typeof c.icon === 'string' ? c.icon.slice(0, 4) : '•',
+        ...(c.type === 'expense' ? { bucket: hasOwn(BUCKETS, c.bucket) ? c.bucket : 'estilo', kind: c.kind === 'fixa' ? 'fixa' : 'variavel' } : {}),
+      }));
+    // Categorias padrão criadas depois do backup também passam a existir.
+    const known = new Set(categories.map((c) => c.id));
+    for (const c of DEFAULT_CATEGORIES) if (!known.has(c.id)) categories.push({ ...c });
+    return categories;
+  }
+
+  function normalizeTransactions(raw, catIds) {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((t) => t && typeof t.id === 'string' && (t.type === 'income' || t.type === 'expense') && Number.isInteger(t.amount) && t.amount > 0 && isISODate(t.date) && catIds.has(t.categoryId))
+      .map((t) => ({
+        id: t.id,
+        type: t.type,
+        amount: t.amount,
+        date: t.date,
+        categoryId: t.categoryId,
+        description: typeof t.description === 'string' ? t.description.slice(0, 120) : '',
+        recurring: Boolean(t.recurring),
+        createdAt: Number.isFinite(t.createdAt) ? t.createdAt : 0,
+        ...(typeof t.goalId === 'string' && t.goalId ? { goalId: t.goalId.slice(0, 80) } : {}),
+        ...(validInstallment(t.installment) ? { installment: { group: t.installment.group, n: t.installment.n, of: t.installment.of } } : {}),
+      }));
+  }
+
+  function normalizeBudgets(raw, catIds) {
+    const budgets = {};
+    if (!raw || typeof raw !== 'object') return budgets;
+    for (const [id, value] of Object.entries(raw)) {
+      if (catIds.has(id) && Number.isInteger(value) && value > 0) budgets[id] = value;
+    }
+    return budgets;
+  }
+
+  function normalizeGoals(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((g) => g && typeof g.id === 'string' && typeof g.name === 'string' && Number.isInteger(g.target) && g.target > 0)
+      .map((g) => ({
+        id: g.id,
+        name: g.name.slice(0, 60),
+        target: g.target,
+        saved: Number.isInteger(g.saved) && g.saved > 0 ? g.saved : 0,
+        deadline: isISODate(g.deadline) ? g.deadline : '',
+      }));
+  }
+
+  function normalizeReviews(raw) {
+    const reviews = {};
+    if (!raw || typeof raw !== 'object') return reviews;
+    for (const [week, items] of Object.entries(raw)) {
+      if (/^\d{4}-W\d{2}$/.test(week) && Array.isArray(items)) reviews[week] = items.filter((i) => typeof i === 'string');
+    }
+    return reviews;
+  }
+
+  function integerInRange(value, min, max) {
+    return Number.isInteger(value) && value >= min && value <= max;
+  }
+
+  function normalizeSettings(raw, categories) {
+    const settings = defaultSettings();
+    const s = raw || {};
+    if (hasOwn(INCOME_PROFILES, s.incomeProfile)) settings.incomeProfile = s.incomeProfile;
+    if (integerInRange(s.reviewDay, 1, 7)) settings.reviewDay = s.reviewDay;
+    if (integerInRange(s.paydayBusinessDay, 1, 10)) settings.paydayBusinessDay = s.paydayBusinessDay;
+    if (Array.isArray(s.budgetItems)) {
+      const expenseIds = new Set(categories.filter((c) => c.type === 'expense').map((c) => c.id));
+      settings.budgetItems = [...new Set(s.budgetItems.filter((id) => typeof id === 'string' && expenseIds.has(id)))];
+    }
+    return settings;
+  }
+
   /** Valida e limpa dados vindos do armazenamento ou de um backup importado. */
   function normalizeData(raw) {
     const data = emptyData();
     if (!raw || typeof raw !== 'object') return data;
-    if (Array.isArray(raw.categories) && raw.categories.length) {
-      data.categories = raw.categories
-        .filter((c) => c && typeof c.id === 'string' && typeof c.name === 'string' && (c.type === 'income' || c.type === 'expense'))
-        .map((c) => ({
-          id: c.id,
-          name: c.name.slice(0, 60),
-          type: c.type,
-          icon: typeof c.icon === 'string' ? c.icon.slice(0, 4) : '•',
-          ...(c.type === 'expense' ? { bucket: BUCKETS[c.bucket] ? c.bucket : 'estilo', kind: c.kind === 'fixa' ? 'fixa' : 'variavel' } : {}),
-        }));
-      // Categorias padrão criadas depois do backup também passam a existir.
-      const known = new Set(data.categories.map((c) => c.id));
-      for (const c of DEFAULT_CATEGORIES) if (!known.has(c.id)) data.categories.push({ ...c });
-    }
+    data.categories = normalizeCategories(raw.categories);
     const catIds = new Set(data.categories.map((c) => c.id));
-    if (Array.isArray(raw.transactions)) {
-      data.transactions = raw.transactions
-        .filter((t) => t && typeof t.id === 'string' && (t.type === 'income' || t.type === 'expense') && Number.isInteger(t.amount) && t.amount > 0 && isISODate(t.date) && catIds.has(t.categoryId))
-        .map((t) => ({
-          id: t.id,
-          type: t.type,
-          amount: t.amount,
-          date: t.date,
-          categoryId: t.categoryId,
-          description: typeof t.description === 'string' ? t.description.slice(0, 120) : '',
-          recurring: Boolean(t.recurring),
-          createdAt: Number.isFinite(t.createdAt) ? t.createdAt : 0,
-          ...(typeof t.goalId === 'string' && t.goalId ? { goalId: t.goalId.slice(0, 80) } : {}),
-          ...(validInstallment(t.installment) ? { installment: { group: t.installment.group, n: t.installment.n, of: t.installment.of } } : {}),
-        }));
-    }
-    if (raw.budgets && typeof raw.budgets === 'object') {
-      for (const [id, value] of Object.entries(raw.budgets)) {
-        if (catIds.has(id) && Number.isInteger(value) && value > 0) data.budgets[id] = value;
-      }
-    }
-    if (Array.isArray(raw.goals)) {
-      data.goals = raw.goals
-        .filter((g) => g && typeof g.id === 'string' && typeof g.name === 'string' && Number.isInteger(g.target) && g.target > 0)
-        .map((g) => ({
-          id: g.id,
-          name: g.name.slice(0, 60),
-          target: g.target,
-          saved: Number.isInteger(g.saved) && g.saved > 0 ? g.saved : 0,
-          deadline: isISODate(g.deadline) ? g.deadline : '',
-        }));
-    }
-    if (raw.reviews && typeof raw.reviews === 'object') {
-      for (const [week, items] of Object.entries(raw.reviews)) {
-        if (/^\d{4}-W\d{2}$/.test(week) && Array.isArray(items)) data.reviews[week] = items.filter((i) => typeof i === 'string');
-      }
-    }
-    if (raw.settings && INCOME_PROFILES[raw.settings.incomeProfile]) data.settings.incomeProfile = raw.settings.incomeProfile;
-    const reviewDay = raw.settings && raw.settings.reviewDay;
-    if (Number.isInteger(reviewDay) && reviewDay >= 1 && reviewDay <= 7) data.settings.reviewDay = reviewDay;
-    const expenseIds = new Set(data.categories.filter((c) => c.type === 'expense').map((c) => c.id));
-    const items = raw.settings && raw.settings.budgetItems;
-    if (Array.isArray(items)) data.settings.budgetItems = [...new Set(items.filter((id) => typeof id === 'string' && expenseIds.has(id)))];
-    const payday = raw.settings && raw.settings.paydayBusinessDay;
-    if (Number.isInteger(payday) && payday >= 1 && payday <= 10) data.settings.paydayBusinessDay = payday;
+    data.transactions = normalizeTransactions(raw.transactions, catIds);
+    data.budgets = normalizeBudgets(raw.budgets, catIds);
+    data.goals = normalizeGoals(raw.goals);
+    data.reviews = normalizeReviews(raw.reviews);
+    data.settings = normalizeSettings(raw.settings, data.categories);
     return data;
   }
 
