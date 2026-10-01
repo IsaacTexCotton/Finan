@@ -139,3 +139,26 @@ Decisões do Isaac aplicadas (30/09/2026)
 - [x] Formulário de lançamento: categoria "Metas" abre a lista das metas (só aparece com metas)
 - [ ] Sugestão: limite do envelope Metas sugerido pela soma dos valores mensais das metas
 - [x] Revisão semanal no dia escolhido (padrão domingo), com lembrete no Painel
+- [x] Visual da lista da revisão semanal (`.checklist`): sem marcadores soltos, linhas tocáveis e com filete
+- [x] "Pode gastar" limitado ao que sobrou no período (guardar numa meta baixa o valor)
+- [ ] Sugestão: reservar também o que a pessoa ainda pretende guardar no mês (envelope Metas com limite)
+
+## Orçamento pelo que a pessoa realmente gasta (reformulação, 30/09/2026)
+Decisão do Isaac: a sugestão atual inventa números (porcentagem repartida à força entre
+categorias). Novo princípio: o orçamento parte da realidade; a porcentagem do plano vira teto
+do balde e comparação. Uma parte por vez:
+- [x] Parte 1: teto do balde, o que já foi distribuído e o que sobra, com aviso de excesso
+- [x] Parte 2: o botão "Sugerir pelos meus gastos" sugere a média dos últimos 3 meses por
+      categoria (nas fixas, o valor que a pessoa de fato paga), só para categorias com gasto; o
+      balde Futuro vem do percentual do plano (`suggestFromHistory`)
+- [ ] Sugestão: retirar `suggestBudgets` do núcleo quando os testes antigos dele puderem ser
+      trocados (hoje ele só divide o balde Futuro por dentro de `suggestFromHistory`)
+- [x] Parte 3: questionário simples (aluguel, mercado, transporte…) para quem não tem histórico
+- [ ] Sugestão: cada valor sugerido mostra o motivo ("média dos últimos 3 meses: R$ 290")
+
+## Adicionar item ao orçamento (30/09/2026)
+- [x] Orçamento enxuto na primeira abertura, botão "Adicionar" por balde e "Criar" item novo
+- [ ] Sugestão: remover um item do orçamento (hoje um item adicionado fica para sempre; só os
+      que aparecem por ter limite somem ao apagar o limite)
+- [ ] Sugestão: escolher "fixa" ou "variável" e o ícone ao criar um item
+- [ ] Sugestão: renomear e excluir categorias criadas pela pessoa
