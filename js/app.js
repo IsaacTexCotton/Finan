@@ -1058,6 +1058,13 @@
 
   $('#mais').addEventListener('click', () => (maisAberto() ? fecharMais(false) : abrirMais()));
 
+  // Teclado: ao sair da lista com o Tab, ela fecha (senão ficaria aberta sobre a página). Só quando o
+  // foco vai para um elemento de fora da barra: com toque o foco pode ser nulo e a lista não deve fechar.
+  $('.tabs').addEventListener('focusout', (event) => {
+    const destino = event.relatedTarget;
+    if (maisAberto() && destino && !destino.closest('.tabs')) fecharMais(false);
+  });
+
   // Teclado: setas, Home e End percorrem a barra (Painel, Lançamentos, Orçamento, Mais) e, aberta a
   // lista, Metas e Método. Nas abas a seleção acompanha o foco; no "Mais" o Enter abre a lista.
   $('.tabs').addEventListener('keydown', (event) => {

@@ -815,6 +815,6 @@ test('cada tipo de renda tem um nome curto e os exemplos separados', () => {
   for (const [id, perfil] of Object.entries(F.INCOME_PROFILES)) {
     assert.ok(perfil.name && perfil.name.length <= 20, `${id}: nome curto (até 20 letras)`);
     assert.ok(perfil.examples && perfil.examples.includes(','), `${id}: exemplos`);
-    assert.ok(perfil.label.startsWith(perfil.name), `${id}: o nome completo começa pelo nome curto`);
+    assert.ok(!('label' in perfil), `${id}: o texto longo duplicado (label) foi removido: vale name + examples`);
   }
 });

@@ -202,11 +202,17 @@ Só faça o commit quando todas as respostas forem "sim":
 - O Finan é instalável e abre sem internet (decisão do Isaac, 01/10/2026: entrega por link de
   acesso, instalado no celular). `manifest.webmanifest`, `sw.js` e `icons/` (PNG gerados de
   `icons/icon.svg` por `node tools/gerar-icones.js`; o ícone, uma letra F, é provisório).
-- O service worker usa **rede primeiro**: com internet entrega sempre a versão mais nova; sem
-  internet, a cópia guardada. Nunca fica preso numa versão antiga. Só mexe em arquivos do próprio
-  site e **nunca chama endereço externo**. Só é registrado em http(s), não ao abrir o arquivo.
+- O service worker usa **rede primeiro**: com internet entrega sempre a versão mais nova (pede ao
+  servidor com `cache: 'no-cache'`, porque o GitHub Pages manda guardar os arquivos por 10
+  minutos); sem internet, a cópia guardada, e só a página inicial para pedidos de página (um
+  arquivo que falta falha de verdade). Nunca fica preso numa versão antiga. Só mexe em arquivos do
+  próprio site e **nunca chama endereço externo**. Só é registrado em http(s), não ao abrir o
+  arquivo. A lista `ARQUIVOS` do `sw.js` tem que ter todo arquivo de `css/` e `js/` (a instalação
+  falha inteira se um listado não existir): `tests/pwa.test.js` confere.
 - Service worker não roda em `file://`: os testes em `tests/e2e/pwa.spec.js` usam um servidor
-  local que entrega só o que a publicação entrega.
+  local que entrega só o que a publicação entrega, com cache longo como o do GitHub Pages.
+  **Offline de verdade = desligar o servidor.** O `setOffline` do Playwright não alcança o service
+  worker, então um teste só com ele passaria sem provar nada.
 - **Dados protegidos** (decisão do Isaac, 01/10/2026): o app pede ao navegador o armazenamento
   persistente (`navigator.storage.persist()`) **depois de um salvamento**, uma vez por visita e só
   quando há lançamentos. Nunca ao abrir o app, porque no Firefox o pedido abre um aviso. Em "Seus

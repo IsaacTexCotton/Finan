@@ -80,3 +80,19 @@ test('o app só registra o service worker em http(s), nunca ao abrir o arquivo d
   assert.match(app, /serviceWorker\.register\('sw\.js'\)/);
   assert.match(app, /\^https\?:\$/, 'o registro precisa conferir que o endereço é http(s)');
 });
+
+test('todo arquivo da lista do service worker existe, e nenhum css/js do app fica de fora dela', () => {
+  const lista = ler('sw.js').match(/const ARQUIVOS = \[([^\]]*)\]/);
+  assert.ok(lista, 'não achei a lista ARQUIVOS no sw.js');
+  const arquivos = [...lista[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  for (const arquivo of arquivos.filter((a) => a !== './')) assert.ok(existe(arquivo), `sw.js lista ${arquivo}, que não existe (a instalação inteira falharia)`);
+  for (const pasta of ['css', 'js']) {
+    for (const nome of fs.readdirSync(path.join(raiz, pasta))) {
+      assert.ok(arquivos.includes(`${pasta}/${nome}`), `${pasta}/${nome} não está na lista do sw.js: não abriria offline na primeira visita`);
+    }
+  }
+});
+
+test('o service worker não responde com a página a pedidos que não são de página', () => {
+  assert.match(ler('sw.js'), /\.mode === 'navigate'/, 'o retorno a index.html só vale para navegação');
+});

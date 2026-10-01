@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // O app abre sem internet depois da primeira visita e continua recebendo atualizações quando
-// há internet. Service worker só funciona em http(s), então aqui o app é servido por um
+// há internet, mesmo quando o servidor manda guardar os arquivos por 10 minutos (como o GitHub
+// Pages). Service worker só funciona em http(s), então aqui o app é servido por um
 // servidor local pequeno que entrega SÓ o que a publicação entrega.
 
 const RAIZ = path.join(__dirname, '..', '..');
@@ -14,7 +15,13 @@ const TIPOS = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 
 
 let servidor;
 let origem;
+let porta = 0;
 let trocas = {};
+
+// Sem internet DE VERDADE: o servidor é desligado. (O setOffline do Playwright não alcança as
+// requisições do service worker no Chromium, então um teste só com ele passaria sem provar nada.)
+const ligar = () => new Promise((ok) => servidor.listen(porta, '127.0.0.1', () => { porta = servidor.address().port; origem = `http://127.0.0.1:${porta}`; ok(); }));
+const desligar = () => new Promise((ok) => { servidor.closeAllConnections(); servidor.close(ok); });
 
 test.beforeAll(async () => {
   servidor = http.createServer((req, res) => {
@@ -26,15 +33,17 @@ test.beforeAll(async () => {
       res.writeHead(404).end('não encontrado');
       return;
     }
-    res.writeHead(200, { 'content-type': TIPOS[path.extname(rel)] || 'application/octet-stream', 'cache-control': 'no-store' });
+    res.writeHead(200, { 'content-type': TIPOS[path.extname(rel)] || 'application/octet-stream', 'cache-control': 'max-age=600' });
     res.end(trocas[rel] !== undefined ? trocas[rel] : fs.readFileSync(arquivo));
   });
-  await new Promise((ok) => servidor.listen(0, '127.0.0.1', ok));
-  origem = `http://127.0.0.1:${servidor.address().port}`;
+  await ligar();
 });
 
-test.afterAll(() => new Promise((ok) => servidor.close(ok)));
-test.beforeEach(() => { trocas = {}; });
+test.afterAll(async () => { if (servidor.listening) await desligar(); });
+test.beforeEach(async () => {
+  trocas = {};
+  if (!servidor.listening) await ligar();
+});
 
 /** Abre o app e espera o service worker assumir o controle da página. */
 async function abrir(page) {
@@ -50,7 +59,7 @@ test('o app registra o service worker e ele fica ativo', async ({ page }) => {
   await expect.poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active.state)).toBe('activated');
 });
 
-test('depois da primeira visita, o app abre sem internet e os dados continuam lá', async ({ page, context }) => {
+test('depois da primeira visita, o app abre sem internet e os dados continuam lá', async ({ page }) => {
   await abrir(page);
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
   await page.locator('#tx-form').getByLabel('Valor (R$)').fill('42,50');
@@ -58,7 +67,7 @@ test('depois da primeira visita, o app abre sem internet e os dados continuam l�
   await page.locator('#tx-form').getByRole('button', { name: 'Salvar' }).click();
   await expect(page.getByRole('status')).toContainText('lançada');
 
-  await context.setOffline(true);
+  await desligar();
   await page.reload();
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
@@ -68,7 +77,7 @@ test('depois da primeira visita, o app abre sem internet e os dados continuam l�
 test('com internet, o app pega a versão nova (não fica preso numa versão antiga)', async ({ page }) => {
   await abrir(page);
   trocas['index.html'] = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8').replace('<title>Finan — controle de gastos</title>', '<title>Finan — versão nova</title>');
-  await page.reload();
+  await page.goto(`${origem}/`); // abrir de novo (e não "recarregar", que já ignora o cache do navegador)
   await expect(page).toHaveTitle('Finan — versão nova');
 });
 
@@ -90,4 +99,22 @@ test('o manifesto e os ícones são entregues e o navegador os aceita', async ({
     expect(r.ok(), icone.src).toBe(true);
     expect(r.headers()['content-type']).toBe('image/png');
   }
+});
+
+test('offline, um arquivo que não está guardado falha de verdade, em vez de receber a página inicial', async ({ page }) => {
+  await abrir(page);
+  await desligar();
+  const resposta = await page.evaluate(() => fetch('js/nao-existe.js').then((r) => `${r.status} ${r.headers.get('content-type')}`, () => 'falhou'));
+  expect(resposta).toBe('falhou');
+});
+
+test('a cópia para uso offline é a da versão mais nova, não a antiga', async ({ page }) => {
+  await abrir(page);
+  trocas['index.html'] = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8').replace('<title>Finan — controle de gastos</title>', '<title>Finan — versão guardada</title>');
+  await page.goto(`${origem}/`);
+  await expect(page).toHaveTitle('Finan — versão guardada');
+  await page.waitForTimeout(300); // dá tempo de a cópia ser gravada
+  await desligar();
+  await page.reload();
+  await expect(page).toHaveTitle('Finan — versão guardada');
 });

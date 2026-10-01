@@ -111,3 +111,20 @@ test('o botão "+ Lançar" e o fim do conteúdo ficam livres da barra', async ({
   const fim = await page.evaluate(() => Math.max(...[...document.querySelectorAll('main > section:not([hidden]) > *')].map((f) => f.getBoundingClientRect().bottom)));
   expect(fim, 'o último bloco termina acima do botão').toBeLessThanOrEqual(botao.y);
 });
+
+test('com o teclado, sair da lista do "Mais" com Tab fecha a lista (ela não fica aberta sobre a página)', async ({ page }) => {
+  await page.goto(APP);
+  await item(page, 'Mais').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('tab', { name: 'Metas' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('tab', { name: 'Metas' })).toBeHidden();
+  await expect(item(page, 'Mais')).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('tocar num item da lista do "Mais" continua funcionando (o fechamento por foco não atrapalha o toque)', async ({ page }) => {
+  await page.goto(APP);
+  await item(page, 'Mais').click();
+  await page.getByRole('tab', { name: 'Método' }).click();
+  await expect(page.getByRole('tabpanel', { name: 'Método' })).toBeVisible();
+});

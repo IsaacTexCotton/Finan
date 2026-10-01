@@ -6,7 +6,9 @@ const CACHE = 'finan';
 const ARQUIVOS = ['./', 'index.html', 'manifest.webmanifest', 'css/styles.css', 'js/core.js', 'js/app.js', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (evento) => {
-  evento.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
+  // "reload": ignora o cache do navegador (o GitHub Pages manda guardar os arquivos por 10 minutos)
+  const pedidos = ARQUIVOS.map((arquivo) => new Request(arquivo, { cache: 'reload' }));
+  evento.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(pedidos)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (evento) => {
@@ -17,14 +19,15 @@ self.addEventListener('fetch', (evento) => {
   const pedido = evento.request;
   if (pedido.method !== 'GET' || new URL(pedido.url).origin !== self.location.origin) return;
   evento.respondWith(
-    fetch(pedido)
+    // "no-cache": confere com o servidor antes de usar qualquer cópia do cache do navegador
+    fetch(pedido, { cache: 'no-cache' })
       .then((resposta) => {
-        if (resposta.ok) {
+        if (resposta.ok && resposta.status === 200) {
           const copia = resposta.clone();
-          caches.open(CACHE).then((cache) => cache.put(pedido, copia));
+          evento.waitUntil(caches.open(CACHE).then((cache) => cache.put(pedido, copia)).catch(() => { /* sem cópia offline desta vez */ }));
         }
         return resposta;
       })
-      .catch(() => caches.match(pedido).then((guardado) => guardado || caches.match('index.html'))),
+      .catch(() => caches.match(pedido).then((guardado) => guardado || (pedido.mode === 'navigate' ? caches.match('index.html') : Response.error()))),
   );
 });
