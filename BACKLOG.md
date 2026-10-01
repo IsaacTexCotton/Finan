@@ -31,7 +31,7 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] Visual da tela Lançamentos: formulário para o polegar e lista por dia
 - [x] Visual da tela Orçamento (envelopes)
 - [x] Tokens de fonte (5 tamanhos) e de espaçamento (4/8/12/16/24) no `:root`
-- [ ] Botão "+" flutuante, sempre no mesmo canto, para lançar (substitui o "+ Lançar" do topo)
+- [x] Botão "+ Lançar" flutuante, sempre no mesmo canto (substitui o do topo)
 - [ ] Tela de lançar refeita para as 2 ações (despesa e receita) e o Painel em primeiro plano
 - [ ] Navegação inferior com 4 itens (Painel, Lançamentos, Orçamento, Mais): decisão do Isaac
       (01/10/2026); exige trocar os testes `abas-visiveis` e `acessibilidade`, que ele precisa autorizar

@@ -28,6 +28,7 @@
   /* Foco do teclado e trilho das barras */
   --focus: #174ea6;
   --track: #d3e0de;
+  --shadow: rgb(0 0 0 / 35%);
 
   /* Estados: texto, fundo suave e cor de preenchimento das barras */
   --ok-fg: #0a5a38;
@@ -235,13 +236,6 @@ main:focus-visible {
   color: var(--on-primary);
 }
 
-.topbar .btn.primary {
-  padding-inline: var(--space-3);
-  border-color: var(--surface);
-  background: var(--surface);
-  color: var(--primary-strong);
-}
-
 .tabs {
   display: flex;
   overflow-x: auto;
@@ -284,7 +278,7 @@ main:focus-visible {
 main {
   max-width: 60rem;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-3) calc(var(--space-4) * 4);
+  padding: var(--space-4) var(--space-3) calc(var(--space-5) * 4);
 }
 
 .panel {
@@ -388,6 +382,19 @@ main {
 .btn.primary {
   background: var(--primary);
   color: var(--on-primary);
+}
+
+/* Botão de ação principal: sempre no canto inferior direito, ao alcance do polegar. */
+.fab {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 20;
+  min-height: calc(var(--tap) + var(--space-2));
+  padding-inline: var(--space-4);
+  border-radius: calc(var(--tap) + var(--space-2));
+  box-shadow: 0 2px 8px var(--shadow);
+  font-size: var(--fs-body);
 }
 
 .btn.primary:hover {

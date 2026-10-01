@@ -156,6 +156,9 @@ Só faça o commit quando todas as respostas forem "sim":
   fonte `--fs-small|body|title|number|display`; espaçamento `--space-1…5` (4, 8, 12, 16, 24 px).
   Nada de `rem` solto em `font-size`, `padding`, `margin` ou `gap` (`tests/tokens.test.js`).
   Sem kit de componentes: CSS puro, seguindo os padrões do Material 3 (privacidade, sem build).
+- **Ação principal sempre no mesmo lugar** (decisão do Isaac, 01/10/2026): o botão "+ Lançar"
+  é flutuante (`.fab`), fixo no canto inferior direito, em todas as abas e na rolagem. O fim
+  do conteúdo nunca fica escondido atrás dele (`tests/e2e/botao-flutuante.spec.js`).
 - Alvos de toque com pelo menos 44px (`--tap`), inclusive botões "pequenos".
 - Nunca remover o `outline` do foco; nunca informar só por cor (status sempre com texto).
   Em campos de texto e de escolha o foco pinta a própria borda de azul e o contorno cola nela
@@ -222,7 +225,7 @@ Só faça o commit quando todas as respostas forem "sim":
 - **"Lançar minha renda" abria o formulário como Despesa:** o botão da tela de boas-vindas e o
   "+ Lançar" do topo compartilhavam a mesma ação. Solução: o botão ganhou `data-type="income"`
   e a ação `quick-add` aplica o tipo antes de desenhar o formulário. O "+ Lançar" continua
-  abrindo como Despesa. Testes em `tests/e2e/lancar-renda.spec.js`.
+  abrindo como Despesa (hoje o botão flutuante). Testes em `tests/e2e/lancar-renda.spec.js`.
 
 - **O foco sumia depois de ações** (limite do Orçamento, revisão semanal, guardar valor,
   excluir, tipo de renda): o `innerHTML` apagava o controle e o foco voltava ao início da
