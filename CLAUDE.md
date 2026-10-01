@@ -77,7 +77,10 @@ Só faça o commit quando todas as respostas forem "sim":
   - sem histórico → 50/30/20.
 - **Envelopes:** cada categoria pode ter um limite mensal. Categorias `fixa` (aluguel,
   assinaturas) não entram na projeção de fim de mês; `variavel` (mercado, delivery) entram,
-  e também no "pode gastar hoje".
+  e também no "pode gastar hoje". A **previsão de fim de mês só vale a partir do 7º dia** do mês
+  (decisão do Isaac, 01/10/2026): antes disso um único gasto, multiplicado pelo mês inteiro, dava
+  alarme falso ("vai estourar"). O aviso de envelope **já estourado** não depende de previsão e vale
+  desde o dia 1.
 - **"Você pode gastar hoje" até o próximo pagamento** (decisão do Isaac, 30/09/2026). Com renda
   estável e o "N-ésimo dia útil em que recebe" informado (1º a 10º, nas Metas), o valor divide
   o que sobra nos envelopes variáveis pelos dias até o próximo pagamento, contando só os gastos

@@ -199,10 +199,12 @@ Por que ele pararia de usar (do mais provável ao menos)
       estável ou variável", "Essenciais consomem 96%". Explicar no lugar ou trocar por palavras do dia a dia
 
 Defeitos e confusões vistos
-- [ ] **Alarme falso no começo do mês** (visto): no dia 2, R$ 80 em iFood geraram "no ritmo atual você
-      vai gastar R$ 1.240 (limite R$ 380). Desacelere". A previsão multiplica 2 dias pelo mês
-      inteiro. Na mesma tela, "Sobrou" fica negativo e os baldes dizem "Sem renda" até o salário cair.
-      Ideia: só prever depois de alguns dias, ou depois de a renda entrar
+- [x] **Alarme falso no começo do mês** (visto): no dia 2, R$ 80 em iFood geraram "no ritmo atual você
+      vai gastar R$ 1.240 (limite R$ 380). Desacelere". A previsão multiplicava 2 dias pelo mês
+      inteiro. Resolvido: a previsão só vale a partir do 7º dia (decisão do Isaac, 01/10/2026);
+      envelope já estourado continua avisando desde o dia 1
+- [ ] "Sobrou" negativo e baldes "Sem renda" nos primeiros dias, até o salário cair (visto, mesma tela
+      do item acima; fora do que foi resolvido)
 - [ ] "Sobrou" otimista no meio do mês (visto): no dia 8 mostrou R$ 2.850, com aluguel (R$ 1.100) e
       contas ainda por pagar. Ideia: mostrar ao lado o que ainda vai vencer (fixos do mês)
 - [ ] A sugestão de limites já nasce com alertas (visto): logo depois de "Sugerir pelos meus gastos"
