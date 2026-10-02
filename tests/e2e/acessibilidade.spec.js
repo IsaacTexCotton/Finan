@@ -157,3 +157,29 @@ test('o "Ver mais N avisos" do Painel, aberto, não tem violações do axe', asy
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
   }
 });
+
+test('a sugestão de limites do Orçamento (com meta, atípico e déficit) não tem violações do axe', async ({ page }) => {
+  const gasto = (id, categoryId, mes, amount) => ({ id, type: 'expense', categoryId, amount, date: `${mes}-10`, description: '' });
+  const salario = (valor) => ({ id: 'r', type: 'income', categoryId: 'salario', amount: valor, date: '2026-09-02', description: '' });
+  const meses = ['2026-05', '2026-06', '2026-07', '2026-08'];
+  const cenarios = {
+    'com meta, atípico e sobra': { version: 1, goals: [{ id: 'g1', name: 'Viagem', target: 600000, saved: 0, deadline: '2027-03-01' }],
+      transactions: [salario(300000), ...meses.flatMap((m, i) => [gasto(`m${i}`, 'mercado', m, 60000), gasto(`c${i}`, 'compras', m, i === 0 ? 250000 : 10000), gasto(`l${i}`, 'lazer', m, 20000)])] },
+    'em déficit': { version: 1, transactions: [salario(100000), ...meses.flatMap((m, i) => [gasto(`d${i}`, 'moradia', m, 120000), gasto(`s${i}`, 'assinaturas', m, 10000)])] },
+  };
+  for (const largura of [320, 390, 1280]) {
+    for (const [nome, dados] of Object.entries(cenarios)) {
+      await page.setViewportSize({ width: largura, height: 900 });
+      await page.clock.setFixedTime(new Date('2026-09-20T12:00:00'));
+      await page.goto(APP);
+      await page.evaluate((d) => localStorage.setItem('finan:data', JSON.stringify(d)), dados);
+      await page.reload();
+      await page.getByRole('tab', { name: 'Orçamento' }).click();
+      await page.getByRole('button', { name: 'Sugerir pelos meus gastos' }).click();
+      await expect(page.locator('#sugestao')).toBeVisible();
+      await page.locator('#sugestao summary', { hasText: 'Como calculamos' }).click();
+      const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+      expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `${nome} a ${largura}px`).toEqual([]);
+    }
+  }
+});

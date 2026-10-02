@@ -139,7 +139,7 @@
           <summary>Como funciona</summary>
           <p class="muted">Os limites valem para todos os meses. A ideia é dar um destino a cada real da sua renda: gastar, guardar ou investir.</p>
           <p class="muted small">Cada balde tem um <strong>teto</strong>: a parte da sua renda que o plano reserva para ele. Você não precisa dar limite a todas as categorias: as que ficam sem limite gastam do que sobra do teto.</p>
-          <p class="muted small">O botão <strong>Sugerir pelos meus gastos</strong> usa a média dos seus últimos 3 meses (nas categorias fixas, o valor que você pagou) e só sugere limite para o que você já gastou. Para o Futuro, usa a parte do plano. Ele não inventa números: se você ainda não tem gastos de meses anteriores, faz algumas perguntas e monta os limites com o que você responder.</p>
+          <p class="muted small">O botão <strong>Sugerir pelos meus gastos</strong> olha o que você realmente gastou nos últimos meses. Primeiro calcula o que você precisa pagar (moradia, mercado, saúde, dívidas…) e o que já está comprometido; só sugere limite para o que você usa, sempre “até” um valor, e o que sobra vai para suas metas e para gastar à vontade. Ele não inventa números: se você ainda não tem gastos de meses anteriores, faz algumas perguntas e monta os limites com o que você responder.</p>
         </details>
         <form id="budget-quiz" class="quiz" hidden>
           <h3 id="quiz-title" tabindex="-1">Conte quanto você gasta por mês</h3>
@@ -151,6 +151,14 @@
             <button type="button" class="btn" data-action="cancel-quiz">Agora não</button>
           </div>
         </form>
+        <div id="sugestao" class="quiz" hidden>
+          <h3 id="sug-title" tabindex="-1">Sugestão para este mês</h3>
+          <div id="sug-conteudo"></div>
+          <div class="actions">
+            <button type="button" class="btn primary" data-action="apply-suggestion">Aplicar como limites</button>
+            <button type="button" class="btn" data-action="cancel-suggestion">Agora não</button>
+          </div>
+        </div>
         <div id="zero-based"></div>
         <div id="budget-table"></div>
       </article>

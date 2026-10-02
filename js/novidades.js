@@ -6,8 +6,15 @@ window.FINAN_NOVIDADES = [
     "data": null,
     "secoes": [
       {
+        "nome": "Adicionado",
+        "itens": [
+          "\"Sugerir pelos meus gastos\" agora mostra a conta inteira antes de aplicar: sua renda, o que você precisa pagar, a margem que sobra, quanto vai para suas metas e quanto dá para gastar em cada coisa, sempre \"até\" um valor. Só aparece o que você realmente usa, e a tela avisa quando a renda não cobre o básico"
+        ]
+      },
+      {
         "nome": "Alterado",
         "itens": [
+          "\"Sugerir pelos meus gastos\" não usa mais a média de 3 meses nem porcentagens fixas: olha os seus últimos meses, deixa de fora um mês fora do comum, protege o mínimo que você já gasta no dia a dia e só depois reparte o resto",
           "Pagar dívida agora conta como gasto essencial, e não mais como dinheiro guardado: quitar uma dívida é obrigação, e o balde Futuro fica só para reserva, investimentos e metas. Quem já tinha lançamentos de dívida vê a mudança sozinha"
         ]
       }

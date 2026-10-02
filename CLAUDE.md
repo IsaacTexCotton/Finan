@@ -122,19 +122,29 @@ Só faça o commit quando todas as respostas forem "sim":
   limites e o que sobra, e avisa com texto quando os limites passam do teto (`bucketBudgetStatus`).
   O app **não corta nada sozinho**: mostra o tamanho do excesso e a pessoa decide. Sem renda no
   mês não há teto.
-- **Sugestão de orçamento pelo que a pessoa realmente gasta** (decisão do Isaac, 30/09/2026).
-  O botão "Sugerir pelos meus gastos" (`suggestFromHistory`) **não inventa números**: Essenciais e
-  Estilo de vida recebem a média dos últimos 3 meses com lançamentos (nas categorias `fixa`, o
-  valor mais recente que foi pago), arredondada para cima em R$ 10, e só para categorias que
-  tiveram gasto. O Futuro vem da parte do plano sobre a renda, repartida pelo histórico do
-  próprio Futuro (igual entre as categorias se não houver). O mês corrente não entra no
-  histórico; a renda é a do mês ou, sem ela, a do mês anterior. Sem renda ou sem meses
-  anteriores com gastos, não sugere números: abre um **questionário** (`#budget-quiz`) com um
-  campo por categoria de Essenciais e Estilo de vida ("Deixe em branco o que você não gasta"),
-  e os limites saem do que a pessoa informou (`budgetsFromAnswers`), com o Futuro pelo plano.
-  Valor inválido mostra o erro no lugar; "Agora não" fecha sem mudar nada. A sugestão substitui os
-  limites atuais (com confirmação) e **não força a soma a bater com a renda**: a tela mostra o
-  que falta ou passa ("Faltam R$ X sem destino", teto do balde). Sem renda, pede a renda antes.
+- **Sugestão de limites pelos gastos reais** (decisão do Isaac, 02/10/2026; substitui a de 30/09, que
+  usava a média de 3 meses e o Futuro pelo plano). O botão "Sugerir pelos meus gastos" (`js/sugestao.js`,
+  `sugerirGastos`) parte do que a pessoa realmente paga e gasta, sem porcentagem fixa da renda, sem idade
+  e sem número para categoria que ela não usa. A conta: **renda esperada − necessários − comprometidos =
+  margem**. Necessários = categorias de Essenciais (inclui saúde e dívida: nunca são "cortadas");
+  comprometidos = categorias fixas de Estilo de vida (assinaturas) + parcelas já agendadas para o mês. Da
+  margem saem, nesta ordem: (1) o **piso de vida** (quartil baixo do que ela já gasta em cada categoria
+  flexível), (2) os **objetivos** (cada meta recebe o aporte que o prazo pede; a reserva vem primeiro e,
+  sem prazo, usa 12 meses; meta sem prazo não cobra nada), (3) os **gastos flexíveis**, sempre "até" um
+  valor da própria faixa dela (do típico ao quartil alto, nunca acima do que sobra). Quando a margem não
+  paga tudo, as metas cedem antes do dia a dia e a tela diz quanto a meta demora. Sobra além disso é
+  mostrada como "sem destino": o app não decide sozinho. Cada categoria: fixa = último valor pago;
+  variável = **mediana** dos meses de uso; usada em menos da metade dos meses = provisão mensal; mês com
+  mais de 2× a mediana é "atípico" (fica fora da conta, mas aparece na tela). **Renda variável**: a base é
+  a média da metade mais baixa dos últimos 6 meses; o que entrar acima é "extra". **Renda que não cobre o
+  básico** é déficit explícito (quanto falta e o que rever primeiro), sem metas nem gastos de estilo de vida.
+  A confiança (baixa, média, alta) vem dos meses de histórico e aparece na tela. Os números de política
+  (6 meses, 12 meses de reserva, 2× a mediana) ficam em `POLITICA`. **Sem renda ou sem gastos de meses
+  anteriores, não inventa números**: abre o **questionário** (`#budget-quiz`, `budgetsFromAnswers`), com um
+  campo por categoria de Essenciais e Estilo de vida ("Deixe em branco o que você não gasta"); nele o
+  Futuro ainda vem da parte do plano. "Aplicar como limites" grava o que a pessoa viu (pergunta antes de
+  substituir limites e tem "Desfazer"). Nunca cria a meta de reserva sozinho: a tela oferece "Ir para
+  Metas". Testes em `tests/sugestao.test.js` e `tests/e2e/sugerir-pelos-gastos.spec.js`.
 - **Orçamento enxuto e "Adicionar item"** (decisão do Isaac, 30/09/2026). Na primeira abertura o
   Orçamento mostra só o essencial (`DEFAULT_BUDGET_ITEMS` em `core.js`, um único lugar: Moradia,
   Contas da casa, Mercado, Transporte, Saúde e Reserva de emergência), mas os três baldes sempre

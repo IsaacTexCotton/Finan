@@ -103,3 +103,52 @@ test('dados salvos com nomes especiais do JavaScript não quebram os textos nem 
   await expect(page.locator('#emergency')).toContainText('Reserva de 6 meses de gastos essenciais');
   await expect(page.locator('#emergency')).not.toContainText('undefined');
 });
+
+test('nomes de categoria e de meta com HTML aparecem como texto na sugestão de limites e não executam', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-20T12:00:00'));
+  await page.addInitScript(({ img, script }) => {
+    const gasto = (id, categoryId, mes, amount) => ({ id, type: 'expense', categoryId, amount, date: `${mes}-10`, description: '' });
+    localStorage.setItem('finan:data', JSON.stringify({
+      version: 1,
+      categories: [
+        { id: 'mercado', name: 'Mercado', type: 'expense', bucket: 'essencial', kind: 'variavel' },
+        { id: 'x1', name: img, type: 'expense', bucket: 'estilo', kind: 'variavel' },
+        { id: 'x2', name: script, type: 'expense', bucket: 'estilo', kind: 'fixa' },
+      ],
+      goals: [{ id: 'g1', name: img, target: 500000, saved: 0, deadline: '2027-06-01' }],
+      transactions: [
+        { id: 'r', type: 'income', amount: 500000, date: '2026-09-02', categoryId: 'salario', description: '' },
+        ...['2026-04', '2026-05', '2026-06', '2026-07'].flatMap((m, i) => [gasto(`a${i}`, 'mercado', m, 50000), gasto(`b${i}`, 'x1', m, i === 0 ? 90000 : 10000), gasto(`c${i}`, 'x2', m, 5000)]), // x1 tem um mês fora do comum
+      ],
+    }));
+  }, { img: IMG, script: SCRIPT });
+  await page.goto(APP);
+  await irParaAba(page, 'Orçamento');
+  await page.getByRole('button', { name: 'Sugerir pelos meus gastos' }).click();
+  const painel = page.locator('#sugestao');
+  await expect(painel).toContainText('<img src=x onerror');
+  await expect(painel).toContainText('num mês fora do comum'); // a mensagem de gasto atípico também mostra o nome
+  await expect(painel.locator('img, script')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__xss), 'nenhum nome de categoria ou de meta pode executar código').toBe(0);
+});
+
+test('nome de categoria com HTML também é só texto na mensagem "Para rever primeiro" do déficit', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-20T12:00:00'));
+  await page.addInitScript((nome) => {
+    const gasto = (id, categoryId, mes, amount) => ({ id, type: 'expense', categoryId, amount, date: `${mes}-10`, description: '' });
+    localStorage.setItem('finan:data', JSON.stringify({
+      version: 1,
+      categories: [{ id: 'x2', name: nome, type: 'expense', bucket: 'estilo', kind: 'fixa' }],
+      transactions: [
+        { id: 'r', type: 'income', amount: 100000, date: '2026-09-02', categoryId: 'salario', description: '' },
+        ...['2026-06', '2026-07'].flatMap((m, i) => [gasto(`a${i}`, 'moradia', m, 120000), gasto(`b${i}`, 'x2', m, 10000)]),
+      ],
+    }));
+  }, IMG);
+  await page.goto(APP);
+  await irParaAba(page, 'Orçamento');
+  await page.getByRole('button', { name: 'Sugerir pelos meus gastos' }).click();
+  await expect(page.locator('#sugestao')).toContainText('Para rever primeiro');
+  await expect(page.locator('#sugestao img')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__xss)).toBe(0);
+});

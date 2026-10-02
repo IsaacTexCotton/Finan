@@ -505,51 +505,6 @@
     return result;
   }
 
-  /** Meses anteriores ao informado (do mais recente ao mais antigo) que têm lançamentos, até `count`. */
-  function historyMonths(transactions, key, count = 3) {
-    const months = [];
-    for (let i = 1; i <= count; i++) {
-      const month = shiftMonth(key, -i);
-      if (transactionsOfMonth(transactions, month).length) months.push(month);
-    }
-    return months;
-  }
-
-  /** Limite de uma categoria a partir do que foi gasto: valor pago (fixa) ou média dos meses (variável), em múltiplos de R$ 10 para cima. */
-  function realSpending(category, valuesByRecentMonth) {
-    const real = category.kind === 'fixa'
-      ? valuesByRecentMonth.find((v) => v > 0) || 0
-      : valuesByRecentMonth.reduce((a, b) => a + b, 0) / valuesByRecentMonth.length;
-    return Math.ceil(real / 1000) * 1000;
-  }
-
-  /**
-   * Sugestão de limites a partir do que a pessoa realmente gasta (nunca inventa números):
-   * - Essenciais e Estilo de vida: média dos últimos 3 meses com lançamentos (nas fixas, o valor
-   *   mais recente que foi pago), só para categorias com gasto;
-   * - Futuro: a parte do plano sobre a renda, repartida pelo histórico do próprio Futuro.
-   * O mês informado não entra no histórico. A renda é a do mês ou, sem ela, a do mês anterior.
-   * Devolve { status: 'ok' | 'sem-renda' | 'sem-historico', budgets, months, income }.
-   */
-  function suggestFromHistory(transactions, categories, key, plan) {
-    const income = referenceIncome(transactions, categories, key);
-    if (!(income > 0)) return { status: 'sem-renda', budgets: {} };
-    const months = historyMonths(transactions, key);
-    if (!months.length) return { status: 'sem-historico', budgets: {} };
-
-    const spent = months.map((m) => summarize(transactionsOfMonth(transactions, m), categories).byCategory);
-    const expenses = categories.filter((c) => c.type === 'expense');
-    const budgets = {};
-    const futureHistory = {};
-    for (const c of expenses) {
-      const values = spent.map((byCategory) => byCategory[c.id] || 0);
-      if (c.bucket === 'futuro') futureHistory[c.id] = values.reduce((a, b) => a + b, 0) / values.length;
-      else if (values.some((v) => v > 0)) budgets[c.id] = realSpending(c, values);
-    }
-    Object.assign(budgets, futureBudgets(income, categories, futureHistory, plan));
-    return { status: 'ok', budgets, months: months.length, income };
-  }
-
   /** Renda de referência do mês: a do próprio mês ou, sem ela, a do mês anterior (0 se não houver). */
   function referenceIncome(transactions, categories, key) {
     const monthIncome = summarize(transactionsOfMonth(transactions, key), categories).income;
@@ -1106,7 +1061,6 @@
     suggestBudgets,
     bucketCeilings,
     bucketBudgetStatus,
-    suggestFromHistory,
     referenceIncome,
     budgetsFromAnswers,
     DEFAULT_BUDGET_ITEMS,

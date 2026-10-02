@@ -1,8 +1,9 @@
-/* Finan — interface. Depende de FinanCore (js/core.js). */
+/* Finan — interface. Depende de FinanCore (js/core.js) e FinanSugestao (js/sugestao.js). */
 (function () {
   'use strict';
 
   const F = window.FinanCore;
+  const S = window.FinanSugestao;
   const STORAGE_KEY = 'finan:data';
   const WEEKDAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
   const TAB_KEY = 'finan:tab';
@@ -117,6 +118,7 @@
     creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
+    sugestao: null, // resultado da sugestão que está na tela, para "Aplicar como limites"
     undo: null, // cópia dos dados antes de uma exclusão (ou troca geral), para o "Desfazer"
     undoTexto: '', // o que a mensagem diz depois de desfazer
   };
@@ -859,8 +861,7 @@
   }
 
   function suggestBudget() {
-    const { plan } = monthContext();
-    const result = F.suggestFromHistory(state.data.transactions, state.data.categories, state.month, plan);
+    const result = S.sugerirGastos(state.data, state.month, F.todayISO());
     if (result.status === 'sem-renda') {
       toast('Lance sua renda primeiro para receber uma sugestão.');
       return;
@@ -869,10 +870,112 @@
       openQuiz();
       return;
     }
-    const hasBudget = Object.keys(state.data.budgets).length > 0;
-    if (hasBudget && !confirmar('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
-    state.data.budgets = result.budgets;
-    commit(`Orçamento sugerido pela média dos últimos ${result.months} ${result.months === 1 ? 'mês' : 'meses'}. Ajuste os valores à sua realidade.`);
+    abrirSugestao(result);
+  }
+
+  // ---------- Sugestão de limites pelos gastos reais ----------
+
+  const sugItem = (rotulo, valor, nota = '') => `<li><span>${esc(rotulo)}</span><strong>${valor}</strong>${nota ? `<span class="muted small">${esc(nota)}</span>` : ''}</li>`;
+  const meses = (n) => `${n} ${n === 1 ? 'mês' : 'meses'}`;
+
+  function sugConfianca(r) {
+    if (r.confianca === 'baixa') return `Baseada em só ${meses(r.meses)} de histórico: use como ponto de partida e ajuste.`;
+    if (r.confianca === 'media') return `Baseada em ${meses(r.meses)} de histórico. Quanto mais meses você lançar, melhor fica.`;
+    return `Baseada nos seus últimos ${meses(r.meses)}.`;
+  }
+
+  function sugResumo(r) {
+    const notaRenda = r.renda.variavel ? 'Renda variável: usamos a parte mais baixa dos últimos meses, para não contar com dinheiro incerto.' : '';
+    const extra = r.renda.extra > 0 ? `Neste mês já entrou ${F.formatBRL(r.renda.extra)} acima disso.` : '';
+    const itens = [sugItem('Renda prevista', F.formatBRL(r.renda.base), `${notaRenda} ${extra}`.trim()), sugItem('O que você precisa pagar', F.formatBRL(r.necessarios))];
+    if (r.comprometidos > 0) itens.push(sugItem('Compromissos fixos', F.formatBRL(r.comprometidos)));
+    itens.push(sugItem('Margem', F.formatBRL(r.margem)));
+    return `<ul class="sug-lista">${itens.join('')}</ul>`;
+  }
+
+  function sugLinha(l) {
+    const valor = l.fixa ? F.formatBRL(l.limite) : `até ${F.formatBRL(l.limite)}`;
+    const notas = [];
+    if (l.esporadico) notas.push('Você gasta isso de vez em quando.');
+    if (l.abaixoDoHabito) notas.push(`Abaixo do que você costuma gastar (${F.formatBRL(l.tipico)}).`);
+    return sugItem(l.nome, valor, notas.join(' '));
+  }
+
+  function sugGrupo(titulo, linhas) {
+    return linhas.length ? `<h4>${esc(titulo)}</h4><ul class="sug-lista">${linhas.map(sugLinha).join('')}</ul>` : '';
+  }
+
+  function sugObjetivos(r) {
+    if (!r.objetivos.length) return '';
+    const itens = r.objetivos.map((o) => {
+      const completo = o.destinado >= o.precisa;
+      const valor = completo ? `${F.formatBRL(o.destinado)} por mês` : `${F.formatBRL(o.destinado)} por mês, de ${F.formatBRL(o.precisa)} que ela precisa`;
+      const nota = o.meses ? `${completo ? 'Chega lá em' : 'Nesse ritmo, leva'} ${meses(o.meses)}.` : 'Não sobra nada para ela neste mês.';
+      return sugItem(o.nome, valor, nota);
+    });
+    return `<h4>Para guardar</h4><ul class="sug-lista">${itens.join('')}</ul>`;
+  }
+
+  function sugAvisos(r) {
+    const atipicos = r.linhas.flatMap((l) => l.atipicos.map((v) => `<p class="muted small">Não entrou na conta: ${esc(l.nome)} teve ${F.formatBRL(v)} num mês fora do comum.</p>`));
+    const sobra = r.livre > 0 ? `<div class="notice">Sobram <strong>${F.formatBRL(r.livre)}</strong> sem destino. Você decide: guardar numa meta ou deixar de folga.</div>` : '';
+    const reserva = r.status === 'ok' && r.avisos.includes('sem-meta-de-reserva')
+      ? '<p>Você ainda não tem uma meta de reserva de emergência. <button type="button" class="btn small" data-action="go-metas">Ir para Metas</button></p>' : '';
+    return atipicos.join('') + sobra + reserva;
+  }
+
+  function sugDeficit(r) {
+    const revisar = r.revisar.length ? ` Para rever primeiro: ${r.revisar.map((l) => `${esc(l.nome)} (${F.formatBRL(l.limite)})`).join(', ')}.` : '';
+    return `<div class="notice danger">Sua renda não cobre o que você já paga todo mês: faltam <strong>${F.formatBRL(r.falta)}</strong>. Por isso a sugestão não separa dinheiro para metas nem para gastos de estilo de vida.${revisar}</div>`;
+  }
+
+  const SUG_COMO = `
+    <details class="how">
+      <summary>Como calculamos</summary>
+      <p class="muted">O app não usa porcentagens fixas da renda. Ele olha o que você realmente paga e gasta nos últimos meses (até 6) e separa a conta em partes: o que você precisa pagar (moradia, mercado, saúde, dívidas…), os compromissos fixos (assinaturas, parcelas) e a margem que sobra.</p>
+      <p class="muted small">Da margem, primeiro fica o mínimo que você já gasta no dia a dia; depois vão as suas metas, só até o que o prazo de cada uma pede; o resto é para gastar à vontade. Em cada categoria vale o valor típico dos seus meses (um mês fora do comum não conta) e o limite é “até” um valor que você já teve. Nada é sugerido para o que você não usa. Se a renda não cobre o básico, o app mostra o tamanho do buraco em vez de inventar folga.</p>
+    </details>`;
+
+  function abrirSugestao(r) {
+    closeQuiz();
+    state.sugestao = r;
+    const deficit = r.status === 'deficit';
+    $('#sug-conteudo').innerHTML = `<p class="muted">${esc(sugConfianca(r))}</p>${sugResumo(r)}${deficit ? sugDeficit(r) : ''}`
+      + sugGrupo('Necessários', r.linhas.filter((l) => l.grupo === 'necessario'))
+      + sugGrupo('Compromissos fixos', r.linhas.filter((l) => l.grupo === 'comprometido'))
+      + sugObjetivos(r)
+      + (deficit ? '' : sugGrupo('Para gastar, até:', r.linhas.filter((l) => l.grupo === 'flexivel')))
+      + sugAvisos(r) + SUG_COMO;
+    $('#sugestao').hidden = false;
+    $('#sug-title').focus();
+  }
+
+  function closeSugestao() {
+    state.sugestao = null;
+    $('#sugestao').hidden = true;
+  }
+
+  function cancelarSugestao() {
+    closeSugestao();
+    $('[data-action="suggest-budget"]').focus();
+  }
+
+  /** Grava o que a pessoa viu na tela (não recalcula), com pergunta se já havia limites e "Desfazer". */
+  function aplicarSugestao() {
+    const r = state.sugestao;
+    if (!r) return;
+    const temLimites = Object.keys(state.data.budgets).length > 0;
+    if (temLimites && !confirmar('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
+    const antes = temLimites ? copiarDados() : undefined;
+    state.data.budgets = { ...r.limites };
+    closeSugestao();
+    commit('Limites aplicados. Ajuste os valores à sua realidade.', antes, 'Limites anteriores de volta.');
+    $('#budget-title').focus();
+  }
+
+  function irParaMetas() {
+    abrirAba('metas');
+    $('#conteudo').focus({ preventScroll: true });
   }
 
   // ---------- Questionário do orçamento (quem ainda não tem histórico) ----------
@@ -888,6 +991,7 @@
     }).join('');
     $('#quiz-fields').innerHTML = grupos;
     $('#quiz-error').textContent = '';
+    closeSugestao();
     $('#budget-quiz').hidden = false;
     $('#quiz-title').focus();
   }
@@ -1040,6 +1144,7 @@
 
   function mudarMes(delta) {
     state.month = F.shiftMonth(state.month, delta);
+    closeSugestao(); // a sugestão é de um mês só
     if (!state.editingId) $('#tx-form').elements.date.value = defaultDate();
     render();
   }
@@ -1113,6 +1218,9 @@
     'export-csv': () => exportarCsv(),
     'suggest-budget': () => suggestBudget(),
     'cancel-quiz': () => cancelarQuestionario(),
+    'apply-suggestion': () => aplicarSugestao(),
+    'cancel-suggestion': () => cancelarSugestao(),
+    'go-metas': () => irParaMetas(),
     'create-emergency': (el) => criarReserva(el),
     'update-emergency': (el) => atualizarReserva(el),
     'deposit-goal': (el) => depositGoal(el.dataset.id),
