@@ -56,6 +56,7 @@
     }
     protegerDados({ pedir: true, gravou });
     limparDesfazer(); // os dados mudaram: a cópia de antes já não vale
+    closeSugestao(); // e a sugestão aberta também não vale mais
   }
 
   // ---------- Proteção dos dados ----------
@@ -908,9 +909,8 @@
   function sugObjetivos(r) {
     if (!r.objetivos.length) return '';
     const itens = r.objetivos.map((o) => {
-      const completo = o.destinado >= o.precisa;
-      const valor = completo ? `${F.formatBRL(o.destinado)} por mês` : `${F.formatBRL(o.destinado)} por mês, de ${F.formatBRL(o.precisa)} que ela precisa`;
-      const nota = o.meses ? `${completo ? 'Chega lá em' : 'Nesse ritmo, leva'} ${meses(o.meses)}.` : 'Não sobra nada para ela neste mês.';
+      const valor = o.completo ? `${F.formatBRL(o.destinado)} por mês` : `${F.formatBRL(o.destinado)} por mês, de ${F.formatBRL(o.precisa)} que ela precisa`;
+      const nota = o.meses ? `${o.completo ? 'Chega lá em' : 'Nesse ritmo, leva'} ${meses(o.meses)}.` : 'Não sobra nada para ela neste mês.';
       return sugItem(o.nome, valor, nota);
     });
     return `<h4>Para guardar</h4><ul class="sug-lista">${itens.join('')}</ul>`;
@@ -926,7 +926,9 @@
 
   function sugDeficit(r) {
     const revisar = r.revisar.length ? ` Para rever primeiro: ${r.revisar.map((l) => `${esc(l.nome)} (${F.formatBRL(l.limite)})`).join(', ')}.` : '';
-    return `<div class="notice danger">Sua renda não cobre o que você já paga todo mês: faltam <strong>${F.formatBRL(r.falta)}</strong>. Por isso a sugestão não separa dinheiro para metas nem para gastos de estilo de vida.${revisar}</div>`;
+    const semFolga = r.linhas.filter((l) => l.grupo === 'flexivel').map((l) => esc(l.nome));
+    const folga = semFolga.length ? ` Sem folga para: ${semFolga.join(', ')}.` : '';
+    return `<div class="notice danger">Sua renda não cobre o que você já paga todo mês: faltam <strong>${F.formatBRL(r.falta)}</strong>. Por isso a sugestão não separa dinheiro para metas nem para gastos de estilo de vida.${folga}${revisar}</div>`;
   }
 
   const SUG_COMO = `
@@ -952,7 +954,10 @@
 
   function closeSugestao() {
     state.sugestao = null;
-    $('#sugestao').hidden = true;
+    const painel = $('#sugestao');
+    const focoDentro = painel.contains(document.activeElement);
+    painel.hidden = true;
+    if (focoDentro) $('[data-action="suggest-budget"]').focus(); // o foco não pode se perder junto com o painel
   }
 
   function cancelarSugestao() {
@@ -965,9 +970,9 @@
     const r = state.sugestao;
     if (!r) return;
     const temLimites = Object.keys(state.data.budgets).length > 0;
-    if (temLimites && !confirmar('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
+    if (temLimites && !confirmar('Substituir os limites atuais pela sugestão baseada nos seus gastos? O que você definiu para o Futuro (como Investimentos) fica como está.')) return;
     const antes = temLimites ? copiarDados() : undefined;
-    state.data.budgets = { ...r.limites };
+    state.data.budgets = S.mesclarLimites(state.data.budgets, r.limites, state.data.categories); // o que ela definiu no Futuro fica
     closeSugestao();
     commit('Limites aplicados. Ajuste os valores à sua realidade.', antes, 'Limites anteriores de volta.');
     $('#budget-title').focus();

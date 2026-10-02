@@ -39,6 +39,7 @@
   const mediana = (valores) => quantil(valores, 0.5);
   const soma = (valores) => valores.reduce((a, b) => a + b, 0);
   const paraBaixo = (cents) => Math.floor(cents / POLITICA.arredondamento) * POLITICA.arredondamento;
+  const paraCima = (cents) => Math.ceil(cents / POLITICA.arredondamento) * POLITICA.arredondamento;
 
   // ---------- 1. o que a pessoa realmente gastou, categoria por categoria ----------
 
@@ -126,7 +127,7 @@
     return lista.map((d) => {
       const destinado = Math.min(d.precisa, resto);
       resto -= destinado;
-      return { id: d.id, nome: d.nome, reserva: d.reserva, precisa: d.precisa, destinado, meses: destinado > 0 ? Math.ceil(d.falta / destinado) : null };
+      return { id: d.id, nome: d.nome, reserva: d.reserva, precisa: d.precisa, destinado, completo: destinado >= d.precisa, meses: destinado > 0 ? Math.ceil(d.falta / destinado) : null };
     });
   }
 
@@ -143,7 +144,11 @@
     if (pote >= topo) escolher = (i) => i.topo;
     else if (pote >= tipico) escolher = (i) => i.tipico + (i.topo - i.tipico) * entre(tipico, topo, pote);
     else if (pote >= piso) escolher = (i) => i.piso + (i.tipico - i.piso) * entre(piso, tipico, pote);
-    return itens.map((i) => ({ ...i, limite: paraBaixo(escolher(i)), abaixoDoHabito: pote < tipico }));
+    // "Abaixo do hábito" vale por categoria: o limite ficou pelo menos R$ 1 abaixo do que ela costuma gastar.
+    return itens.map((i) => {
+      const limite = paraBaixo(escolher(i));
+      return { ...i, limite, abaixoDoHabito: limite + POLITICA.arredondamento <= i.tipico };
+    });
   }
 
   // ---------- montagem ----------
@@ -159,18 +164,33 @@
     return linhas;
   }
 
-  /** Necessários e comprometidos não são cortados: limite = o valor pago (fixa) ou o topo da faixa (variável). */
-  const comLimiteFixo = (l) => ({ ...l, limite: paraBaixo(l.fixa ? l.tipico : l.topo), abaixoDoHabito: false });
+  /**
+   * Necessários e comprometidos não são cortados: limite = o valor pago (fixa) ou o topo da faixa (variável),
+   * sempre arredondado para cima (o envelope não pode nascer abaixo do que a pessoa paga). Esses limites são
+   * os valores da conta: o que a tela mostra, o que entra na margem e o que é aplicado são o mesmo número.
+   */
+  const comLimiteFixo = (l) => ({ ...l, limite: paraCima(l.fixa ? l.tipico : l.topo), abaixoDoHabito: false });
 
   function limitesDe(linhas, objetivos, parcelas) {
     const limites = {};
     for (const l of linhas) if (l.limite > 0) limites[l.id] = l.limite;
     for (const [id, valor] of Object.entries(parcelas)) limites[id] = (limites[id] || 0) + valor;
-    const reserva = soma(objetivos.filter((o) => o.reserva).map((o) => o.destinado));
-    const outras = soma(objetivos.filter((o) => !o.reserva).map((o) => o.destinado));
-    if (reserva > 0) limites.reserva = paraBaixo(reserva);
-    if (outras > 0) limites.metas = paraBaixo(outras);
+    const reserva = paraBaixo(soma(objetivos.filter((o) => o.reserva).map((o) => o.destinado)));
+    const outras = paraBaixo(soma(objetivos.filter((o) => !o.reserva).map((o) => o.destinado)));
+    if (reserva > 0) limites.reserva = reserva; // aporte menor que R$ 1 não vira limite
+    if (outras > 0) limites.metas = outras;
     return limites;
+  }
+
+  /**
+   * Limites depois de aplicar a sugestão: os da sugestão no lugar dos atuais, mas o que a pessoa definiu para
+   * categorias do Futuro (como Investimentos) e a sugestão não mexeu fica como estava.
+   */
+  function mesclarLimites(atuais, novos, categories) {
+    const futuros = new Set(categories.filter((c) => c.type === 'expense' && c.bucket === 'futuro').map((c) => c.id));
+    const mantidos = {};
+    for (const [id, valor] of Object.entries(atuais)) if (futuros.has(id)) mantidos[id] = valor;
+    return { ...mantidos, ...novos };
   }
 
   function confiancaDe(meses) {
@@ -192,8 +212,8 @@
     if (!meses || (!brutas.length && !parcelas.total)) return { status: 'sem-historico' };
 
     const fixos = brutas.filter((l) => l.grupo !== 'flexivel').map(comLimiteFixo);
-    const necessarios = soma(fixos.filter((l) => l.grupo === 'necessario').map((l) => l.tipico));
-    const comprometidos = soma(fixos.filter((l) => l.grupo === 'comprometido').map((l) => l.tipico)) + parcelas.total;
+    const necessarios = soma(fixos.filter((l) => l.grupo === 'necessario').map((l) => l.limite));
+    const comprometidos = soma(fixos.filter((l) => l.grupo === 'comprometido').map((l) => l.limite)) + parcelas.total;
     const margem = renda.base - necessarios - comprometidos;
     const base = { confianca: confiancaDe(meses), meses, renda, necessarios, comprometidos, parcelas: parcelas.total, margem };
     const flexiveis = brutas.filter((l) => l.grupo === 'flexivel');
@@ -201,7 +221,7 @@
 
     if (margem < 0) {
       const linhas = [...fixos, ...flexiveis.map((l) => ({ ...l, limite: 0, abaixoDoHabito: true }))];
-      const revisar = fixos.filter((l) => l.grupo === 'comprometido').sort((a, b) => b.tipico - a.tipico);
+      const revisar = fixos.filter((l) => l.grupo === 'comprometido').sort((a, b) => b.limite - a.limite);
       return { ...base, status: 'deficit', falta: -margem, linhas, revisar, objetivos: [], livre: 0, limites: limitesDe(linhas, [], parcelas.porCategoria), avisos };
     }
     const piso = soma(flexiveis.map((l) => l.piso));
@@ -213,5 +233,5 @@
     return { ...base, status: 'ok', linhas, revisar: [], objetivos, livre, limites: limitesDe(linhas, objetivos, parcelas.porCategoria), avisos };
   }
 
-  return { POLITICA, sugerirGastos, quantil, mediana };
+  return { POLITICA, sugerirGastos, mesclarLimites, quantil, mediana };
 });

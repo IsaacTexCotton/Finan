@@ -127,7 +127,9 @@ Só faça o commit quando todas as respostas forem "sim":
   `sugerirGastos`) parte do que a pessoa realmente paga e gasta, sem porcentagem fixa da renda, sem idade
   e sem número para categoria que ela não usa. A conta: **renda esperada − necessários − comprometidos =
   margem**. Necessários = categorias de Essenciais (inclui saúde e dívida: nunca são "cortadas");
-  comprometidos = categorias fixas de Estilo de vida (assinaturas) + parcelas já agendadas para o mês. Da
+  comprometidos = categorias fixas de Estilo de vida (assinaturas) + parcelas já agendadas para o mês.
+  Os dois entram na conta pelo **mesmo valor do limite que a tela mostra** (fixa = o valor pago, variável
+  = o topo da faixa, sempre arredondado para cima), então a soma dos limites nunca passa da renda. Da
   margem saem, nesta ordem: (1) o **piso de vida** (quartil baixo do que ela já gasta em cada categoria
   flexível), (2) os **objetivos** (cada meta recebe o aporte que o prazo pede; a reserva vem primeiro e,
   sem prazo, usa 12 meses; meta sem prazo não cobra nada), (3) os **gastos flexíveis**, sempre "até" um
@@ -143,7 +145,8 @@ Só faça o commit quando todas as respostas forem "sim":
   anteriores, não inventa números**: abre o **questionário** (`#budget-quiz`, `budgetsFromAnswers`), com um
   campo por categoria de Essenciais e Estilo de vida ("Deixe em branco o que você não gasta"); nele o
   Futuro ainda vem da parte do plano. "Aplicar como limites" grava o que a pessoa viu (pergunta antes de
-  substituir limites e tem "Desfazer"). Nunca cria a meta de reserva sozinho: a tela oferece "Ir para
+  substituir limites, tem "Desfazer" e **mantém o que ela definiu no Futuro**, como Investimentos:
+  `mesclarLimites`). A sugestão aberta fecha sozinha quando os dados mudam, para nunca se aplicar uma velha. Nunca cria a meta de reserva sozinho: a tela oferece "Ir para
   Metas". Testes em `tests/sugestao.test.js` e `tests/e2e/sugerir-pelos-gastos.spec.js`.
 - **Orçamento enxuto e "Adicionar item"** (decisão do Isaac, 30/09/2026). Na primeira abertura o
   Orçamento mostra só o essencial (`DEFAULT_BUDGET_ITEMS` em `core.js`, um único lugar: Moradia,

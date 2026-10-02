@@ -11,7 +11,7 @@ const S = require('../js/sugestao.js');
 const KEY = '2026-10';
 const HOJE = '2026-10-15';
 const MESES = ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09']; // do mais antigo ao mais novo
-const reais = (v) => v * 100;
+const reais = (v) => Math.round(v * 100);
 let seq = 0;
 const tx = (m, categoryId, valor, extra = {}) => ({ id: `s${++seq}`, type: categoryId === 'salario' ? 'income' : 'expense', categoryId, amount: reais(valor), date: `${m}-05`, description: '', ...extra });
 const mensal = (cat, valores) => valores.flatMap((v, i) => (v ? [tx(MESES[i], cat, v)] : []));
@@ -46,9 +46,9 @@ test('renda que não cobre o básico é déficit: nada para objetivos nem para g
   const r = sugerir([...salario(1800), ...fixo('moradia', 1200), ...mensal('mercado', [600, 620, 590, 610, 600, 630]), ...fixo('transporte', 200),
     ...mensal('saude', [100, 80, 120, 90, 100, 110]), ...mensal('lazer', [80, 60, 90, 70, 80, 60])]);
   assert.equal(r.status, 'deficit');
-  assert.equal(r.necessarios, reais(1200 + 605 + 200 + 100)); // mercado e saúde pela mediana
-  assert.equal(r.margem, -reais(305));
-  assert.equal(r.falta, reais(305));
+  assert.equal(r.necessarios, reais(1200 + 618 + 200 + 108)); // mercado e saúde pelo topo da faixa, arredondado para cima
+  assert.equal(r.margem, -reais(326));
+  assert.equal(r.falta, reais(326));
   assert.deepEqual(r.objetivos, []);
   assert.equal(linha(r, 'lazer').limite, 0);
   assert.equal(r.livre, 0);
@@ -65,8 +65,8 @@ test('saúde pesada é necessidade (nunca "categoria para cortar") e o lazer rar
     ...fixo('contas', 300), ...mensal('lazer', [100, 0, 0, 80, 0, 0])]);
   assert.equal(r.status, 'ok');
   assert.equal(linha(r, 'saude').grupo, 'necessario');
-  assert.equal(r.necessarios, reais(1410 + 700 + 300));
-  assert.equal(r.margem, reais(590));
+  assert.equal(r.necessarios, reais(1443 + 708 + 300)); // saúde e mercado pelo topo da faixa
+  assert.equal(r.margem, reais(549));
   const lazer = linha(r, 'lazer');
   assert.equal(lazer.grupo, 'flexivel');
   assert.equal(lazer.esporadico, true); // gastou em 2 de 6 meses
@@ -118,11 +118,11 @@ test('com margem boa, cada meta recebe o que precisa e o resto fica sem destino'
   const reserva = { id: 'g2', name: 'Reserva de emergência', target: reais(12000), saved: 0, deadline: '' };
   const r = sugerir([...salario(5000), ...fixo('moradia', 1500), ...mensal('mercado', [700, 720, 690, 710, 700, 700]),
     ...mensal('lazer', [300, 280, 320, 260, 300, 310]), ...mensal('restaurantes', [250, 200, 260, 240, 230, 250])], { goals: [viagem, reserva] });
-  assert.equal(r.margem, reais(2800));
+  assert.equal(r.margem, reais(2792)); // mercado entra pelo topo da faixa: R$ 708
   assert.deepEqual(r.objetivos.map((o) => [o.nome, o.precisa, o.destinado]), [['Reserva de emergência', reais(1000), reais(1000)], ['Viagem', reais(1000), reais(1000)]]);
   assert.equal(linha(r, 'lazer').limite, 30700);
   assert.equal(linha(r, 'restaurantes').limite, reais(250));
-  assert.equal(r.livre, 24300);
+  assert.equal(r.livre, 23500);
   assert.equal(linha(r, 'lazer').abaixoDoHabito, false);
 });
 
@@ -131,12 +131,12 @@ test('com margem pequena, as metas cedem antes do dia a dia: o piso da pessoa é
   const reserva = { id: 'g2', name: 'Reserva de emergência', target: reais(12000), saved: 0, deadline: '' };
   const r = sugerir([...salario(3800), ...fixo('moradia', 1500), ...mensal('mercado', [700, 720, 690, 710, 700, 700]),
     ...mensal('lazer', [300, 280, 320, 260, 300, 310]), ...mensal('restaurantes', [250, 200, 260, 240, 230, 250])], { goals: [viagem, reserva] });
-  assert.equal(r.margem, reais(1600));
+  assert.equal(r.margem, reais(1592));
   const [primeira, segunda] = r.objetivos;
   assert.equal(primeira.nome, 'Reserva de emergência'); // a reserva vem primeiro
   assert.equal(primeira.destinado, reais(1000));
-  assert.equal(segunda.destinado, 8250); // só o que sobra depois de proteger o piso do lazer e dos restaurantes
-  assert.equal(segunda.meses, 73); // e a tela diz que, nesse ritmo, a viagem demora
+  assert.equal(segunda.destinado, 7450); // só o que sobra depois de proteger o piso do lazer e dos restaurantes
+  assert.equal(segunda.meses, 81); // e a tela diz que, nesse ritmo, a viagem demora
   assert.equal(linha(r, 'lazer').limite, 28500); // o piso: o quartil baixo do que a pessoa já gastou
   assert.equal(linha(r, 'lazer').abaixoDoHabito, true);
 });
@@ -213,4 +213,73 @@ test('quantil e mediana trabalham com centavos inteiros', () => {
   assert.equal(S.quantil([10000, 20000, 30000, 40000], 0.25), 17500);
   assert.equal(S.quantil([], 0.5), 0);
   assert.equal(S.quantil([500], 0.9), 500);
+});
+
+// ---------- Achados da revisão de código (02/10/2026) ----------
+
+test('o limite do que a pessoa paga nunca fica abaixo do valor pago (arredonda para cima, não para baixo)', () => {
+  const r = sugerir([...salario(5000), ...fixo('moradia', 1234.56), ...fixo('assinaturas', 59.9)]);
+  assert.equal(linha(r, 'moradia').limite, reais(1235)); // R$ 1.234,56 pagos: o envelope não nasce estourado
+  assert.equal(linha(r, 'assinaturas').limite, reais(60));
+  assert.equal(r.limites.moradia, reais(1235));
+  assert.equal(r.necessarios, reais(1235)); // e o total da conta usa o mesmo valor
+  assert.equal(r.comprometidos, reais(60));
+});
+
+test('a conta mostrada e os limites aplicados batem: necessários e margem usam os mesmos valores dos limites', () => {
+  const r = sugerir([...salario(3000), ...fixo('moradia', 1000), ...mensal('mercado', [600, 620, 590, 610, 600, 630])]);
+  assert.equal(linha(r, 'mercado').limite, reais(618)); // topo da faixa, arredondado para cima
+  assert.equal(r.necessarios, reais(1000) + reais(618)); // o total é a soma das linhas que a tela mostra
+  assert.equal(r.margem, reais(3000) - r.necessarios - r.comprometidos);
+});
+
+test('a soma dos limites sugeridos nunca passa da renda prevista', () => {
+  const viagem = { id: 'g1', name: 'Viagem', target: reais(6000), saved: 0, deadline: '2027-04-15' };
+  const reserva = { id: 'g2', name: 'Reserva de emergência', target: reais(12000), saved: 0, deadline: '' };
+  const comMetas = { goals: [viagem, reserva] };
+  const cenarios = [
+    sugerir([...salario(3800), ...fixo('moradia', 1500), ...mensal('mercado', [700, 720, 690, 710, 700, 700]), ...mensal('lazer', [300, 280, 320, 260, 300, 310])], comMetas),
+    sugerir([...salario(5000), ...fixo('moradia', 1500), ...mensal('mercado', [700, 720, 690, 710, 700, 700]), ...mensal('lazer', [300, 280, 320, 260, 300, 310]), tx(KEY, 'compras', 333.33, { installment: { group: 'g', n: 1, of: 3 } })], comMetas),
+    sugerir([...salario(3000), ...mensal('saude', [1400, 1350, 1500, 1420, 1380, 1450]), ...mensal('mercado', [700, 680, 720, 700, 690, 710]), ...fixo('contas', 300)]),
+  ];
+  for (const r of cenarios) {
+    assert.equal(r.status, 'ok');
+    const total = Object.values(r.limites).reduce((a, b) => a + b, 0);
+    assert.ok(total <= r.renda.base, `limites ${total} passam da renda ${r.renda.base}`);
+  }
+});
+
+test('o aviso "abaixo do hábito" vale para cada categoria, não para todas ao mesmo tempo', () => {
+  const r = sugerir([...salario(1300), ...fixo('moradia', 1000), ...fixo('lazer', 100), ...mensal('restaurantes', [100, 200, 300, 400, 150, 250])]);
+  assert.equal(r.margem, reais(300));
+  assert.equal(linha(r, 'lazer').limite, reais(100)); // gasto estável: continua igual ao que ela gasta
+  assert.equal(linha(r, 'lazer').abaixoDoHabito, false);
+  assert.equal(linha(r, 'restaurantes').limite, reais(200)); // este sim ficou abaixo dos R$ 225 de costume
+  assert.equal(linha(r, 'restaurantes').abaixoDoHabito, true);
+});
+
+test('cada objetivo diz se está completo, para a tela não refazer a conta', () => {
+  const viagem = { id: 'g1', name: 'Viagem', target: reais(6000), saved: 0, deadline: '2027-04-15' };
+  const reserva = { id: 'g2', name: 'Reserva de emergência', target: reais(12000), saved: 0, deadline: '' };
+  const r = sugerir([...salario(4300), ...fixo('moradia', 1500), ...fixo('mercado', 700)], { goals: [viagem, reserva] });
+  assert.deepEqual(r.objetivos.map((o) => [o.nome, o.completo]), [['Reserva de emergência', true], ['Viagem', true]]);
+  const apertado = sugerir([...salario(2800), ...fixo('moradia', 1500), ...fixo('mercado', 700)], { goals: [viagem, reserva] });
+  assert.deepEqual(apertado.objetivos.map((o) => [o.nome, o.completo]), [['Reserva de emergência', false], ['Viagem', false]]);
+});
+
+test('um aporte de meta menor que R$ 1 não vira um limite de R$ 0 gravado', () => {
+  const miuda = { id: 'g1', name: 'Moeda', target: reais(1), saved: 0, deadline: '2027-04-15' };
+  const r = sugerir([...salario(3000), ...fixo('moradia', 1000)], { goals: [miuda] });
+  assert.equal(r.objetivos[0].destinado > 0, true);
+  assert.equal(r.limites.metas, undefined);
+  const reservaMiuda = { id: 'g2', name: 'Reserva de emergência', target: reais(1), saved: 0, deadline: '2027-04-15' };
+  assert.equal(sugerir([...salario(3000), ...fixo('moradia', 1000)], { goals: [reservaMiuda] }).limites.reserva, undefined);
+});
+
+test('mesclarLimites troca os limites pela sugestão, mas não apaga o que a pessoa definiu no Futuro', () => {
+  const atuais = { investimentos: 20000, lazer: 5000, mercado: 99000, reserva: 500 };
+  const novos = { mercado: 58800, reserva: 100000 };
+  assert.deepEqual(S.mesclarLimites(atuais, novos, F.DEFAULT_CATEGORIES), { investimentos: 20000, mercado: 58800, reserva: 100000 });
+  assert.deepEqual(S.mesclarLimites({}, novos, F.DEFAULT_CATEGORIES), novos);
+  assert.deepEqual(S.mesclarLimites({ metas: 7000 }, { mercado: 100 }, F.DEFAULT_CATEGORIES), { metas: 7000, mercado: 100 });
 });

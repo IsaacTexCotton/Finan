@@ -34,9 +34,9 @@ test('mostra a conta: renda, o que precisa pagar, a margem e quanto pode gastar 
   await sugerir(page).click();
   await expect(painel(page).getByRole('heading', { name: 'Sugestão para este mês' })).toBeFocused();
   await expect(painel(page)).toContainText(/Renda prevista\s*R\$\s3\.000,00/);
-  await expect(painel(page)).toContainText(/O que você precisa pagar\s*R\$\s1\.775,00/); // moradia 1.200 (último valor pago) + mercado 575 (mediana)
-  await expect(painel(page)).toContainText(/Margem\s*R\$\s1\.225,00/);
-  await expect(painel(page)).toContainText(/Mercado\s*até R\$\s587,00/); // o topo da faixa dele, não a média
+  await expect(painel(page)).toContainText(/O que você precisa pagar\s*R\$\s1\.788,00/); // moradia 1.200 (último valor pago) + mercado 588 (topo da faixa, para cima)
+  await expect(painel(page)).toContainText(/Margem\s*R\$\s1\.212,00/);
+  await expect(painel(page)).toContainText(/Mercado\s*até R\$\s588,00/); // o topo da faixa dele, não a média
   await expect(painel(page)).toContainText(/Moradia\s*R\$\s1\.200,00/);
   await expect(painel(page)).not.toContainText('Lazer'); // nunca gastou: nada é sugerido
 });
@@ -47,7 +47,7 @@ test('"Aplicar como limites" grava a sugestão no Orçamento e a pessoa continua
   await aplicar(page).click();
   await expect(page.getByRole('status')).toContainText('Limites aplicados');
   await expect(painel(page)).toBeHidden();
-  await expect(page.getByLabel('Limite para Mercado')).toHaveValue('587,00');
+  await expect(page.getByLabel('Limite para Mercado')).toHaveValue('588,00');
   await expect(page.getByLabel('Limite para Moradia')).toHaveValue('1200,00');
   await expect(page.getByLabel('Limite para Lazer')).toHaveCount(0); // sem limite inventado, e o Lazer nem aparece na lista
   await expect(page.getByRole('heading', { name: 'Envelopes do mês' })).toBeFocused();
@@ -58,7 +58,7 @@ test('aplicar por cima de limites antigos pode ser desfeito', async ({ page }) =
   page.on('dialog', (d) => d.accept());
   await sugerir(page).click();
   await aplicar(page).click();
-  await expect(page.getByLabel('Limite para Mercado')).toHaveValue('587,00');
+  await expect(page.getByLabel('Limite para Mercado')).toHaveValue('588,00');
   await page.getByRole('button', { name: 'Desfazer' }).click();
   await expect(page.getByLabel('Limite para Mercado')).toHaveValue('990,00');
 });
@@ -75,7 +75,7 @@ test('"Agora não" fecha a sugestão sem mudar nada', async ({ page }) => {
 test('sobra sem destino aparece como sobra: o app não decide sozinho o que fazer com ela', async ({ page }) => {
   await abrir(page, HISTORICO);
   await sugerir(page).click();
-  await expect(painel(page)).toContainText(/Sobram R\$\s1\.225,00 sem destino/);
+  await expect(painel(page)).toContainText(/Sobram R\$\s1\.212,00 sem destino/);
   await expect(painel(page)).toContainText('Você ainda não tem uma meta de reserva de emergência');
   await painel(page).getByRole('button', { name: 'Ir para Metas' }).click();
   await expect(page.getByRole('tabpanel', { name: 'Metas' })).toBeVisible();
@@ -88,8 +88,8 @@ test('com metas, mostra quanto vai para cada uma e, se não couber, quanto a met
   ] });
   await sugerir(page).click();
   await expect(painel(page)).toContainText(/Reserva de emergência\s*R\$\s1\.000,00 por mês/);
-  await expect(painel(page)).toContainText(/Viagem\s*R\$\s225,00 por mês, de R\$\s1\.000,00 que ela precisa/); // sobrou só isso depois da reserva
-  await expect(painel(page)).toContainText('Nesse ritmo, leva 27 meses');
+  await expect(painel(page)).toContainText(/Viagem\s*R\$\s212,00 por mês, de R\$\s1\.000,00 que ela precisa/); // sobrou só isso depois da reserva
+  await expect(painel(page)).toContainText('Nesse ritmo, leva 29 meses');
   await aplicar(page).click();
   await expect(page.getByLabel('Limite para Reserva de emergência')).toHaveValue('1000,00');
 });
@@ -145,6 +145,52 @@ test('com limites já definidos, pergunta antes de substituir', async ({ page })
   await aplicar(page).click(); // a pergunta vem ao aplicar, não ao abrir a sugestão
   await expect.poll(() => pergunta).toContain('Substituir os limites atuais pela sugestão baseada nos seus gastos');
   await expect(page.getByLabel('Limite para Mercado')).toHaveValue('990,00'); // recusou: nada mudou
+});
+
+test('a sugestão aberta some quando os dados mudam: nunca se aplica uma sugestão velha', async ({ page }) => {
+  await abrir(page, HISTORICO);
+  await sugerir(page).click();
+  await expect(painel(page)).toContainText('Você ainda não tem uma meta de reserva de emergência');
+  await painel(page).getByRole('button', { name: 'Ir para Metas' }).click();
+  await page.getByRole('button', { name: 'Criar meta de reserva' }).click();
+  await page.getByRole('tab', { name: 'Orçamento' }).click();
+  await expect(painel(page)).toBeHidden(); // a sugestão antiga não sabia da reserva
+  await sugerir(page).click();
+  await expect(painel(page)).not.toContainText('Você ainda não tem uma meta de reserva de emergência');
+  await expect(painel(page)).toContainText(/Reserva de emergência\s*R\$/);
+});
+
+test('aplicar a sugestão não apaga o que a pessoa definiu no Futuro (como Investimentos)', async ({ page }) => {
+  await abrir(page, { ...HISTORICO, budgets: { mercado: 99000, investimentos: 20000, lazer: 5000 } });
+  page.on('dialog', (d) => d.accept());
+  await sugerir(page).click();
+  await aplicar(page).click();
+  await expect(page.getByLabel('Limite para Mercado')).toHaveValue('588,00'); // trocado pela sugestão
+  await expect(page.getByLabel('Limite para Investimentos')).toHaveValue('200,00'); // o Futuro dela fica
+  await expect(page.getByLabel('Limite para Lazer')).toHaveCount(0); // a sugestão não tem nada para Lazer
+});
+
+test('no déficit, a tela diz para quais categorias não há folga', async ({ page }) => {
+  await abrir(page, { version: 1, transactions: [
+    { id: 'r1', type: 'income', categoryId: 'salario', amount: 100000, date: '2026-09-07', description: '' },
+    ...['2026-06', '2026-07'].flatMap((m, i) => [
+      { id: `d${i}a`, type: 'expense', categoryId: 'moradia', amount: 120000, date: `${m}-05`, description: '' },
+      { id: `d${i}b`, type: 'expense', categoryId: 'lazer', amount: 8000, date: `${m}-15`, description: '' },
+      { id: `d${i}c`, type: 'expense', categoryId: 'restaurantes', amount: 5000, date: `${m}-16`, description: '' },
+    ]),
+  ] });
+  await sugerir(page).click();
+  await expect(painel(page)).toContainText(/Sem folga para:.*Restaurantes e delivery/);
+  await expect(painel(page)).toContainText(/Sem folga para:.*Lazer/);
+});
+
+test('se a sugestão fecha com o foco dentro dela, o foco volta ao botão "Sugerir" e não ao início da página', async ({ page }) => {
+  await abrir(page, HISTORICO);
+  await sugerir(page).click();
+  await aplicar(page).focus();
+  await page.evaluate(() => document.querySelector('[data-action="next-month"]').click()); // fecha a sugestão sem tirar o foco dela
+  await expect(painel(page)).toBeHidden();
+  await expect(sugerir(page)).toBeFocused();
 });
 
 test('sem gastos de meses anteriores, pergunta em vez de inventar números', async ({ page }) => {
