@@ -56,7 +56,9 @@ Só faça o commit quando todas as respostas forem "sim":
 - **Dinheiro é inteiro em centavos.** Nunca some ou compare reais em ponto flutuante.
   Entrada com `parseAmount` (aceita `1.234,56`), saída com `formatBRL` (`R$ 1.234,56`).
 - **Datas são strings locais `AAAA-MM-DD`.** Não use `new Date('AAAA-MM-DD')` (vira UTC).
-- **Três baldes:** Essenciais, Estilo de vida e Futuro (reserva, investimentos, dívidas).
+- **Três baldes:** Essenciais, Estilo de vida e Futuro (reserva, investimentos e metas). **Pagar dívida
+  é Essenciais** (decisão do Isaac, 02/10/2026): é obrigação, não poupança, então "Quitação de dívidas"
+  conta em Gastos e nunca em Guardado. Dados antigos, com ela no Futuro, migram sozinhos (`normalizeData`).
 - **Gastar e guardar são coisas diferentes** (decisão do Isaac, 30/09/2026). O Painel mostra
   quatro números que somam a renda: **Gastos** (Essenciais + Estilo de vida), **Guardado**
   (balde Futuro), **Sobrou** (renda − gastos − guardado) e as **Receitas**. Dinheiro do Futuro

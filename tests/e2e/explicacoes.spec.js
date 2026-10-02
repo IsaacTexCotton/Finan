@@ -12,7 +12,7 @@ test('Painel explica o que são os três baldes e o que significa 50/30/20', asy
   const baldes = page.locator('#tab-painel .panel').filter({ hasText: 'Seus baldes' });
   await expect(baldes).toContainText('Essenciais (o que você precisa para viver)');
   await expect(baldes).toContainText('Estilo de vida (o que é opcional)');
-  await expect(baldes).toContainText('Futuro (o que você guarda, investe ou usa para pagar dívidas)');
+  await expect(baldes).toContainText('Futuro (o que você guarda ou investe)');
   await expect(baldes).toContainText('até 50% da renda para Essenciais, até 30% para Estilo de vida e pelo menos 20% para o Futuro');
   await expect(page.locator('#plan-info')).toContainText('essenciais / estilo de vida / futuro');
 });

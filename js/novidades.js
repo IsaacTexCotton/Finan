@@ -1,6 +1,19 @@
 // GERADO por tools/gerar-novidades.js a partir do CHANGELOG.md. Não edite à mão: rode "node tools/gerar-novidades.js".
 window.FINAN_NOVIDADES = [
   {
+    "versao": null,
+    "rotulo": "Não lançado",
+    "data": null,
+    "secoes": [
+      {
+        "nome": "Alterado",
+        "itens": [
+          "Pagar dívida agora conta como gasto essencial, e não mais como dinheiro guardado: quitar uma dívida é obrigação, e o balde Futuro fica só para reserva, investimentos e metas. Quem já tinha lançamentos de dívida vê a mudança sozinha"
+        ]
+      }
+    ]
+  },
+  {
     "versao": "0.2.0",
     "rotulo": null,
     "data": "2026-10-02",

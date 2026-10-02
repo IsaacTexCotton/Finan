@@ -754,7 +754,7 @@ test('budgetsFromAnswers monta os limites com o que a pessoa informou e o Futuro
   for (const id of ['lazer', 'compras', 'educacao', 'categoriaQueNaoExiste']) assert.equal(r[id], undefined, id);
   const futuras = cats.filter((c) => c.type === 'expense' && c.bucket === 'futuro');
   assert.equal(futuras.reduce((sum, c) => sum + (r[c.id] || 0), 0), 60000); // 20% de R$ 3.000
-  assert.equal(r.reserva, 15000); // dividido igualmente entre as 4 categorias do Futuro
+  assert.equal(r.reserva, 20000); // dividido igualmente entre as 3 categorias do Futuro (a dívida saiu dele em 02/10/2026)
 });
 
 test('budgetsFromAnswers sem nenhuma resposta ainda devolve só o Futuro, e sem renda devolve nada do Futuro', () => {
@@ -789,9 +789,9 @@ test('budgetVisibleCategories acrescenta o que a pessoa adicionou e o que já te
 });
 
 test('budgetAddable lista só o que ainda não está no orçamento, do balde tocado', () => {
-  assert.deepEqual(ids(F.budgetAddable(cats, 'essencial', {}, [])), ['educacao', 'impostos']);
+  assert.deepEqual(ids(F.budgetAddable(cats, 'essencial', {}, [])), ['educacao', 'impostos', 'dividas']); // a dívida é Essenciais desde 02/10/2026
   assert.deepEqual(ids(F.budgetAddable(cats, 'estilo', {}, [])), ['restaurantes', 'lazer', 'compras', 'assinaturas', 'cuidados', 'presentes', 'outros']);
-  assert.deepEqual(ids(F.budgetAddable(cats, 'futuro', {}, [])), ['investimentos', 'metas', 'dividas']);
+  assert.deepEqual(ids(F.budgetAddable(cats, 'futuro', {}, [])), ['investimentos', 'metas']);
   // depois de adicionar, sai da lista
   assert.ok(!ids(F.budgetAddable(cats, 'estilo', {}, ['lazer'])).includes('lazer'));
   // quem já tem limite também não volta para a lista
@@ -1180,4 +1180,41 @@ test('splitInsights com 3 avisos ou menos mostra todos e não sobra nada', () =>
     assert.equal(shown.length, n);
     assert.equal(rest.length, 0);
   }
+});
+
+// ---------- Dívida é obrigação, não poupança (decisão do Isaac, 02/10/2026) ----------
+
+test('"Quitação de dívidas" é do balde Essenciais: pagar o que se deve é obrigação, não guardar', () => {
+  const dividas = cats.find((c) => c.id === 'dividas');
+  assert.equal(dividas.bucket, 'essencial');
+  assert.equal(dividas.type, 'expense');
+});
+
+test('pagar dívida conta em Gastos e nunca em Guardado', () => {
+  const s = resumo(tx('income', 'salario', 300000, '2026-09-05'), tx('expense', 'dividas', 50000, '2026-09-10'), tx('expense', 'reserva', 20000, '2026-09-11'));
+  assert.equal(s.consumption, 50000); // a dívida é gasto
+  assert.equal(s.saved, 20000); // só a reserva foi guardada
+  assert.equal(s.byBucket.essencial, 50000);
+  assert.equal(s.balance, 230000); // a soma continua fechando: renda − gastos − guardado = sobrou
+  assert.equal(s.income - s.consumption - s.saved, s.balance);
+});
+
+test('dados antigos, com a dívida guardada no Futuro, passam a tratá-la como Essenciais', () => {
+  const antigo = { version: 1, categories: [{ id: 'dividas', name: 'Quitação de dívidas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '⛓️' }] };
+  const migrado = F.normalizeData(antigo).categories.find((c) => c.id === 'dividas');
+  assert.equal(migrado.bucket, 'essencial');
+});
+
+test('a migração da dívida só mexe na categoria padrão que estava no Futuro', () => {
+  const dados = { version: 1, categories: [
+    { id: 'dividas', name: 'Dívida do carro', type: 'expense', bucket: 'estilo', kind: 'fixa', icon: '🚗' },
+    { id: 'outra', name: 'Minha reserva', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '💰' },
+  ] };
+  const cs = F.normalizeData(dados).categories;
+  assert.equal(cs.find((c) => c.id === 'dividas').bucket, 'estilo'); // a pessoa já a tinha em outro balde: fica
+  assert.equal(cs.find((c) => c.id === 'outra').bucket, 'futuro'); // outras categorias não mudam
+});
+
+test('o balde Futuro não promete mais "quitação de dívidas" na descrição', () => {
+  assert.ok(!/dívida/i.test(F.BUCKETS.futuro.description));
 });

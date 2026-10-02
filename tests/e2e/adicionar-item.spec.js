@@ -39,9 +39,10 @@ test('"Adicionar" lista só os itens ainda não adicionados do balde tocado', as
 
   await page.getByRole('button', { name: 'Fechar' }).click();
   await adicionar(page, 'Essenciais').click();
-  await expect(itensDaLista(page)).toHaveCount(2);
+  await expect(itensDaLista(page)).toHaveCount(3);
   await expect(page.locator('.add-panel')).toContainText('Educação');
   await expect(page.locator('.add-panel')).toContainText('Impostos e taxas');
+  await expect(page.locator('.add-panel')).toContainText('Quitação de dívidas'); // dívida é Essenciais desde 02/10/2026
 });
 
 test('escolher um item o move para o balde, o tira da lista e leva o foco ao limite dele', async ({ page }) => {
@@ -67,7 +68,7 @@ test('os itens adicionados continuam lá ao reabrir o app', async ({ page }) => 
   await page.getByRole('tab', { name: 'Orçamento' }).click();
   await expect(limite(page, 'Educação')).toHaveCount(1);
   await adicionar(page, 'Essenciais').click();
-  await expect(itensDaLista(page)).toHaveCount(1); // só sobrou Impostos e taxas
+  await expect(itensDaLista(page)).toHaveCount(2); // sobraram Impostos e taxas e Quitação de dívidas
 });
 
 test('quem já tem limite definido continua vendo o item, e ele não aparece na lista de adicionar', async ({ page }) => {

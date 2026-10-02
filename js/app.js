@@ -535,7 +535,7 @@
 
     let zb;
     if (summary.income <= 0) zb = '<div class="notice">Lance a renda deste mês para comparar com o orçamento.</div>';
-    else if (unassigned > 0) zb = `<div class="notice warn">Faltam <strong>${money(unassigned)}</strong> sem destino. Distribua nos envelopes (de preferência para o Futuro: reserva, investimentos ou dívidas).</div>`;
+    else if (unassigned > 0) zb = `<div class="notice warn">Faltam <strong>${money(unassigned)}</strong> sem destino. Distribua nos envelopes (de preferência para o Futuro: reserva e investimentos).</div>`;
     else if (unassigned < 0) zb = `<div class="notice danger">Seu orçamento passa a renda em <strong>${money(-unassigned)}</strong>. Reduza algum envelope.</div>`;
     else zb = '<div class="notice ok">Tudo certo: cada real da renda tem um destino. 🎯</div>';
     $('#zero-based').innerHTML = zb;

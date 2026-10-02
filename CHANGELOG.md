@@ -20,6 +20,9 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ## [Não lançado]
 
+### Alterado
+- Pagar dívida agora conta como gasto essencial, e não mais como dinheiro guardado: quitar uma dívida é obrigação, e o balde Futuro fica só para reserva, investimentos e metas. Quem já tinha lançamentos de dívida vê a mudança sozinha
+
 ## [0.2.0] - 2026-10-02
 
 ### Adicionado
