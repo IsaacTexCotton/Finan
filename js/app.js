@@ -1041,10 +1041,11 @@
   }
 
   function apagarTudo() {
-    if (!confirmar('Apagar TODOS os lançamentos, orçamentos e metas deste navegador? Não dá para desfazer.')) return;
+    if (!confirmar('Apagar TODOS os lançamentos, orçamentos e metas deste navegador? Você terá 10 segundos para desfazer.')) return;
+    const antes = copiarDados();
     state.data = F.emptyData();
     resetTxForm();
-    commit('Dados apagados.');
+    commit('Dados apagados.', antes);
   }
 
   // Cada botão com data-action chama a função daqui; o clique chega por handleAction (e a tecla "n" por 'quick-add').

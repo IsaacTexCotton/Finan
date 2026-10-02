@@ -19,6 +19,7 @@ test.beforeEach(async ({ page }) => {
         ...meses.map((m, i) => ({ id: `tv${i + 1}`, type: 'expense', categoryId: 'compras', amount: 20000, date: `${m}-10`, description: 'Geladeira', installment: { group: 'gtv', n: i + 1, of: 12 } })),
       ],
       budgets: { mercado: 50000 },
+      settings: { incomeProfile: 'variavel', reviewDay: 3, paydayBusinessDay: 5 },
       goals: [
         { id: 'm1', name: 'Reserva de emergência', target: 100000, saved: 0, deadline: '' },
         { id: 'm2', name: 'Viagem', target: 600000, saved: 0, deadline: '' },
@@ -134,4 +135,30 @@ test('o texto do botão "Desfazer" tem contraste de pelo menos 4,5:1 com a mensa
     return (Math.max(texto, fundo) + 0.05) / (Math.min(texto, fundo) + 0.05);
   });
   expect(razao).toBeGreaterThanOrEqual(4.5);
+});
+
+test('"Apagar tudo" também pode ser desfeito: voltam lançamentos, limites, metas e ajustes', async ({ page }) => {
+  await irParaAba(page, 'Método');
+  await page.getByRole('button', { name: 'Apagar tudo' }).click();
+  await expect(aviso(page)).toContainText('Dados apagados.');
+  const vazio = await dadosSalvos(page);
+  expect([vazio.transactions, vazio.goals, vazio.budgets]).toEqual([[], [], {}]);
+
+  await desfazer(page).click();
+  await expect(aviso(page)).toContainText('Exclusão desfeita.');
+  const depois = await dadosSalvos(page);
+  expect(depois.transactions).toHaveLength(14); // 2 lançamentos + 12 parcelas
+  expect(depois.goals.map((g) => g.id)).toEqual(['m1', 'm2', 'm3']);
+  expect(depois.budgets).toEqual({ mercado: 50000 });
+  expect(depois.settings).toMatchObject({ incomeProfile: 'variavel', reviewDay: 3, paydayBusinessDay: 5 });
+});
+
+test('a pergunta do "Apagar tudo" avisa que dá para desfazer por 10 segundos', async ({ page }) => {
+  page.removeAllListeners('dialog'); // este teste lê a pergunta em vez de só aceitar
+  const perguntas = [];
+  page.once('dialog', (d) => { perguntas.push(d.message()); d.dismiss(); });
+  await irParaAba(page, 'Método');
+  await page.getByRole('button', { name: 'Apagar tudo' }).click();
+  expect(perguntas[0]).toContain('10 segundos para desfazer');
+  expect(perguntas[0]).not.toContain('Não dá para desfazer');
 });
