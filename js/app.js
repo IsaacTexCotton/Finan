@@ -321,12 +321,17 @@
   }
 
   /** Só vale até o próximo pagamento para renda estável com o dia útil informado; senão, até o fim do mês. */
-  function renderAllowance(ctx) {
+  function calcularAllowance(ctx) {
     const { incomeProfile, paydayBusinessDay } = state.data.settings;
     const byPayday = incomeProfile === 'estavel' && paydayBusinessDay > 0 && state.month === F.monthKey(ctx.today);
     const allowance = byPayday
       ? F.allowanceUntilPayday(state.data.transactions, state.data.categories, state.data.budgets, ctx.today, paydayBusinessDay)
       : F.dailyAllowance(ctx.budgetRows, state.month, ctx.today, ctx.summary);
+    return { allowance, byPayday };
+  }
+
+  function renderAllowance(ctx) {
+    const { allowance, byPayday } = calcularAllowance(ctx);
     if (!allowance) return '';
     const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
     const periodo = byPayday ? 'desde o último pagamento' : 'no mês';
@@ -757,6 +762,13 @@
     form.elements.date.focus();
   }
 
+  /** Depois de um gasto novo, diz quanto ainda dá para gastar hoje (o mesmo número do cartão do Painel). */
+  function restanteDoDia(entry) {
+    if (entry.type !== 'expense' || guardaDinheiro(entry)) return '';
+    const { allowance } = calcularAllowance(monthContext());
+    return allowance ? ` Você ainda pode gastar ${F.formatBRL(allowance.perDay)} hoje.` : '';
+  }
+
   function submitTx(event) {
     event.preventDefault();
     const form = event.target;
@@ -784,6 +796,7 @@
     const installments = F.requestedInstallments(entry, form.elements.installments.value);
     const doMes = F.installmentAmounts(amount, installments)[0]; // o que cai no mês da compra
     if (!state.editingId && guardaDinheiro(entry) && !confirmarGuardar(doMes, F.monthKey(date))) return;
+    const lancamentoNovo = !state.editingId;
     let message;
     if (state.editingId) {
       const idx = state.data.transactions.findIndex((t) => t.id === state.editingId);
@@ -804,7 +817,7 @@
     resetTxForm();
     form.elements.type.value = keepType;
     form.elements.date.value = keepDate;
-    commit(message);
+    commit(lancamentoNovo ? message + restanteDoDia(entry) : message);
     form.elements.amount.focus();
   }
 

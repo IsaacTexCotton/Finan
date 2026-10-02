@@ -253,8 +253,10 @@ Defeitos e confusões vistos
 - [ ] O "Você pode gastar hoje" só aparece depois de definir limites (visto: sem limites o Painel
       não mostra o número, e o Orçamento avisa "Faltam R$ 3.450,00 sem destino"). Ideia: sem
       limites, mostrar um valor simples a partir da renda e dos gastos
-- [ ] Depois de salvar um gasto nada mostra o efeito (visto): só "Despesa de R$ X lançada", e a
-      pessoa fica em Lançamentos. Ideia: mostrar na mensagem quanto ainda pode gastar hoje
+- [x] Depois de salvar um gasto nada mostra o efeito (visto): só "Despesa de R$ X lançada", e a
+      pessoa fica em Lançamentos. Resolvido (02/10/2026): a mensagem diz "Você ainda pode gastar R$ Y
+      hoje" (o mesmo número do cartão do Painel); só para gastos novos que não são guardar, e só quando
+      o cartão existe (decisão tomada pela IA com o Isaac ausente)
 - [ ] Estilo de vida aparece vazio no Orçamento mesmo com gasto (visto): diz "elas já gastaram
       R$ 525,70" sem dizer quais categorias; Restaurantes, Compras e Assinaturas só surgem em "Adicionar".
       Ideia: categorias com gasto no mês aparecem sozinhas

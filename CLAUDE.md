@@ -252,6 +252,11 @@ Só faça o commit quando todas as respostas forem "sim":
   lista de "O que fazer agora" já vem por prioridade; os 3 primeiros ficam à vista e o resto fica num
   "Ver mais N avisos" (`splitInsights`, `#insights-more`). Nenhum aviso some. `insights()` continua
   devolvendo a lista inteira. Testes em `tests/e2e/avisos-no-painel.spec.js`.
+- **A mensagem de "salvar gasto" diz quanto ainda pode gastar hoje** (decisão tomada pela IA com o Isaac
+  ausente, 02/10/2026): depois de salvar uma despesa nova que não seja do balde Futuro, a mensagem ganha
+  "Você ainda pode gastar R$ X hoje.", o mesmo número do cartão do Painel (`calcularAllowance`). Não
+  aparece em receita, em edição, em guardar dinheiro, em gasto de outro mês nem sem o cartão (sem limites).
+  Testes em `tests/e2e/pode-gastar-ao-salvar.spec.js`.
 - **Site instalável primeiro** (decisão do Isaac, 01/10/2026): o produto desta etapa é o site que
   funciona como app (PWA). Aplicativo de loja (Play Store ou App Store) **fica para depois** do
   teste com pessoas de verdade; com ele o próprio sistema do celular poderia guardar cópia dos dados,
