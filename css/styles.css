@@ -1035,6 +1035,35 @@ select:disabled {
   transform: none;
 }
 
+/* Mensagem com botão "Desfazer" (depois de excluir): fica clicável e o botão é fácil de tocar */
+.toast.com-desfazer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.toast.com-desfazer.show {
+  pointer-events: auto;
+}
+
+.toast-btn {
+  flex: none;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--surface);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--surface);
+  font: inherit;
+  font-weight: 800;
+}
+
+.toast-btn:focus-visible {
+  outline-color: var(--surface); /* o azul do foco some sobre o fundo escuro da mensagem */
+}
+
 /* ---------- Tela Lançamentos: formulário para o polegar e lista por dia ---------- */
 
 input[name="amount"] {

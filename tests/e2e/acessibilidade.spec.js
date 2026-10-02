@@ -109,3 +109,20 @@ test('a janela escondida das novidades, aberta, não tem violações do axe', as
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
   }
 });
+
+test('a mensagem com o botão "Desfazer" (depois de excluir) não tem violações do axe', async ({ page }) => {
+  for (const largura of [320, 390]) {
+    await page.setViewportSize({ width: largura, height: 800 });
+    await page.goto(APP);
+    await page.evaluate(() => localStorage.clear()); // cada volta começa com o app vazio
+    await page.reload();
+    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click(); // app vazio: não pergunta nada
+    await irParaAba(page, 'Lançamentos');
+    page.once('dialog', (d) => d.accept());
+    await page.getByRole('button', { name: /^Excluir/ }).first().click();
+    await expect(page.getByRole('button', { name: 'Desfazer' })).toBeVisible();
+    await page.locator('#toast').evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished))); // contraste só vale com a mensagem parada
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});

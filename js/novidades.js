@@ -6,6 +6,12 @@ window.FINAN_NOVIDADES = [
     "data": null,
     "secoes": [
       {
+        "nome": "Adicionado",
+        "itens": [
+          "Desfazer ao excluir: depois de excluir um lançamento (ou todas as parcelas de uma compra), uma meta ou todos os dados, a mensagem ganha um botão \"Desfazer\" por 10 segundos"
+        ]
+      },
+      {
         "nome": "Corrigido",
         "itens": [
           "Um backup com dados corrompidos, com nomes especiais no lugar do tipo de renda ou do balde, não faz mais a tela Metas mostrar \"undefined meses\" nem esconde gastos dos totais"

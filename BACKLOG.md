@@ -255,8 +255,14 @@ Defeitos e confusões vistos
       Ideia: categorias com gasto no mês aparecem sozinhas
 - [ ] Fixos não vêm sozinhos (visto): todo mês é preciso apertar "Trazer fixos do mês anterior", e
       os meses futuros não mostram nada previsto (nem parcelas já feitas)
-- [ ] Excluir não tem "desfazer" (visto): uma confirmação apagou 12 parcelas de uma vez, numa janela
-      do navegador. Ligado ao item da Prioridade baixa sobre `confirm()`
+- [x] Excluir não tem "desfazer" (visto): uma confirmação apagou 12 parcelas de uma vez, numa janela
+      do navegador. Resolvido (01/10/2026): depois de excluir um lançamento, as parcelas de uma
+      compra, uma meta ou "Apagar tudo", a mensagem ganha o botão "Desfazer" por 10 segundos (cópia dos
+      dados antes de excluir; some assim que outra coisa muda os dados). Foco no celular: sem atalho
+- [ ] Sugestão: tirar as perguntas "tem certeza?" ao excluir um lançamento ou uma meta, já que o
+      "Desfazer" as substitui (menos um toque no dia a dia). Mudaria testes que hoje esperam a pergunta
+      (por exemplo `metas-e-dados`, `foco` e `nomes-acessiveis`), por isso é decisão do Isaac
+- [ ] Sugestão: "Desfazer" também para "Restaurar backup" e "Carregar exemplo" (hoje só perguntam)
 - [ ] Reserva ideal sem prazo (visto): com sobra de uns R$ 500 por mês a tela mostra
       "R$ 15.700,02" e não diz em quanto tempo a pessoa chegaria lá
 - [ ] O mesmo teto do Futuro com dois valores (visto): R$ 170,00 no Orçamento e R$ 172,50 no Painel
