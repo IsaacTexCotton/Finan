@@ -117,7 +117,8 @@
     creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
-    undo: null, // cópia dos dados antes de uma exclusão, para o "Desfazer"
+    undo: null, // cópia dos dados antes de uma exclusão (ou troca geral), para o "Desfazer"
+    undoTexto: '', // o que a mensagem diz depois de desfazer
   };
 
   function newId() {
@@ -166,10 +167,13 @@
     devolverFoco();
   }
 
-  function commit(message, copiaAntes) {
+  function commit(message, copiaAntes, textoDesfeito = 'Exclusão desfeita.') {
     saveData();
     redesenhar();
-    if (copiaAntes) state.undo = copiaAntes; // depois de saveData, que limpa o desfazer anterior
+    if (copiaAntes) { // depois de saveData, que limpa o desfazer anterior
+      state.undo = copiaAntes;
+      state.undoTexto = textoDesfeito;
+    }
     if (message) toast(message, Boolean(copiaAntes));
   }
 
@@ -226,6 +230,12 @@
     return JSON.parse(JSON.stringify(state.data));
   }
 
+  // Cópia para desfazer uma troca geral dos dados; sem dados a perder, não há o que desfazer.
+  function copiaSeTemDados() {
+    const d = state.data;
+    return d.transactions.length || d.goals.length || Object.keys(d.budgets).length ? copiarDados() : undefined;
+  }
+
   function limparDesfazer() {
     state.undo = null;
     const botao = $('#toast .toast-btn');
@@ -235,8 +245,9 @@
 
   function desfazer() {
     if (!state.undo) return;
+    const texto = state.undoTexto;
     state.data = state.undo;
-    commit('Exclusão desfeita.');
+    commit(texto);
     $('#conteudo').focus({ preventScroll: true }); // o botão saiu da tela: o foco volta ao conteúdo
   }
 
@@ -321,12 +332,17 @@
   }
 
   /** Só vale até o próximo pagamento para renda estável com o dia útil informado; senão, até o fim do mês. */
-  function renderAllowance(ctx) {
+  function calcularAllowance(ctx) {
     const { incomeProfile, paydayBusinessDay } = state.data.settings;
     const byPayday = incomeProfile === 'estavel' && paydayBusinessDay > 0 && state.month === F.monthKey(ctx.today);
     const allowance = byPayday
       ? F.allowanceUntilPayday(state.data.transactions, state.data.categories, state.data.budgets, ctx.today, paydayBusinessDay)
       : F.dailyAllowance(ctx.budgetRows, state.month, ctx.today, ctx.summary);
+    return { allowance, byPayday };
+  }
+
+  function renderAllowance(ctx) {
+    const { allowance, byPayday } = calcularAllowance(ctx);
     if (!allowance) return '';
     const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
     const periodo = byPayday ? 'desde o último pagamento' : 'no mês';
@@ -367,11 +383,12 @@
 
     $('#allowance').innerHTML = renderAllowance(ctx);
     renderReviewReminder();
+    renderBackupReminder();
 
     renderBuckets(summary, buckets, plan);
 
     const list = F.insights({ summary, buckets, budgetRows, previousSummary, commitments, plan, categories: state.data.categories });
-    $('#insights').innerHTML = list.map((i) => `<li class="insight level-${esc(i.level)}">${esc(i.text)}</li>`).join('');
+    renderInsights(list);
 
     const cats = F.indexCategories(state.data.categories);
     const entries = Object.entries(summary.byCategory).sort((a, b) => b[1] - a[1]);
@@ -667,6 +684,31 @@
       </article>` : '';
   }
 
+  const insightItem = (i) => `<li class="insight level-${esc(i.level)}">${esc(i.text)}</li>`;
+
+  /** No máximo 3 avisos à vista; o resto fica recolhido em "Ver mais N avisos". */
+  function renderInsights(list) {
+    const { shown, rest } = F.splitInsights(list);
+    $('#insights').innerHTML = shown.map(insightItem).join('');
+    const more = $('#insights-more');
+    more.hidden = !rest.length;
+    $('summary', more).textContent = `Ver mais ${rest.length} ${rest.length === 1 ? 'aviso' : 'avisos'}`;
+    $('.insights', more).innerHTML = rest.map(insightItem).join('');
+  }
+
+  function renderBackupReminder() {
+    const reminder = F.backupReminder(F.todayISO(), state.data.settings.lastBackup, state.data.transactions.length);
+    const text = {
+      nunca: 'Você ainda não baixou nenhum backup. Seus dados ficam só neste aparelho: se o navegador for limpo, tudo se perde.',
+      antigo: 'Faz 30 dias ou mais que você baixou o último backup. Baixe um novo para não perder o que lançou desde então.',
+    }[reminder];
+    $('#backup-reminder').innerHTML = text ? `
+      <article class="panel">
+        <p><strong>${text}</strong></p>
+        <button type="button" class="btn primary" data-action="export-json">Baixar backup</button>
+      </article>` : '';
+  }
+
   function renderReview() {
     const week = F.weekKey(F.todayISO());
     const done = new Set(state.data.reviews[week] || []);
@@ -731,6 +773,13 @@
     form.elements.date.focus();
   }
 
+  /** Depois de um gasto novo, diz quanto ainda dá para gastar hoje (o mesmo número do cartão do Painel). */
+  function restanteDoDia(entry) {
+    if (entry.type !== 'expense' || guardaDinheiro(entry)) return '';
+    const { allowance } = calcularAllowance(monthContext());
+    return allowance ? ` Você ainda pode gastar ${F.formatBRL(allowance.perDay)} hoje.` : '';
+  }
+
   function submitTx(event) {
     event.preventDefault();
     const form = event.target;
@@ -758,6 +807,7 @@
     const installments = F.requestedInstallments(entry, form.elements.installments.value);
     const doMes = F.installmentAmounts(amount, installments)[0]; // o que cai no mês da compra
     if (!state.editingId && guardaDinheiro(entry) && !confirmarGuardar(doMes, F.monthKey(date))) return;
+    const lancamentoNovo = !state.editingId;
     let message;
     if (state.editingId) {
       const idx = state.data.transactions.findIndex((t) => t.id === state.editingId);
@@ -778,7 +828,7 @@
     resetTxForm();
     form.elements.type.value = keepType;
     form.elements.date.value = keepDate;
-    commit(message);
+    commit(lancamentoNovo ? message + restanteDoDia(entry) : message);
     form.elements.amount.focus();
   }
 
@@ -788,7 +838,7 @@
     const t = state.data.transactions.find((x) => x.id === id);
     if (!t) return;
     const todasAsParcelas = Boolean(t.installment) && confirmar(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`);
-    if (!todasAsParcelas && !confirmar(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) return;
+    if (t.installment && !todasAsParcelas && !confirmar('Excluir só esta parcela?')) return; // sem parcelas, o "Desfazer" cobre o engano
     const antes = copiarDados();
     const ids = F.idsToDelete(state.data.transactions, id, todasAsParcelas);
     const remove = new Set(ids);
@@ -935,8 +985,9 @@
       try {
         const data = F.normalizeData(JSON.parse(reader.result));
         if (!confirmar(`Restaurar backup com ${data.transactions.length} lançamento(s)? Os dados atuais serão substituídos.`)) return;
+        const antes = copiaSeTemDados();
         state.data = data;
-        commit('Backup restaurado.');
+        commit('Backup restaurado.', antes, 'Restauração do backup desfeita.');
       } catch (e) {
         toast('Arquivo de backup inválido.');
       }
@@ -1022,22 +1073,24 @@
   }
 
   function excluirMeta(el) {
-    if (!confirmar('Excluir esta meta?')) return;
-    const antes = copiarDados();
+    const antes = copiarDados(); // sem pergunta: o "Desfazer" cobre o engano
     state.data.goals = state.data.goals.filter((g) => g.id !== el.dataset.id);
     commit('Meta excluída.', antes);
   }
 
   function exportarBackup() {
+    state.data.settings.lastBackup = F.todayISO(); // antes de baixar, para o arquivo já levar a data
     download(`finan-backup-${F.todayISO()}.json`, JSON.stringify(state.data, null, 2), 'application/json');
+    commit('Backup baixado.');
   }
 
   function carregarExemplo() {
     if (state.data.transactions.length && !confirmar('Substituir seus dados pelos dados de exemplo?')) return;
+    const antes = copiaSeTemDados();
     state.data = demoData();
     state.month = F.monthKey(F.todayISO());
     state.tab = 'painel';
-    commit('Dados de exemplo carregados. Use "Apagar tudo" para começar do zero.');
+    commit('Dados de exemplo carregados. Use "Apagar tudo" para começar do zero.', antes, 'Dados de exemplo desfeitos.');
   }
 
   function apagarTudo() {

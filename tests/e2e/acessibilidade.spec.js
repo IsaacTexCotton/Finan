@@ -126,3 +126,34 @@ test('a mensagem com o botão "Desfazer" (depois de excluir) não tem violaçõe
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
   }
 });
+
+test('o lembrete de backup no Painel (dados de exemplo, nenhum backup baixado) não tem violações do axe', async ({ page }) => {
+  for (const largura of [320, 390, 1280]) {
+    await page.setViewportSize({ width: largura, height: 900 });
+    await page.goto(APP);
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await expect(page.locator('#backup-reminder')).toContainText('Você ainda não baixou nenhum backup'); // o exemplo tem mais de 5 lançamentos
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});
+
+test('o "Ver mais N avisos" do Painel, aberto, não tem violações do axe', async ({ page }) => {
+  for (const largura of [320, 390, 1280]) {
+    await page.setViewportSize({ width: largura, height: 900 });
+    await page.clock.setFixedTime(new Date('2026-09-10T12:00:00'));
+    await page.addInitScript(() => {
+      const t = (id, type, categoryId, amount, date) => ({ id, type, categoryId, amount, date, description: '' });
+      localStorage.setItem('finan:data', JSON.stringify({ version: 1, budgets: { lazer: 50000, restaurantes: 100000 }, transactions: [
+        t('a1', 'income', 'salario', 200000, '2026-09-05'), t('a2', 'expense', 'moradia', 150000, '2026-09-06'),
+        t('a3', 'expense', 'lazer', 90000, '2026-09-08'), t('a4', 'expense', 'restaurantes', 60000, '2026-09-08')] }));
+    });
+    await page.goto(APP);
+    await page.locator('#insights-more summary').click();
+    await expect(page.locator('#insights-more li').first()).toBeVisible();
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});

@@ -51,7 +51,11 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] App instalável e que abre sem internet (manifesto, ícones, service worker de rede primeiro)
 - [x] Dados protegidos: pede armazenamento persistente ao navegador e mostra o estado em "Seus dados"
 - [ ] Sugestão: o primeiro parágrafo de "Seus dados" e a linha de proteção repetem o conselho de fazer backup; enxugar
-- [ ] Backup: decidir o que fazer (cópias internas automáticas, lembrete de backup externo ou os dois)
+- [x] Backup: lembrete no Painel (02/10/2026): com 5 lançamentos ou mais, avisa se nunca baixou um backup
+      ou se o último tem 30 dias ou mais, com botão "Baixar backup". Decisão tomada pela IA com o Isaac
+      ausente; ele pode trocar os números (5 lançamentos, 30 dias)
+- [ ] Backup: cópias internas automáticas (a outra metade da decisão; hoje só há o lembrete)
+- [ ] Sugestão: o lembrete de backup não tem "Agora não"; quem não quer baixar vê o aviso em toda abertura
 - [ ] Ícone definitivo do app (hoje é uma letra F provisória; não é prioridade)
 - [ ] Sugestão: endereço próprio (domínio) para o produto vendido, separado de outros sites do GitHub Pages
       (no GitHub Pages, todas as páginas de uma conta dividem o mesmo armazenamento do navegador)
@@ -221,16 +225,17 @@ Por que ele pararia de usar (do mais provável ao menos)
 - [ ] Esquece de lançar e os números passam a mentir (avaliação). O app não avisa com ele fechado
       (sem servidor). Ideias: lançar mais rápido (valores e descrições usados com frequência),
       aviso na abertura quando faz dias que não há lançamentos
-- [ ] Medo de perder tudo (avaliação): trocar de celular ou limpar o navegador apaga o histórico, e o
-      app nunca lembra de fazer backup (visto: só o texto em "Seus dados"). Ligado ao item de backup
-      da Parte 5. Ideia: aviso suave a cada 2 a 4 semanas e botão "Salvar cópia" mais à vista
+- [x] Medo de perder tudo (avaliação): trocar de celular ou limpar o navegador apaga o histórico, e o
+      app nunca lembra de fazer backup (visto: só o texto em "Seus dados"). Resolvido em parte
+      (02/10/2026): o Painel lembra de baixar um backup (ver o item de backup da Parte 5)
 - [ ] O app não bate com a vida real (visto na falta dos campos): sem fatura do cartão (a compra
       entra no dia da compra, mas o dinheiro sai no vencimento); sem vale-alimentação; só um
       pagamento por mês (sem adiantamento do dia 20); receitas só Salário, Renda extra e Outras
       (sem 13º, férias, reembolso)
 - [ ] Culpa repetida (visto): todo mês "Você guardou R$ 0,00… faça o aporte"; num mês estourado o
-      Painel mostrou 10 mensagens seguidas. Ideias: no máximo 3 alertas por vez; aviso de "guarde
-      mais" só uma vez por semana
+      Painel mostrou 10 mensagens seguidas. Feito (02/10/2026): no máximo 3 avisos à vista, o resto em
+      "Ver mais N avisos" (decisão tomada pela IA com o Isaac ausente). Falta: aviso de "guarde mais"
+      só uma vez por semana
 - [ ] Esforço e palavras difíceis no começo (avaliação): balde, envelope, "80/15/5", "renda
       estável ou variável", "Essenciais consomem 96%". Explicar no lugar ou trocar por palavras do dia a dia
 
@@ -248,8 +253,10 @@ Defeitos e confusões vistos
 - [ ] O "Você pode gastar hoje" só aparece depois de definir limites (visto: sem limites o Painel
       não mostra o número, e o Orçamento avisa "Faltam R$ 3.450,00 sem destino"). Ideia: sem
       limites, mostrar um valor simples a partir da renda e dos gastos
-- [ ] Depois de salvar um gasto nada mostra o efeito (visto): só "Despesa de R$ X lançada", e a
-      pessoa fica em Lançamentos. Ideia: mostrar na mensagem quanto ainda pode gastar hoje
+- [x] Depois de salvar um gasto nada mostra o efeito (visto): só "Despesa de R$ X lançada", e a
+      pessoa fica em Lançamentos. Resolvido (02/10/2026): a mensagem diz "Você ainda pode gastar R$ Y
+      hoje" (o mesmo número do cartão do Painel); só para gastos novos que não são guardar, e só quando
+      o cartão existe (decisão tomada pela IA com o Isaac ausente)
 - [ ] Estilo de vida aparece vazio no Orçamento mesmo com gasto (visto): diz "elas já gastaram
       R$ 525,70" sem dizer quais categorias; Restaurantes, Compras e Assinaturas só surgem em "Adicionar".
       Ideia: categorias com gasto no mês aparecem sozinhas
@@ -259,10 +266,13 @@ Defeitos e confusões vistos
       do navegador. Resolvido (01/10/2026): depois de excluir um lançamento, as parcelas de uma
       compra, uma meta ou "Apagar tudo", a mensagem ganha o botão "Desfazer" por 10 segundos (cópia dos
       dados antes de excluir; some assim que outra coisa muda os dados). Foco no celular: sem atalho
-- [ ] Sugestão: tirar as perguntas "tem certeza?" ao excluir um lançamento ou uma meta, já que o
-      "Desfazer" as substitui (menos um toque no dia a dia). Mudaria testes que hoje esperam a pergunta
-      (por exemplo `metas-e-dados`, `foco` e `nomes-acessiveis`), por isso é decisão do Isaac
-- [ ] Sugestão: "Desfazer" também para "Restaurar backup" e "Carregar exemplo" (hoje só perguntam)
+- [x] Tirar as perguntas "tem certeza?" ao excluir um lançamento ou uma meta, já que o "Desfazer" as
+      substitui (02/10/2026, decisão tomada pela IA com o Isaac ausente, a pedido dele de "fazer tudo").
+      Continuam perguntando: compra parcelada (é uma escolha), "Apagar tudo" e "Restaurar backup". Único
+      teste existente reescrito: `metas-e-dados` ("Excluir meta pergunta antes")
+- [x] "Desfazer" também para "Restaurar backup" e "Carregar exemplo" (02/10/2026, decisão tomada pela IA
+      com o Isaac ausente): só aparece quando havia dados a perder (lançamentos, metas ou limites); cada
+      caso diz a sua mensagem ao desfazer. As perguntas dos dois continuam
 - [ ] Reserva ideal sem prazo (visto): com sobra de uns R$ 500 por mês a tela mostra
       "R$ 15.700,02" e não diz em quanto tempo a pessoa chegaria lá
 - [ ] O mesmo teto do Futuro com dois valores (visto): R$ 170,00 no Orçamento e R$ 172,50 no Painel

@@ -394,6 +394,19 @@
     return weekday > reviewDay ? 'atrasada' : null;
   }
 
+  const BACKUP_MIN_TRANSACTIONS = 5; // com menos que isso não há muito o que perder
+  const BACKUP_MAX_DAYS = 30;
+
+  /**
+   * Lembrete de backup: 'nunca' (tem lançamentos e nunca baixou um backup), 'antigo' (o último tem 30 dias
+   * ou mais) ou null. `lastBackup` é a data (AAAA-MM-DD) do último backup baixado, ou '' se nunca baixou.
+   */
+  function backupReminder(today, lastBackup, transactionCount) {
+    if (transactionCount < BACKUP_MIN_TRANSACTIONS) return null;
+    if (!lastBackup) return 'nunca';
+    return daysBetween(lastBackup, today) >= BACKUP_MAX_DAYS ? 'antigo' : null;
+  }
+
   /** Arredonda centavos para múltiplos de R$ step (padrão R$ 10). */
   function roundTo(cents, step = 1000) {
     return Math.round(cents / step) * step;
@@ -880,6 +893,13 @@
     insightCategoriaQueSubiu, insightParcelas, insightPlano, insightElogio,
   ];
 
+  const MAX_INSIGHTS = 3;
+
+  /** Separa os avisos em os `max` primeiros (a lista já vem por prioridade) e o resto, sem perder nenhum. */
+  function splitInsights(list, max = MAX_INSIGHTS) {
+    return { shown: list.slice(0, max), rest: list.slice(max) };
+  }
+
   function insights(context) {
     const list = INSIGHT_RULES.flatMap((rule) => rule(context));
     if (!list.length) list.push({ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' });
@@ -889,11 +909,19 @@
   // ---------- Importação / exportação ----------
 
   function defaultSettings() {
-    return { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7, budgetItems: [] };
+    return { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7, budgetItems: [], lastBackup: '' };
   }
 
   function emptyData() {
     return { version: DATA_VERSION, categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })), transactions: [], budgets: {}, goals: [], reviews: {}, settings: defaultSettings() };
+  }
+
+  /** Data AAAA-MM-DD que existe no calendário (2026-02-30 não existe). */
+  function isRealDate(s) {
+    if (!isISODate(s)) return false;
+    const [y, m, d] = s.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
   }
 
   function isISODate(s) {
@@ -982,6 +1010,7 @@
     if (hasOwn(INCOME_PROFILES, s.incomeProfile)) settings.incomeProfile = s.incomeProfile;
     if (integerInRange(s.reviewDay, 1, 7)) settings.reviewDay = s.reviewDay;
     if (integerInRange(s.paydayBusinessDay, 1, 10)) settings.paydayBusinessDay = s.paydayBusinessDay;
+    if (isRealDate(s.lastBackup)) settings.lastBackup = s.lastBackup;
     if (Array.isArray(s.budgetItems)) {
       const expenseIds = new Set(categories.filter((c) => c.type === 'expense').map((c) => c.id));
       settings.budgetItems = [...new Set(s.budgetItems.filter((id) => typeof id === 'string' && expenseIds.has(id)))];
@@ -1062,6 +1091,7 @@
     dailyAllowance,
     isoWeekday,
     reviewReminder,
+    backupReminder,
     nthBusinessDay,
     paydayCycle,
     allowanceUntilPayday,
@@ -1099,6 +1129,7 @@
     installmentCommitments,
     installmentLabel,
     insights,
+    splitInsights,
     emptyData,
     normalizeData,
     toCSV,

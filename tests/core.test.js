@@ -1138,3 +1138,46 @@ test('normalizeData não aceita como balde um nome que o JavaScript já tem', ()
     assert.equal(F.normalizeData({ categories: [{ id: 'x', name: 'X', type: 'expense', bucket: balde }] }).categories.find((c) => c.id === 'x').bucket, balde);
   }
 });
+
+// ---------- Lembrete de backup ----------
+
+test('backupReminder: lembra quem tem lançamentos e nunca baixou um backup, ou baixou há 30 dias ou mais', () => {
+  assert.equal(F.backupReminder('2026-09-20', '', 5), 'nunca'); // nunca baixou
+  assert.equal(F.backupReminder('2026-09-20', '2026-08-21', 5), 'antigo'); // 30 dias
+  assert.equal(F.backupReminder('2026-09-20', '2026-08-22', 5), null); // 29 dias: ainda vale
+  assert.equal(F.backupReminder('2026-09-20', '2026-09-20', 50), null); // baixou hoje
+  assert.equal(F.backupReminder('2026-09-20', '2026-12-01', 50), null); // data futura (relógio atrasado): não lembra
+});
+
+test('backupReminder: não lembra quem tem poucos lançamentos (não há o que perder)', () => {
+  assert.equal(F.backupReminder('2026-09-20', '', 0), null);
+  assert.equal(F.backupReminder('2026-09-20', '', 4), null);
+  assert.equal(F.backupReminder('2026-09-20', '', 5), 'nunca');
+});
+
+test('settings.lastBackup só aceita data AAAA-MM-DD válida; o resto vira vazio', () => {
+  assert.equal(F.emptyData().settings.lastBackup, '');
+  assert.equal(F.normalizeData({ settings: { lastBackup: '2026-09-20' } }).settings.lastBackup, '2026-09-20');
+  for (const invalido of ['20/09/2026', '2026-13-45', 20260920, null, {}, '__proto__', '<img src=x onerror=alert(1)>']) {
+    assert.equal(F.normalizeData({ settings: { lastBackup: invalido } }).settings.lastBackup, '', String(invalido));
+  }
+});
+
+// ---------- No máximo 3 avisos por vez ----------
+
+test('splitInsights mostra os 3 primeiros avisos (os mais importantes) e separa o resto, sem perder nenhum', () => {
+  const lista = ['a', 'b', 'c', 'd', 'e'].map((text) => ({ level: 'alerta', text }));
+  const { shown, rest } = F.splitInsights(lista);
+  assert.deepEqual(shown.map((m) => m.text), ['a', 'b', 'c']);
+  assert.deepEqual(rest.map((m) => m.text), ['d', 'e']);
+  assert.equal(lista.length, 5); // não mexe na lista original
+});
+
+test('splitInsights com 3 avisos ou menos mostra todos e não sobra nada', () => {
+  for (const n of [0, 1, 2, 3]) {
+    const lista = Array.from({ length: n }, (_, i) => ({ level: 'bom', text: String(i) }));
+    const { shown, rest } = F.splitInsights(lista);
+    assert.equal(shown.length, n);
+    assert.equal(rest.length, 0);
+  }
+});
