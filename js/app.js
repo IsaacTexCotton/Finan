@@ -367,6 +367,7 @@
 
     $('#allowance').innerHTML = renderAllowance(ctx);
     renderReviewReminder();
+    renderBackupReminder();
 
     renderBuckets(summary, buckets, plan);
 
@@ -664,6 +665,19 @@
       <article class="panel">
         <p><strong>${text}</strong> Leva só alguns minutos.</p>
         <button type="button" class="btn primary" data-action="open-review">Fazer a revisão</button>
+      </article>` : '';
+  }
+
+  function renderBackupReminder() {
+    const reminder = F.backupReminder(F.todayISO(), state.data.settings.lastBackup, state.data.transactions.length);
+    const text = {
+      nunca: 'Você ainda não baixou nenhum backup. Seus dados ficam só neste aparelho: se o navegador for limpo, tudo se perde.',
+      antigo: 'Faz 30 dias ou mais que você baixou o último backup. Baixe um novo para não perder o que lançou desde então.',
+    }[reminder];
+    $('#backup-reminder').innerHTML = text ? `
+      <article class="panel">
+        <p><strong>${text}</strong></p>
+        <button type="button" class="btn primary" data-action="export-json">Baixar backup</button>
       </article>` : '';
   }
 
@@ -1029,7 +1043,9 @@
   }
 
   function exportarBackup() {
+    state.data.settings.lastBackup = F.todayISO(); // antes de baixar, para o arquivo já levar a data
     download(`finan-backup-${F.todayISO()}.json`, JSON.stringify(state.data, null, 2), 'application/json');
+    commit('Backup baixado.');
   }
 
   function carregarExemplo() {

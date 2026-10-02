@@ -51,7 +51,11 @@ quando houver regra de negócio. Marque `[x]` ao concluir.
 - [x] App instalável e que abre sem internet (manifesto, ícones, service worker de rede primeiro)
 - [x] Dados protegidos: pede armazenamento persistente ao navegador e mostra o estado em "Seus dados"
 - [ ] Sugestão: o primeiro parágrafo de "Seus dados" e a linha de proteção repetem o conselho de fazer backup; enxugar
-- [ ] Backup: decidir o que fazer (cópias internas automáticas, lembrete de backup externo ou os dois)
+- [x] Backup: lembrete no Painel (02/10/2026): com 5 lançamentos ou mais, avisa se nunca baixou um backup
+      ou se o último tem 30 dias ou mais, com botão "Baixar backup". Decisão tomada pela IA com o Isaac
+      ausente; ele pode trocar os números (5 lançamentos, 30 dias)
+- [ ] Backup: cópias internas automáticas (a outra metade da decisão; hoje só há o lembrete)
+- [ ] Sugestão: o lembrete de backup não tem "Agora não"; quem não quer baixar vê o aviso em toda abertura
 - [ ] Ícone definitivo do app (hoje é uma letra F provisória; não é prioridade)
 - [ ] Sugestão: endereço próprio (domínio) para o produto vendido, separado de outros sites do GitHub Pages
       (no GitHub Pages, todas as páginas de uma conta dividem o mesmo armazenamento do navegador)
@@ -221,9 +225,9 @@ Por que ele pararia de usar (do mais provável ao menos)
 - [ ] Esquece de lançar e os números passam a mentir (avaliação). O app não avisa com ele fechado
       (sem servidor). Ideias: lançar mais rápido (valores e descrições usados com frequência),
       aviso na abertura quando faz dias que não há lançamentos
-- [ ] Medo de perder tudo (avaliação): trocar de celular ou limpar o navegador apaga o histórico, e o
-      app nunca lembra de fazer backup (visto: só o texto em "Seus dados"). Ligado ao item de backup
-      da Parte 5. Ideia: aviso suave a cada 2 a 4 semanas e botão "Salvar cópia" mais à vista
+- [x] Medo de perder tudo (avaliação): trocar de celular ou limpar o navegador apaga o histórico, e o
+      app nunca lembra de fazer backup (visto: só o texto em "Seus dados"). Resolvido em parte
+      (02/10/2026): o Painel lembra de baixar um backup (ver o item de backup da Parte 5)
 - [ ] O app não bate com a vida real (visto na falta dos campos): sem fatura do cartão (a compra
       entra no dia da compra, mas o dinheiro sai no vencimento); sem vale-alimentação; só um
       pagamento por mês (sem adiantamento do dia 20); receitas só Salário, Renda extra e Outras

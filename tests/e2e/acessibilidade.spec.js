@@ -126,3 +126,16 @@ test('a mensagem com o botão "Desfazer" (depois de excluir) não tem violaçõe
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
   }
 });
+
+test('o lembrete de backup no Painel (dados de exemplo, nenhum backup baixado) não tem violações do axe', async ({ page }) => {
+  for (const largura of [320, 390, 1280]) {
+    await page.setViewportSize({ width: largura, height: 900 });
+    await page.goto(APP);
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await expect(page.locator('#backup-reminder')).toContainText('Você ainda não baixou nenhum backup'); // o exemplo tem mais de 5 lançamentos
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});

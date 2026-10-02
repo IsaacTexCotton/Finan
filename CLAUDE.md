@@ -243,6 +243,11 @@ Só faça o commit quando todas as respostas forem "sim":
   lançamento, ou "não foi possível salvar" (manda baixar o backup agora; nunca diz "protegido" depois
   de uma gravação que falhou). As consultas entram numa fila (`protegerDados`), então uma resposta
   antiga nunca cobre uma nova. Testes em `tests/e2e/dados-protegidos.spec.js`.
+- **Lembrete de backup** (decisão tomada pela IA com o Isaac ausente, 02/10/2026; ele pode mudar os
+  números): com 5 lançamentos ou mais, o Painel lembra de baixar um backup quando nunca se baixou um ou
+  o último tem 30 dias ou mais (`backupReminder`). A data do último backup (`settings.lastBackup`) é
+  gravada ao baixar, vai dentro do próprio arquivo e passa por `normalizeData` (só aceita data real).
+  Testes em `tests/e2e/lembrete-backup.spec.js`.
 - **Site instalável primeiro** (decisão do Isaac, 01/10/2026): o produto desta etapa é o site que
   funciona como app (PWA). Aplicativo de loja (Play Store ou App Store) **fica para depois** do
   teste com pessoas de verdade; com ele o próprio sistema do celular poderia guardar cópia dos dados,
