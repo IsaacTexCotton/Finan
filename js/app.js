@@ -54,6 +54,7 @@
       toast('Não foi possível salvar neste navegador. Faça um backup.');
     }
     protegerDados({ pedir: true, gravou });
+    limparDesfazer(); // os dados mudaram: a cópia de antes já não vale
   }
 
   // ---------- Proteção dos dados ----------
@@ -116,6 +117,7 @@
     creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
+    undo: null, // cópia dos dados antes de uma exclusão, para o "Desfazer"
   };
 
   function newId() {
@@ -164,10 +166,11 @@
     devolverFoco();
   }
 
-  function commit(message) {
+  function commit(message, copiaAntes) {
     saveData();
     redesenhar();
-    if (message) toast(message);
+    if (copiaAntes) state.undo = copiaAntes; // depois de saveData, que limpa o desfazer anterior
+    if (message) toast(message, Boolean(copiaAntes));
   }
 
   // ---------- Utilidades de interface ----------
@@ -195,12 +198,46 @@
   }
 
   let toastTimer;
-  function toast(text) {
+  const TOAST_MS = 3200;
+  const DESFAZER_MS = 10000; // tempo para desfazer uma exclusão (decisão do Isaac, 01/10/2026)
+
+  function toast(text, comDesfazer = false) {
     const el = $('#toast');
     el.textContent = text;
+    if (comDesfazer) {
+      const botao = document.createElement('button'); // montado sem innerHTML: nenhum texto digitado entra aqui
+      botao.type = 'button';
+      botao.className = 'toast-btn';
+      botao.dataset.action = 'undo';
+      botao.textContent = 'Desfazer';
+      el.append(botao);
+    }
+    el.classList.toggle('com-desfazer', comDesfazer);
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+    toastTimer = setTimeout(() => {
+      el.classList.remove('show');
+      limparDesfazer();
+    }, comDesfazer ? DESFAZER_MS : TOAST_MS);
+  }
+
+  // Cópia dos dados antes de excluir: "Desfazer" devolve esta cópia, até algo mais mudar os dados.
+  function copiarDados() {
+    return JSON.parse(JSON.stringify(state.data));
+  }
+
+  function limparDesfazer() {
+    state.undo = null;
+    const botao = $('#toast .toast-btn');
+    if (botao) botao.remove();
+    $('#toast').classList.remove('com-desfazer');
+  }
+
+  function desfazer() {
+    if (!state.undo) return;
+    state.data = state.undo;
+    commit('Exclusão desfeita.');
+    $('#conteudo').focus({ preventScroll: true }); // o botão saiu da tela: o foco volta ao conteúdo
   }
 
   function download(filename, content, type) {
@@ -752,11 +789,12 @@
     if (!t) return;
     const todasAsParcelas = Boolean(t.installment) && confirmar(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`);
     if (!todasAsParcelas && !confirmar(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) return;
+    const antes = copiarDados();
     const ids = F.idsToDelete(state.data.transactions, id, todasAsParcelas);
     const remove = new Set(ids);
     state.data.transactions = state.data.transactions.filter((x) => !remove.has(x.id));
     if (remove.has(state.editingId)) resetTxForm();
-    commit(ids.length > 1 ? `${ids.length} parcelas excluídas.` : 'Lançamento excluído.');
+    commit(ids.length > 1 ? `${ids.length} parcelas excluídas.` : 'Lançamento excluído.', antes);
   }
 
   function copyRecurring() {
@@ -985,8 +1023,9 @@
 
   function excluirMeta(el) {
     if (!confirmar('Excluir esta meta?')) return;
+    const antes = copiarDados();
     state.data.goals = state.data.goals.filter((g) => g.id !== el.dataset.id);
-    commit('Meta excluída.');
+    commit('Meta excluída.', antes);
   }
 
   function exportarBackup() {
@@ -1027,6 +1066,7 @@
     'export-json': () => exportarBackup(),
     'load-demo': () => carregarExemplo(),
     'reset': () => apagarTudo(),
+    'undo': () => desfazer(),
   };
 
   function handleAction(action, el) {
