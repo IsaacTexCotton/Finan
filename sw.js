@@ -3,7 +3,7 @@
  * cópia); sem internet, entrega a cópia guardada. Só mexe em arquivos do próprio site: não
  * chama nenhum endereço externo e não guarda dados da pessoa (eles ficam no localStorage). */
 const CACHE = 'finan';
-const ARQUIVOS = ['./', 'index.html', 'manifest.webmanifest', 'css/styles.css', 'js/core.js', 'js/novidades.js', 'js/app.js', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
+const ARQUIVOS = ['./', 'index.html', 'manifest.webmanifest', 'css/styles.css', 'js/core.js', 'js/sugestao.js', 'js/novidades.js', 'js/app.js', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (evento) => {
   // "reload": ignora o cache do navegador (o GitHub Pages manda guardar os arquivos por 10 minutos)
