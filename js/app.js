@@ -827,7 +827,7 @@
     const t = state.data.transactions.find((x) => x.id === id);
     if (!t) return;
     const todasAsParcelas = Boolean(t.installment) && confirmar(`Esta compra foi parcelada em ${t.installment.of}x. Excluir todas as parcelas?`);
-    if (!todasAsParcelas && !confirmar(t.installment ? 'Excluir só esta parcela?' : 'Excluir este lançamento?')) return;
+    if (t.installment && !todasAsParcelas && !confirmar('Excluir só esta parcela?')) return; // sem parcelas, o "Desfazer" cobre o engano
     const antes = copiarDados();
     const ids = F.idsToDelete(state.data.transactions, id, todasAsParcelas);
     const remove = new Set(ids);
@@ -1061,8 +1061,7 @@
   }
 
   function excluirMeta(el) {
-    if (!confirmar('Excluir esta meta?')) return;
-    const antes = copiarDados();
+    const antes = copiarDados(); // sem pergunta: o "Desfazer" cobre o engano
     state.data.goals = state.data.goals.filter((g) => g.id !== el.dataset.id);
     commit('Meta excluída.', antes);
   }

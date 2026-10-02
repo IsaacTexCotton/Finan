@@ -257,6 +257,14 @@ Só faça o commit quando todas as respostas forem "sim":
   "Você ainda pode gastar R$ X hoje.", o mesmo número do cartão do Painel (`calcularAllowance`). Não
   aparece em receita, em edição, em guardar dinheiro, em gasto de outro mês nem sem o cartão (sem limites).
   Testes em `tests/e2e/pode-gastar-ao-salvar.spec.js`.
+- **Desfazer ao excluir** (decisão do Isaac, 01/10/2026; sem atalhos de teclado, o foco é o celular):
+  depois de excluir um lançamento (ou todas as parcelas), uma meta ou usar "Apagar tudo", a mensagem
+  ganha o botão "Desfazer" por 10 segundos (`desfazer`, `copiarDados`). A cópia dos dados fica só na
+  memória e o botão some quando qualquer outra coisa muda os dados (`saveData` chama `limparDesfazer`).
+  **Excluir lançamento simples ou meta não pergunta mais "tem certeza?"** (decisão tomada pela IA com o
+  Isaac ausente, 02/10/2026): o "Desfazer" cobre o engano. Continuam perguntando a compra parcelada (é
+  uma escolha), "Apagar tudo" e "Restaurar backup". Testes em `tests/e2e/desfazer.spec.js` e
+  `tests/e2e/excluir-sem-pergunta.spec.js`.
 - **Site instalável primeiro** (decisão do Isaac, 01/10/2026): o produto desta etapa é o site que
   funciona como app (PWA). Aplicativo de loja (Play Store ou App Store) **fica para depois** do
   teste com pessoas de verdade; com ele o próprio sistema do celular poderia guardar cópia dos dados,

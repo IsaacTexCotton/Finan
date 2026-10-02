@@ -15,6 +15,12 @@ window.FINAN_NOVIDADES = [
         ]
       },
       {
+        "nome": "Alterado",
+        "itens": [
+          "Excluir um lançamento ou uma meta não pergunta mais \"tem certeza?\": apaga na hora e o botão \"Desfazer\" (10 segundos) devolve. Compra parcelada, \"Apagar tudo\" e \"Restaurar backup\" continuam perguntando"
+        ]
+      },
+      {
         "nome": "Corrigido",
         "itens": [
           "Um backup com dados corrompidos, com nomes especiais no lugar do tipo de renda ou do balde, não faz mais a tela Metas mostrar \"undefined meses\" nem esconde gastos dos totais"

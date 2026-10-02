@@ -26,6 +26,9 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 - Lembrete de backup no Painel: quando você tem 5 lançamentos ou mais e nunca baixou um backup (ou o último tem 30 dias ou mais), o Painel avisa e já traz o botão "Baixar backup"
 - Desfazer ao excluir: depois de excluir um lançamento (ou todas as parcelas de uma compra), uma meta ou todos os dados, a mensagem ganha um botão "Desfazer" por 10 segundos
 
+### Alterado
+- Excluir um lançamento ou uma meta não pergunta mais "tem certeza?": apaga na hora e o botão "Desfazer" (10 segundos) devolve. Compra parcelada, "Apagar tudo" e "Restaurar backup" continuam perguntando
+
 ### Corrigido
 - Um backup com dados corrompidos, com nomes especiais no lugar do tipo de renda ou do balde, não faz mais a tela Metas mostrar "undefined meses" nem esconde gastos dos totais
 

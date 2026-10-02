@@ -41,18 +41,11 @@ test('"Atualizar minha meta" põe o valor ideal na reserva e o botão some', asy
   expect((await dadosSalvos(page)).goals.find((g) => g.id === 'm1').target).toBe(900000);
 });
 
-test('"Excluir meta" pergunta antes, apaga só a meta escolhida e respeita o "cancelar"', async ({ page }) => {
+// Regra mudada em 02/10/2026 (excluir não pergunta mais; o "Desfazer" cobre o engano; ver
+// `excluir-sem-pergunta.spec.js`). O que continua valendo: só a meta escolhida é apagada.
+test('"Excluir meta" apaga só a meta escolhida', async ({ page }) => {
   await irParaAba(page, 'Metas');
-  const excluir = page.getByRole('button', { name: 'Excluir meta Viagem' });
-
-  const perguntas = [];
-  page.once('dialog', (d) => { perguntas.push(d.message()); d.dismiss(); });
-  await excluir.click();
-  expect(perguntas).toEqual(['Excluir esta meta?']);
-  await expect(meta(page, 'Viagem')).toHaveCount(1); // cancelou: continua lá
-
-  page.once('dialog', (d) => d.accept());
-  await excluir.click();
+  await page.getByRole('button', { name: 'Excluir meta Viagem' }).click();
   await expect(page.getByRole('status')).toContainText('Meta excluída.');
   await expect(meta(page, 'Viagem')).toHaveCount(0);
   await expect(meta(page, 'Reserva de emergência')).toHaveCount(1); // as outras ficam
