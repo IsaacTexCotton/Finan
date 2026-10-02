@@ -263,7 +263,10 @@ Só faça o commit quando todas as respostas forem "sim":
   memória e o botão some quando qualquer outra coisa muda os dados (`saveData` chama `limparDesfazer`).
   **Excluir lançamento simples ou meta não pergunta mais "tem certeza?"** (decisão tomada pela IA com o
   Isaac ausente, 02/10/2026): o "Desfazer" cobre o engano. Continuam perguntando a compra parcelada (é
-  uma escolha), "Apagar tudo" e "Restaurar backup". Testes em `tests/e2e/desfazer.spec.js` e
+  uma escolha), "Apagar tudo" e "Restaurar backup". O "Desfazer" também vale para "Restaurar backup" e
+  "Carregar exemplo" (decisão tomada pela IA com o Isaac ausente, 02/10/2026), só quando havia dados a
+  perder (`copiaSeTemDados`: lançamentos, metas ou limites); as perguntas desses dois continuam. Testes
+  em `tests/e2e/desfazer.spec.js`, `tests/e2e/desfazer-restaurar.spec.js` e
   `tests/e2e/excluir-sem-pergunta.spec.js`.
 - **Site instalável primeiro** (decisão do Isaac, 01/10/2026): o produto desta etapa é o site que
   funciona como app (PWA). Aplicativo de loja (Play Store ou App Store) **fica para depois** do

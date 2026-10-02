@@ -117,7 +117,8 @@
     creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
-    undo: null, // cópia dos dados antes de uma exclusão, para o "Desfazer"
+    undo: null, // cópia dos dados antes de uma exclusão (ou troca geral), para o "Desfazer"
+    undoTexto: '', // o que a mensagem diz depois de desfazer
   };
 
   function newId() {
@@ -166,10 +167,13 @@
     devolverFoco();
   }
 
-  function commit(message, copiaAntes) {
+  function commit(message, copiaAntes, textoDesfeito = 'Exclusão desfeita.') {
     saveData();
     redesenhar();
-    if (copiaAntes) state.undo = copiaAntes; // depois de saveData, que limpa o desfazer anterior
+    if (copiaAntes) { // depois de saveData, que limpa o desfazer anterior
+      state.undo = copiaAntes;
+      state.undoTexto = textoDesfeito;
+    }
     if (message) toast(message, Boolean(copiaAntes));
   }
 
@@ -226,6 +230,12 @@
     return JSON.parse(JSON.stringify(state.data));
   }
 
+  // Cópia para desfazer uma troca geral dos dados; sem dados a perder, não há o que desfazer.
+  function copiaSeTemDados() {
+    const d = state.data;
+    return d.transactions.length || d.goals.length || Object.keys(d.budgets).length ? copiarDados() : undefined;
+  }
+
   function limparDesfazer() {
     state.undo = null;
     const botao = $('#toast .toast-btn');
@@ -235,8 +245,9 @@
 
   function desfazer() {
     if (!state.undo) return;
+    const texto = state.undoTexto;
     state.data = state.undo;
-    commit('Exclusão desfeita.');
+    commit(texto);
     $('#conteudo').focus({ preventScroll: true }); // o botão saiu da tela: o foco volta ao conteúdo
   }
 
@@ -974,8 +985,9 @@
       try {
         const data = F.normalizeData(JSON.parse(reader.result));
         if (!confirmar(`Restaurar backup com ${data.transactions.length} lançamento(s)? Os dados atuais serão substituídos.`)) return;
+        const antes = copiaSeTemDados();
         state.data = data;
-        commit('Backup restaurado.');
+        commit('Backup restaurado.', antes, 'Restauração do backup desfeita.');
       } catch (e) {
         toast('Arquivo de backup inválido.');
       }
@@ -1074,10 +1086,11 @@
 
   function carregarExemplo() {
     if (state.data.transactions.length && !confirmar('Substituir seus dados pelos dados de exemplo?')) return;
+    const antes = copiaSeTemDados();
     state.data = demoData();
     state.month = F.monthKey(F.todayISO());
     state.tab = 'painel';
-    commit('Dados de exemplo carregados. Use "Apagar tudo" para começar do zero.');
+    commit('Dados de exemplo carregados. Use "Apagar tudo" para começar do zero.', antes, 'Dados de exemplo desfeitos.');
   }
 
   function apagarTudo() {

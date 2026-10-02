@@ -270,7 +270,9 @@ Defeitos e confusões vistos
       substitui (02/10/2026, decisão tomada pela IA com o Isaac ausente, a pedido dele de "fazer tudo").
       Continuam perguntando: compra parcelada (é uma escolha), "Apagar tudo" e "Restaurar backup". Único
       teste existente reescrito: `metas-e-dados` ("Excluir meta pergunta antes")
-- [ ] Sugestão: "Desfazer" também para "Restaurar backup" e "Carregar exemplo" (hoje só perguntam)
+- [x] "Desfazer" também para "Restaurar backup" e "Carregar exemplo" (02/10/2026, decisão tomada pela IA
+      com o Isaac ausente): só aparece quando havia dados a perder (lançamentos, metas ou limites); cada
+      caso diz a sua mensagem ao desfazer. As perguntas dos dois continuam
 - [ ] Reserva ideal sem prazo (visto): com sobra de uns R$ 500 por mês a tela mostra
       "R$ 15.700,02" e não diz em quanto tempo a pessoa chegaria lá
 - [ ] O mesmo teto do Futuro com dois valores (visto): R$ 170,00 no Orçamento e R$ 172,50 no Painel
