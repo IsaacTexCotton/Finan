@@ -1,9 +1,9 @@
 // GERADO por tools/gerar-novidades.js a partir do CHANGELOG.md. Não edite à mão: rode "node tools/gerar-novidades.js".
 window.FINAN_NOVIDADES = [
   {
-    "versao": null,
-    "rotulo": "Não lançado",
-    "data": null,
+    "versao": "0.2.0",
+    "rotulo": null,
+    "data": "2026-10-02",
     "secoes": [
       {
         "nome": "Adicionado",

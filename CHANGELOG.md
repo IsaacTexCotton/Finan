@@ -20,6 +20,8 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ## [Não lançado]
 
+## [0.2.0] - 2026-10-02
+
 ### Adicionado
 - "Desfazer" também depois de "Restaurar backup" e de "Carregar exemplo" por cima dos seus dados (10 segundos)
 - Ao salvar um gasto, a mensagem diz quanto você ainda pode gastar hoje (o mesmo número do cartão do Painel)
