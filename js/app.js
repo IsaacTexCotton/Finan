@@ -372,7 +372,7 @@
     renderBuckets(summary, buckets, plan);
 
     const list = F.insights({ summary, buckets, budgetRows, previousSummary, commitments, plan, categories: state.data.categories });
-    $('#insights').innerHTML = list.map((i) => `<li class="insight level-${esc(i.level)}">${esc(i.text)}</li>`).join('');
+    renderInsights(list);
 
     const cats = F.indexCategories(state.data.categories);
     const entries = Object.entries(summary.byCategory).sort((a, b) => b[1] - a[1]);
@@ -666,6 +666,18 @@
         <p><strong>${text}</strong> Leva só alguns minutos.</p>
         <button type="button" class="btn primary" data-action="open-review">Fazer a revisão</button>
       </article>` : '';
+  }
+
+  const insightItem = (i) => `<li class="insight level-${esc(i.level)}">${esc(i.text)}</li>`;
+
+  /** No máximo 3 avisos à vista; o resto fica recolhido em "Ver mais N avisos". */
+  function renderInsights(list) {
+    const { shown, rest } = F.splitInsights(list);
+    $('#insights').innerHTML = shown.map(insightItem).join('');
+    const more = $('#insights-more');
+    more.hidden = !rest.length;
+    $('summary', more).textContent = `Ver mais ${rest.length} ${rest.length === 1 ? 'aviso' : 'avisos'}`;
+    $('.insights', more).innerHTML = rest.map(insightItem).join('');
   }
 
   function renderBackupReminder() {

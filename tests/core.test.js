@@ -1162,3 +1162,22 @@ test('settings.lastBackup só aceita data AAAA-MM-DD válida; o resto vira vazio
     assert.equal(F.normalizeData({ settings: { lastBackup: invalido } }).settings.lastBackup, '', String(invalido));
   }
 });
+
+// ---------- No máximo 3 avisos por vez ----------
+
+test('splitInsights mostra os 3 primeiros avisos (os mais importantes) e separa o resto, sem perder nenhum', () => {
+  const lista = ['a', 'b', 'c', 'd', 'e'].map((text) => ({ level: 'alerta', text }));
+  const { shown, rest } = F.splitInsights(lista);
+  assert.deepEqual(shown.map((m) => m.text), ['a', 'b', 'c']);
+  assert.deepEqual(rest.map((m) => m.text), ['d', 'e']);
+  assert.equal(lista.length, 5); // não mexe na lista original
+});
+
+test('splitInsights com 3 avisos ou menos mostra todos e não sobra nada', () => {
+  for (const n of [0, 1, 2, 3]) {
+    const lista = Array.from({ length: n }, (_, i) => ({ level: 'bom', text: String(i) }));
+    const { shown, rest } = F.splitInsights(lista);
+    assert.equal(shown.length, n);
+    assert.equal(rest.length, 0);
+  }
+});

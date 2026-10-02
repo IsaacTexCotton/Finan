@@ -21,6 +21,7 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 ## [Não lançado]
 
 ### Adicionado
+- Painel mais calmo: só os 3 avisos mais importantes ficam à vista; os outros ficam num botão "Ver mais N avisos", sem perder nenhum
 - Lembrete de backup no Painel: quando você tem 5 lançamentos ou mais e nunca baixou um backup (ou o último tem 30 dias ou mais), o Painel avisa e já traz o botão "Baixar backup"
 - Desfazer ao excluir: depois de excluir um lançamento (ou todas as parcelas de uma compra), uma meta ou todos os dados, a mensagem ganha um botão "Desfazer" por 10 segundos
 

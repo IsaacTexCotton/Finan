@@ -248,6 +248,10 @@ Só faça o commit quando todas as respostas forem "sim":
   o último tem 30 dias ou mais (`backupReminder`). A data do último backup (`settings.lastBackup`) é
   gravada ao baixar, vai dentro do próprio arquivo e passa por `normalizeData` (só aceita data real).
   Testes em `tests/e2e/lembrete-backup.spec.js`.
+- **No máximo 3 avisos à vista no Painel** (decisão tomada pela IA com o Isaac ausente, 02/10/2026): a
+  lista de "O que fazer agora" já vem por prioridade; os 3 primeiros ficam à vista e o resto fica num
+  "Ver mais N avisos" (`splitInsights`, `#insights-more`). Nenhum aviso some. `insights()` continua
+  devolvendo a lista inteira. Testes em `tests/e2e/avisos-no-painel.spec.js`.
 - **Site instalável primeiro** (decisão do Isaac, 01/10/2026): o produto desta etapa é o site que
   funciona como app (PWA). Aplicativo de loja (Play Store ou App Store) **fica para depois** do
   teste com pessoas de verdade; com ele o próprio sistema do celular poderia guardar cópia dos dados,

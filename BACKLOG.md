@@ -233,8 +233,9 @@ Por que ele pararia de usar (do mais provável ao menos)
       pagamento por mês (sem adiantamento do dia 20); receitas só Salário, Renda extra e Outras
       (sem 13º, férias, reembolso)
 - [ ] Culpa repetida (visto): todo mês "Você guardou R$ 0,00… faça o aporte"; num mês estourado o
-      Painel mostrou 10 mensagens seguidas. Ideias: no máximo 3 alertas por vez; aviso de "guarde
-      mais" só uma vez por semana
+      Painel mostrou 10 mensagens seguidas. Feito (02/10/2026): no máximo 3 avisos à vista, o resto em
+      "Ver mais N avisos" (decisão tomada pela IA com o Isaac ausente). Falta: aviso de "guarde mais"
+      só uma vez por semana
 - [ ] Esforço e palavras difíceis no começo (avaliação): balde, envelope, "80/15/5", "renda
       estável ou variável", "Essenciais consomem 96%". Explicar no lugar ou trocar por palavras do dia a dia
 

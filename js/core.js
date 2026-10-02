@@ -893,6 +893,13 @@
     insightCategoriaQueSubiu, insightParcelas, insightPlano, insightElogio,
   ];
 
+  const MAX_INSIGHTS = 3;
+
+  /** Separa os avisos em os `max` primeiros (a lista já vem por prioridade) e o resto, sem perder nenhum. */
+  function splitInsights(list, max = MAX_INSIGHTS) {
+    return { shown: list.slice(0, max), rest: list.slice(max) };
+  }
+
   function insights(context) {
     const list = INSIGHT_RULES.flatMap((rule) => rule(context));
     if (!list.length) list.push({ level: 'bom', text: 'Tudo dentro do plano. Continue registrando cada gasto.' });
@@ -1122,6 +1129,7 @@
     installmentCommitments,
     installmentLabel,
     insights,
+    splitInsights,
     emptyData,
     normalizeData,
     toCSV,
