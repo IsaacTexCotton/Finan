@@ -115,6 +115,14 @@ Só faça o commit quando todas as respostas forem "sim":
   valor quando o dinheiro que sobrou fica menor que o prometido pelos envelopes, e o cartão diz
   por quê ("Limitado ao que sobrou…"). Sobra negativa dá R$ 0. Sem renda registrada no período
   não há o que comparar e valem só os envelopes. O cartão também mostra quanto já foi guardado.
+- **Painel enxuto** (consenso de UX, finanças e usuário, decisão do Isaac, 02/10/2026: "uma pergunta, um
+  número, um aviso"). Fase 1: o cartão "Você pode gastar hoje" mostra o número e uma linha ("Esse é o
+  máximo para hoje, contando até…", com "Limitado ao que sobrou." quando for o caso, para não soar como
+  permissão de gastar); semana, envelopes e o que já guardou ficam em "Ver detalhes" (`.allowance-mais`, que
+  continua aberto depois de redesenhar). Os baldes têm uma frase curta; o texto do método e a explicação do
+  plano vão para "Como funciona"; cada barra tem uma linha. Nada é apagado. Fases seguintes (ainda não
+  feitas): reordenar (resumo, 1 aviso, baldes recolhidos) e lembretes calmos (um por vez, "Agora não").
+  Testes em `tests/e2e/painel-enxuto.spec.js`.
 - **Teto do balde** (decisão do Isaac, 30/09/2026). Cada balde tem um teto: a parte da renda do
   mês que o plano reserva para ele (`bucketCeilings`, em múltiplos de R$ 10, somando a renda
   arredondada). Os limites por categoria são **opcionais**: as categorias sem limite gastam do

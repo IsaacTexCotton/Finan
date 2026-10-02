@@ -269,6 +269,14 @@ Defeitos e confusões vistos
       pelo botão), e avisar quando um limite estoura em 2 dos últimos 3 meses
 - [ ] Sugestão: categorias com gasto só em meses atuais não entram (a janela é de meses anteriores); gastos
       anuais (IPVA, seguro) só viram provisão se aparecerem na janela de 6 meses
+- [x] Painel enxuto, fase 1 (02/10/2026): cartão "pode gastar" com número e uma linha + "Ver detalhes", baldes
+      e plano em "Como funciona", barras de uma linha
+- [ ] Painel enxuto, fase 2: reordenar (estrela, resumo, 1 aviso, baldes recolhidos com título "Para onde foi
+      o dinheiro")
+- [ ] Painel enxuto, fase 3: lembretes calmos (um por vez, faixa fina, "Agora não" que guarda uma data: mexe
+      em dados, vai por PR)
+- [ ] Painel enxuto, depois: valor sem centavos no destaque ("R$ 46") e trocar balde/envelope/plano por
+      palavras do dia a dia (decisão do Isaac)
 - [ ] Estilo de vida aparece vazio no Orçamento mesmo com gasto (visto): diz "elas já gastaram
       R$ 525,70" sem dizer quais categorias; Restaurantes, Compras e Assinaturas só surgem em "Adicionar".
       Ideia: categorias com gasto no mês aparecem sozinhas

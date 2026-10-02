@@ -183,3 +183,18 @@ test('a sugestão de limites do Orçamento (com meta, atípico e déficit) não 
     }
   }
 });
+
+test('o Painel enxuto, com "Ver detalhes" e "Como funciona" abertos, não tem violações do axe', async ({ page }) => {
+  for (const largura of [320, 390, 1280]) {
+    await page.setViewportSize({ width: largura, height: 900 });
+    await page.goto(APP);
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await page.locator('#allowance summary').click();
+    await page.locator('#tab-painel summary', { hasText: 'Como funciona' }).click();
+    await expect(page.locator('#allowance details')).toHaveJSProperty('open', true);
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});

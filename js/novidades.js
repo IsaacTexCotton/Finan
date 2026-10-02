@@ -14,6 +14,7 @@ window.FINAN_NOVIDADES = [
       {
         "nome": "Alterado",
         "itens": [
+          "Painel mais leve: o cartão \"Você pode gastar hoje\" mostra só o número e uma linha (\"Esse é o máximo para hoje\"), e o resto fica em \"Ver detalhes\"; a explicação dos baldes e do plano foi para \"Como funciona\", e cada barra tem uma linha só. Nada foi apagado",
           "\"Sugerir pelos meus gastos\" não usa mais a média de 3 meses nem porcentagens fixas: olha os seus últimos meses, deixa de fora um mês fora do comum, protege o mínimo que você já gasta no dia a dia e só depois reparte o resto",
           "Pagar dívida agora conta como gasto essencial, e não mais como dinheiro guardado: quitar uma dívida é obrigação, e o balde Futuro fica só para reserva, investimentos e metas. Quem já tinha lançamentos de dívida vê a mudança sozinha"
         ]

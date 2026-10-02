@@ -350,16 +350,22 @@
     const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
     const periodo = byPayday ? 'desde o último pagamento' : 'no mês';
     const ate = byPayday ? `, até o próximo pagamento (${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)})` : '';
+    const contando = byPayday ? `contando até o próximo pagamento (${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)})` : 'contando até o fim do mês';
+    // Painel enxuto: o número e uma linha. O resto (semana, envelopes, o que já guardou) fica em "Ver detalhes".
     return `
       <div class="allowance">
         <div>
           <span class="card-label">Você pode gastar hoje</span>
           <span class="allowance-value">${money(allowance.perDay)}</span>
         </div>
-        <p>Nesta semana, até domingo (${allowance.weekDays} ${allowance.weekDays === 1 ? 'dia' : 'dias'}): <strong>${money(allowance.perWeek)}</strong>.</p>
-        <p>${allowance.capped ? `Limitado ao que sobrou ${periodo} (${money(allowance.left)})` : `${money(allowance.remaining)} livres nos envelopes variáveis`} para os próximos ${dias}${ate}.</p>
-        ${allowance.capped ? `<p>Os envelopes ainda têm ${money(allowance.envelopeRemaining)}, mas esse dinheiro já foi gasto ou guardado.</p>` : ''}
-        ${allowance.saved > 0 ? `<p class="muted">Você já guardou ${money(allowance.saved)} ${byPayday ? 'desde o último pagamento' : 'neste mês'}.</p>` : ''}
+        <p class="allowance-resumo">Esse é o máximo para hoje, ${contando}.${allowance.capped ? ' Limitado ao que sobrou.' : ''}</p>
+        <details class="allowance-mais">
+          <summary>Ver detalhes</summary>
+          <p>Nesta semana, até domingo (${allowance.weekDays} ${allowance.weekDays === 1 ? 'dia' : 'dias'}): <strong>${money(allowance.perWeek)}</strong>.</p>
+          <p>${allowance.capped ? `Limitado ao que sobrou ${periodo} (${money(allowance.left)})` : `${money(allowance.remaining)} livres nos envelopes variáveis`} para os próximos ${dias}${ate}.</p>
+          ${allowance.capped ? `<p>Os envelopes ainda têm ${money(allowance.envelopeRemaining)}, mas esse dinheiro já foi gasto ou guardado.</p>` : ''}
+          ${allowance.saved > 0 ? `<p class="muted">Você já guardou ${money(allowance.saved)} ${byPayday ? 'desde o último pagamento' : 'neste mês'}.</p>` : ''}
+        </details>
       </div>`;
   }
 
@@ -384,7 +390,9 @@
 
     renderCards(summary, plan);
 
+    const detalhesAbertos = Boolean($('#allowance details[open]')); // redesenhar não pode fechar o que a pessoa abriu
     $('#allowance').innerHTML = renderAllowance(ctx);
+    if (detalhesAbertos && $('#allowance details')) $('#allowance details').open = true;
     renderReviewReminder();
     renderBackupReminder();
 
@@ -425,8 +433,8 @@
     $('#plan-info').innerHTML = `
       <span class="badge plan-${esc(plan.profile)}">${esc(profile.label)}</span>
       <strong>${plan.essencial}/${plan.estilo}/${plan.futuro}</strong>
-      <span class="muted small">essenciais / estilo de vida / futuro</span>
-      <span class="muted">${esc(profile.description)}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${esc(F.formatPercent(plan.essentialShare))} da renda.` : ''}</span>`;
+      <span class="muted small">essenciais / estilo de vida / futuro</span>`;
+    $('#plan-description').textContent = `${profile.description}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${F.formatPercent(plan.essentialShare)} da renda.` : ''}`;
     $('#buckets').innerHTML = buckets.map((b) => `
       <div class="bucket">
         <div class="bucket-head">
@@ -435,8 +443,7 @@
         </div>
         ${bar(summary.income > 0 ? b.share : 0, b.status, b.targetRatio)}
         <div class="bucket-foot muted">
-          <span>${money(b.actual)} · ${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda</span>
-          <span>${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}${summary.income > 0 ? ` (${money(b.target)})` : ''}</span>
+          <span>${money(b.actual)} (${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda) · ${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}</span>
         </div>
       </div>`).join('');
   }
