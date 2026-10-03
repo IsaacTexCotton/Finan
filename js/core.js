@@ -333,6 +333,7 @@
     const remaining = capped ? Math.max(left, 0) : envelopeRemaining;
     const weekDays = Math.min(8 - isoWeekday(today), daysLeft);
     return {
+      semRenda: Boolean(summary) && !(summary.income > 0), // sem nenhuma renda no período não há dinheiro conhecido: a tela não promete número
       perDay: Math.floor(remaining / daysLeft),
       perWeek: Math.floor((remaining * weekDays) / daysLeft),
       weekDays, remaining, envelopeRemaining, capped, left, saved: summary ? summary.saved : 0, daysLeft,

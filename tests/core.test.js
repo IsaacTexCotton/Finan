@@ -1165,3 +1165,36 @@ test('a migração da dívida só mexe na categoria padrão que estava no Futuro
 test('o balde Futuro não promete mais "quitação de dívidas" na descrição', () => {
   assert.ok(!/dívida/i.test(F.BUCKETS.futuro.description));
 });
+
+// ---------- "Pode gastar" sem renda no período (decisão do Isaac, 03/10/2026) ----------
+// Sem nenhuma renda lançada no período, o app não sabe se existe dinheiro: o resultado avisa (`semRenda`)
+// e a tela não promete número. Antes, só os envelopes valiam e o cartão dizia "R$ 46" sem salário nenhum.
+
+test('allowanceUntilPayday avisa `semRenda` quando o ciclo do salário não tem nenhuma renda', () => {
+  const mercado = tx('expense', 'mercado', 37000, '2026-10-02');
+  const semNada = F.allowanceUntilPayday([mercado], cats, { mercado: 60000 }, '2026-10-03', 5);
+  assert.equal(semNada.semRenda, true);
+  const comSalario = F.allowanceUntilPayday([tx('income', 'salario', 300000, '2026-10-03'), mercado], cats, { mercado: 60000 }, '2026-10-03', 5);
+  assert.equal(comSalario.semRenda, false);
+});
+
+test('o salário com data do próximo pagamento (dia 7) ainda não conta neste ciclo: `semRenda`', () => {
+  const salarioDia7 = tx('income', 'salario', 300000, '2026-10-07');
+  const r = F.allowanceUntilPayday([salarioDia7, tx('expense', 'mercado', 37000, '2026-10-02')], cats, { mercado: 60000 }, '2026-10-03', 5);
+  assert.equal(r.semRenda, true);
+  assert.equal(r.nextPayday, '2026-10-07');
+  // no dia 7 ele já é do ciclo novo e passa a contar
+  const noDia = F.allowanceUntilPayday([salarioDia7], cats, { mercado: 60000 }, '2026-10-07', 5);
+  assert.equal(noDia.semRenda, false);
+});
+
+test('dailyAllowance avisa `semRenda` quando o mês não tem renda; sem resumo (nada a comparar) não avisa', () => {
+  const hoje = '2026-09-20';
+  const gasto = tx('expense', 'mercado', 10000, '2026-09-10');
+  const semRenda = F.summarize([gasto], cats);
+  const rows = F.budgetStatus({ mercado: 60000 }, semRenda, cats, '2026-09', hoje);
+  assert.equal(F.dailyAllowance(rows, '2026-09', hoje, semRenda).semRenda, true);
+  const comRenda = F.summarize([tx('income', 'salario', 300000, '2026-09-07'), gasto], cats);
+  assert.equal(F.dailyAllowance(rows, '2026-09', hoje, comRenda).semRenda, false);
+  assert.equal(F.dailyAllowance(rows, '2026-09', hoje).semRenda, false); // sem resumo, o chamador não tem como saber
+});
