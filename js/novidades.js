@@ -1,6 +1,27 @@
 // GERADO por tools/gerar-novidades.js a partir do CHANGELOG.md. Não edite à mão: rode "node tools/gerar-novidades.js".
 window.FINAN_NOVIDADES = [
   {
+    "versao": null,
+    "rotulo": "Não lançado",
+    "data": null,
+    "secoes": [
+      {
+        "nome": "Adicionado",
+        "itens": [
+          "\"Sugerir pelos meus gastos\" agora mostra a conta inteira antes de aplicar: sua renda, o que você precisa pagar, a margem que sobra, quanto vai para suas metas e quanto dá para gastar em cada coisa, sempre \"até\" um valor. Só aparece o que você realmente usa, e a tela avisa quando a renda não cobre o básico"
+        ]
+      },
+      {
+        "nome": "Alterado",
+        "itens": [
+          "Painel mais leve: o cartão \"Você pode gastar hoje\" mostra só o número e uma linha (\"Esse é o máximo para hoje\"), e o resto fica em \"Ver detalhes\"; a explicação dos baldes e do plano foi para \"Como funciona\", e cada barra tem uma linha só. Nada foi apagado",
+          "\"Sugerir pelos meus gastos\" não usa mais a média de 3 meses nem porcentagens fixas: olha os seus últimos meses, deixa de fora um mês fora do comum, protege o mínimo que você já gasta no dia a dia e só depois reparte o resto",
+          "Pagar dívida agora conta como gasto essencial, e não mais como dinheiro guardado: quitar uma dívida é obrigação, e o balde Futuro fica só para reserva, investimentos e metas. Quem já tinha lançamentos de dívida vê a mudança sozinha"
+        ]
+      }
+    ]
+  },
+  {
     "versao": "0.2.0",
     "rotulo": null,
     "data": "2026-10-02",

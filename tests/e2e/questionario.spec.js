@@ -47,7 +47,7 @@ test('responder cria os limites: os valores informados e o Futuro pelo plano', a
   await expect(page.getByLabel('Limite para Moradia')).toHaveValue('1200,00');
   await expect(page.getByLabel('Limite para Mercado')).toHaveValue('600,00');
   await expect(page.getByLabel('Limite para Lazer')).toHaveCount(0); // em branco: sem limite, e o Lazer nem aparece na lista
-  await expect(page.getByLabel('Limite para Reserva de emergência')).toHaveValue('150,00'); // 20% de R$ 3.000 ÷ 4
+  await expect(page.getByLabel('Limite para Reserva de emergência')).toHaveValue('200,00'); // 20% de R$ 3.000 ÷ 3 (a dívida saiu do Futuro)
 });
 
 test('valor inválido mostra o erro no lugar, leva o foco ao campo e não salva nada', async ({ page }) => {
@@ -102,6 +102,8 @@ test('com histórico de meses anteriores a sugestão vem direto, sem questionár
   await abrir(page, { ...SEM_HISTORICO, transactions: [...SEM_HISTORICO.transactions, { id: 'a1', type: 'expense', categoryId: 'mercado', amount: 60000, date: '2026-08-10', description: '' }] });
   await sugerir(page).click();
   await expect(questionario(page)).toBeHidden();
+  await expect(page.locator('#sugestao')).toBeVisible(); // desde 02/10/2026 a sugestão aparece primeiro e a pessoa aplica
+  await page.locator('#sugestao').getByRole('button', { name: 'Aplicar como limites' }).click();
   await expect(page.getByLabel('Limite para Mercado')).toHaveValue('600,00');
 });
 

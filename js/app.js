@@ -1,8 +1,9 @@
-/* Finan — interface. Depende de FinanCore (js/core.js). */
+/* Finan — interface. Depende de FinanCore (js/core.js) e FinanSugestao (js/sugestao.js). */
 (function () {
   'use strict';
 
   const F = window.FinanCore;
+  const S = window.FinanSugestao;
   const STORAGE_KEY = 'finan:data';
   const WEEKDAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
   const TAB_KEY = 'finan:tab';
@@ -55,6 +56,7 @@
     }
     protegerDados({ pedir: true, gravou });
     limparDesfazer(); // os dados mudaram: a cópia de antes já não vale
+    closeSugestao(); // e a sugestão aberta também não vale mais
   }
 
   // ---------- Proteção dos dados ----------
@@ -117,6 +119,8 @@
     creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
+    allowanceAberto: false, // "Ver detalhes" do cartão do pode gastar: a escolha da pessoa vale mesmo se o cartão sumir num redesenho
+    sugestao: null, // resultado da sugestão que está na tela, para "Aplicar como limites"
     undo: null, // cópia dos dados antes de uma exclusão (ou troca geral), para o "Desfazer"
     undoTexto: '', // o que a mensagem diz depois de desfazer
   };
@@ -156,7 +160,7 @@
       }
       if (!alvo && aba && bloco >= 0) alvo = $$('.panel', aba)[bloco]?.querySelector('h2');
       if (!alvo) return;
-      if (!alvo.matches('button, input, select, a[href]')) alvo.tabIndex = -1;
+      if (!alvo.matches('button, input, select, a[href], summary')) alvo.tabIndex = -1;
       alvo.focus();
     };
   }
@@ -346,17 +350,25 @@
     if (!allowance) return '';
     const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
     const periodo = byPayday ? 'desde o último pagamento' : 'no mês';
-    const ate = byPayday ? `, até o próximo pagamento (${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)})` : '';
+    const proximo = byPayday ? `${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)}` : '';
+    const ate = byPayday ? `, até o próximo pagamento (${proximo})` : '';
+    const contando = byPayday ? `contando até o próximo pagamento (${proximo})` : 'contando até o fim do mês';
+    const abertura = allowance.perDay > 0 ? 'Esse é o máximo para hoje' : 'Hoje não sobra nada para gastar';
+    // Painel enxuto: o número e uma linha. O resto (semana, envelopes, o que já guardou) fica em "Ver detalhes".
     return `
       <div class="allowance">
         <div>
           <span class="card-label">Você pode gastar hoje</span>
           <span class="allowance-value">${money(allowance.perDay)}</span>
         </div>
-        <p>Nesta semana, até domingo (${allowance.weekDays} ${allowance.weekDays === 1 ? 'dia' : 'dias'}): <strong>${money(allowance.perWeek)}</strong>.</p>
-        <p>${allowance.capped ? `Limitado ao que sobrou ${periodo} (${money(allowance.left)})` : `${money(allowance.remaining)} livres nos envelopes variáveis`} para os próximos ${dias}${ate}.</p>
-        ${allowance.capped ? `<p>Os envelopes ainda têm ${money(allowance.envelopeRemaining)}, mas esse dinheiro já foi gasto ou guardado.</p>` : ''}
-        ${allowance.saved > 0 ? `<p class="muted">Você já guardou ${money(allowance.saved)} ${byPayday ? 'desde o último pagamento' : 'neste mês'}.</p>` : ''}
+        <p class="allowance-resumo">${abertura}, ${contando}.${allowance.capped ? ' Limitado ao que sobrou.' : ''}</p>
+        <details class="allowance-mais"${state.allowanceAberto ? ' open' : ''}>
+          <summary id="allowance-detalhes">Ver detalhes</summary>
+          <p>Nesta semana, até domingo (${allowance.weekDays} ${allowance.weekDays === 1 ? 'dia' : 'dias'}): <strong>${money(allowance.perWeek)}</strong>.</p>
+          <p>${allowance.capped ? `Limitado ao que sobrou ${periodo} (${money(allowance.left)})` : `${money(allowance.remaining)} livres nos envelopes variáveis`} para os próximos ${dias}${ate}.</p>
+          ${allowance.capped ? `<p>Os envelopes ainda têm ${money(allowance.envelopeRemaining)}, mas esse dinheiro já foi gasto ou guardado.</p>` : ''}
+          ${allowance.saved > 0 ? `<p class="muted">Você já guardou ${money(allowance.saved)} ${byPayday ? 'desde o último pagamento' : 'neste mês'}.</p>` : ''}
+        </details>
       </div>`;
   }
 
@@ -419,11 +431,15 @@
 
   function renderBuckets(summary, buckets, plan) {
     const profile = F.PLAN_PROFILES[plan.profile];
+    const descricao = `${profile.description}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${F.formatPercent(plan.essentialShare)} da renda.` : ''}`;
+    const pedeAtencao = plan.profile === 'ajustando' || plan.profile === 'critico'; // aí a explicação fica à vista, no lugar
     $('#plan-info').innerHTML = `
       <span class="badge plan-${esc(plan.profile)}">${esc(profile.label)}</span>
       <strong>${plan.essencial}/${plan.estilo}/${plan.futuro}</strong>
       <span class="muted small">essenciais / estilo de vida / futuro</span>
-      <span class="muted">${esc(profile.description)}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${esc(F.formatPercent(plan.essentialShare))} da renda.` : ''}</span>`;
+      ${pedeAtencao ? `<span class="muted">${esc(descricao)}</span>` : ''}`;
+    $('#plan-description').hidden = pedeAtencao;
+    $('#plan-description').textContent = descricao;
     $('#buckets').innerHTML = buckets.map((b) => `
       <div class="bucket">
         <div class="bucket-head">
@@ -432,8 +448,7 @@
         </div>
         ${bar(summary.income > 0 ? b.share : 0, b.status, b.targetRatio)}
         <div class="bucket-foot muted">
-          <span>${money(b.actual)} · ${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda</span>
-          <span>${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}${summary.income > 0 ? ` (${money(b.target)})` : ''}</span>
+          <span>${money(b.actual)} (${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda) · ${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}${summary.income > 0 ? ` (${money(b.target)})` : ''}</span>
         </div>
       </div>`).join('');
   }
@@ -535,7 +550,7 @@
 
     let zb;
     if (summary.income <= 0) zb = '<div class="notice">Lance a renda deste mês para comparar com o orçamento.</div>';
-    else if (unassigned > 0) zb = `<div class="notice warn">Faltam <strong>${money(unassigned)}</strong> sem destino. Distribua nos envelopes (de preferência para o Futuro: reserva, investimentos ou dívidas).</div>`;
+    else if (unassigned > 0) zb = `<div class="notice warn">Faltam <strong>${money(unassigned)}</strong> sem destino. Distribua nos envelopes (de preferência para o Futuro: reserva e investimentos).</div>`;
     else if (unassigned < 0) zb = `<div class="notice danger">Seu orçamento passa a renda em <strong>${money(-unassigned)}</strong>. Reduza algum envelope.</div>`;
     else zb = '<div class="notice ok">Tudo certo: cada real da renda tem um destino. 🎯</div>';
     $('#zero-based').innerHTML = zb;
@@ -859,8 +874,7 @@
   }
 
   function suggestBudget() {
-    const { plan } = monthContext();
-    const result = F.suggestFromHistory(state.data.transactions, state.data.categories, state.month, plan);
+    const result = S.sugerirGastos(state.data, state.month, F.todayISO());
     if (result.status === 'sem-renda') {
       toast('Lance sua renda primeiro para receber uma sugestão.');
       return;
@@ -869,10 +883,116 @@
       openQuiz();
       return;
     }
-    const hasBudget = Object.keys(state.data.budgets).length > 0;
-    if (hasBudget && !confirmar('Substituir os limites atuais pela sugestão baseada nos seus gastos?')) return;
-    state.data.budgets = result.budgets;
-    commit(`Orçamento sugerido pela média dos últimos ${result.months} ${result.months === 1 ? 'mês' : 'meses'}. Ajuste os valores à sua realidade.`);
+    abrirSugestao(result);
+  }
+
+  // ---------- Sugestão de limites pelos gastos reais ----------
+
+  const sugItem = (rotulo, valor, nota = '') => `<li><span>${esc(rotulo)}</span><strong>${valor}</strong>${nota ? `<span class="muted small">${esc(nota)}</span>` : ''}</li>`;
+  const meses = (n) => `${n} ${n === 1 ? 'mês' : 'meses'}`;
+
+  function sugConfianca(r) {
+    if (r.confianca === 'baixa') return `Baseada em só ${meses(r.meses)} de histórico: use como ponto de partida e ajuste.`;
+    if (r.confianca === 'media') return `Baseada em ${meses(r.meses)} de histórico. Quanto mais meses você lançar, melhor fica.`;
+    return `Baseada nos seus últimos ${meses(r.meses)}.`;
+  }
+
+  function sugResumo(r) {
+    const notaRenda = r.renda.variavel ? 'Renda variável: usamos a parte mais baixa dos últimos meses, para não contar com dinheiro incerto.' : '';
+    const extra = r.renda.extra > 0 ? `Neste mês já entrou ${F.formatBRL(r.renda.extra)} acima disso.` : '';
+    const itens = [sugItem('Renda prevista', F.formatBRL(r.renda.base), `${notaRenda} ${extra}`.trim()), sugItem('O que você precisa pagar', F.formatBRL(r.necessarios))];
+    if (r.comprometidos > 0) itens.push(sugItem('Compromissos fixos', F.formatBRL(r.comprometidos)));
+    itens.push(sugItem('Margem', F.formatBRL(r.margem)));
+    return `<ul class="sug-lista">${itens.join('')}</ul>`;
+  }
+
+  function sugLinha(l) {
+    const valor = l.fixa ? F.formatBRL(l.limite) : `até ${F.formatBRL(l.limite)}`;
+    const notas = [];
+    if (l.esporadico) notas.push('Você gasta isso de vez em quando.');
+    if (l.abaixoDoHabito) notas.push(`Abaixo do que você costuma gastar (${F.formatBRL(l.tipico)}).`);
+    return sugItem(l.nome, valor, notas.join(' '));
+  }
+
+  function sugGrupo(titulo, linhas) {
+    return linhas.length ? `<h4>${esc(titulo)}</h4><ul class="sug-lista">${linhas.map(sugLinha).join('')}</ul>` : '';
+  }
+
+  function sugObjetivos(r) {
+    if (!r.objetivos.length) return '';
+    const itens = r.objetivos.map((o) => {
+      const valor = o.completo ? `${F.formatBRL(o.destinado)} por mês` : `${F.formatBRL(o.destinado)} por mês, de ${F.formatBRL(o.precisa)} que ela precisa`;
+      const nota = o.meses ? `${o.completo ? 'Chega lá em' : 'Nesse ritmo, leva'} ${meses(o.meses)}.` : 'Não sobra nada para ela neste mês.';
+      return sugItem(o.nome, valor, nota);
+    });
+    return `<h4>Para guardar</h4><ul class="sug-lista">${itens.join('')}</ul>`;
+  }
+
+  function sugAvisos(r) {
+    const atipicos = r.linhas.flatMap((l) => l.atipicos.map((v) => `<p class="muted small">Não entrou na conta: ${esc(l.nome)} teve ${F.formatBRL(v)} num mês fora do comum.</p>`));
+    const sobra = r.livre > 0 ? `<div class="notice">Sobram <strong>${F.formatBRL(r.livre)}</strong> sem destino. Você decide: guardar numa meta ou deixar de folga.</div>` : '';
+    const reserva = r.status === 'ok' && r.avisos.includes('sem-meta-de-reserva')
+      ? '<p>Você ainda não tem uma meta de reserva de emergência. <button type="button" class="btn small" data-action="go-metas">Ir para Metas</button></p>' : '';
+    return atipicos.join('') + sobra + reserva;
+  }
+
+  function sugDeficit(r) {
+    const revisar = r.revisar.length ? ` Para rever primeiro: ${r.revisar.map((l) => `${esc(l.nome)} (${F.formatBRL(l.limite)})`).join(', ')}.` : '';
+    const semFolga = r.linhas.filter((l) => l.grupo === 'flexivel').map((l) => esc(l.nome));
+    const folga = semFolga.length ? ` Sem folga para: ${semFolga.join(', ')}.` : '';
+    return `<div class="notice danger">Sua renda não cobre o que você já paga todo mês: faltam <strong>${F.formatBRL(r.falta)}</strong>. Por isso a sugestão não separa dinheiro para metas nem para gastos de estilo de vida.${folga}${revisar}</div>`;
+  }
+
+  const SUG_COMO = `
+    <details class="how">
+      <summary>Como calculamos</summary>
+      <p class="muted">O app não usa porcentagens fixas da renda. Ele olha o que você realmente paga e gasta nos últimos meses (até 6) e separa a conta em partes: o que você precisa pagar (moradia, mercado, saúde, dívidas…), os compromissos fixos (assinaturas, parcelas) e a margem que sobra.</p>
+      <p class="muted small">Da margem, primeiro fica o mínimo que você já gasta no dia a dia; depois vão as suas metas, só até o que o prazo de cada uma pede; o resto é para gastar à vontade. Em cada categoria vale o valor típico dos seus meses (um mês fora do comum não conta) e o limite é “até” um valor que você já teve. Nada é sugerido para o que você não usa. Se a renda não cobre o básico, o app mostra o tamanho do buraco em vez de inventar folga.</p>
+    </details>`;
+
+  function abrirSugestao(r) {
+    closeQuiz();
+    state.sugestao = r;
+    const deficit = r.status === 'deficit';
+    $('#sug-conteudo').innerHTML = `<p class="muted">${esc(sugConfianca(r))}</p>${sugResumo(r)}${deficit ? sugDeficit(r) : ''}`
+      + sugGrupo('Necessários', r.linhas.filter((l) => l.grupo === 'necessario'))
+      + sugGrupo('Compromissos fixos', r.linhas.filter((l) => l.grupo === 'comprometido'))
+      + sugObjetivos(r)
+      + (deficit ? '' : sugGrupo('Para gastar, até:', r.linhas.filter((l) => l.grupo === 'flexivel')))
+      + sugAvisos(r) + SUG_COMO;
+    $('#sugestao').hidden = false;
+    $('#sug-title').focus();
+  }
+
+  function closeSugestao() {
+    state.sugestao = null;
+    const painel = $('#sugestao');
+    const focoDentro = painel.contains(document.activeElement);
+    painel.hidden = true;
+    if (focoDentro) $('[data-action="suggest-budget"]').focus(); // o foco não pode se perder junto com o painel
+  }
+
+  function cancelarSugestao() {
+    closeSugestao();
+    $('[data-action="suggest-budget"]').focus();
+  }
+
+  /** Grava o que a pessoa viu na tela (não recalcula), com pergunta se já havia limites e "Desfazer". */
+  function aplicarSugestao() {
+    const r = state.sugestao;
+    if (!r) return;
+    const temLimites = Object.keys(state.data.budgets).length > 0;
+    if (temLimites && !confirmar('Substituir os limites atuais pela sugestão baseada nos seus gastos? O que você definiu para o Futuro (como Investimentos) fica como está.')) return;
+    const antes = temLimites ? copiarDados() : undefined;
+    state.data.budgets = S.mesclarLimites(state.data.budgets, r.limites, state.data.categories); // o que ela definiu no Futuro fica
+    closeSugestao();
+    commit('Limites aplicados. Ajuste os valores à sua realidade.', antes, 'Limites anteriores de volta.');
+    $('#budget-title').focus();
+  }
+
+  function irParaMetas() {
+    abrirAba('metas');
+    $('#conteudo').focus({ preventScroll: true });
   }
 
   // ---------- Questionário do orçamento (quem ainda não tem histórico) ----------
@@ -888,6 +1008,7 @@
     }).join('');
     $('#quiz-fields').innerHTML = grupos;
     $('#quiz-error').textContent = '';
+    closeSugestao();
     $('#budget-quiz').hidden = false;
     $('#quiz-title').focus();
   }
@@ -1040,6 +1161,7 @@
 
   function mudarMes(delta) {
     state.month = F.shiftMonth(state.month, delta);
+    closeSugestao(); // a sugestão é de um mês só
     if (!state.editingId) $('#tx-form').elements.date.value = defaultDate();
     render();
   }
@@ -1113,6 +1235,9 @@
     'export-csv': () => exportarCsv(),
     'suggest-budget': () => suggestBudget(),
     'cancel-quiz': () => cancelarQuestionario(),
+    'apply-suggestion': () => aplicarSugestao(),
+    'cancel-suggestion': () => cancelarSugestao(),
+    'go-metas': () => irParaMetas(),
     'create-emergency': (el) => criarReserva(el),
     'update-emergency': (el) => atualizarReserva(el),
     'deposit-goal': (el) => depositGoal(el.dataset.id),
@@ -1300,6 +1425,7 @@
   });
 
   $('#budget-quiz').addEventListener('submit', submitQuiz);
+  $('#allowance').addEventListener('toggle', (e) => { state.allowanceAberto = e.target.open; }, true); // o evento "toggle" não sobe: captura na ida
 
   $('#review-day').addEventListener('change', (event) => {
     state.data.settings.reviewDay = Number(event.target.value);

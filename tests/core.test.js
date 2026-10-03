@@ -675,59 +675,6 @@ test('bucketBudgetStatus: teto todo distribuído é "justo" e sem renda não há
 
 const PLANO = { essencial: 50, estilo: 30, futuro: 20 };
 
-test('suggestFromHistory sugere a média dos meses anteriores e, nas fixas, o valor que a pessoa paga', () => {
-  const list = [
-    tx('income', 'salario', 300000, '2026-09-07'),
-    tx('expense', 'mercado', 999999, '2026-09-08'), // mês corrente: não conta como histórico
-    tx('expense', 'mercado', 55000, '2026-06-10'),
-    tx('expense', 'mercado', 60000, '2026-07-10'),
-    tx('expense', 'moradia', 100000, '2026-06-05'),
-    tx('expense', 'moradia', 120000, '2026-07-05'), // a fixa usa o valor mais recente
-    tx('expense', 'contas', 30000, '2026-06-06'), // não houve em julho: vale o último pago
-    tx('expense', 'lazer', 20000, '2026-07-12'),
-    tx('expense', 'investimentos', 20000, '2026-06-15'),
-    tx('expense', 'reserva', 20000, '2026-07-15'),
-  ];
-  const r = F.suggestFromHistory(list, cats, '2026-09', PLANO);
-  assert.equal(r.status, 'ok');
-  assert.equal(r.months, 2); // junho e julho têm lançamentos; agosto não
-  assert.equal(r.budgets.mercado, 58000); // média 575, arredondada para cima de R$ 10
-  assert.equal(r.budgets.moradia, 120000);
-  assert.equal(r.budgets.contas, 30000);
-  assert.equal(r.budgets.lazer, 10000); // média de 2 meses: 200 e 0
-  assert.equal(r.budgets.educacao, undefined); // nunca gastou: sem limite inventado
-  // Futuro vem do percentual do plano (20% de R$ 3.000 = R$ 600), repartido pelo histórico do Futuro
-  assert.equal(r.budgets.reserva, 30000);
-  assert.equal(r.budgets.investimentos, 30000);
-  assert.equal(r.budgets.metas, undefined);
-});
-
-test('suggestFromHistory: sem histórico de gastos, ou sem renda, não inventa nada', () => {
-  const soMesCorrente = [tx('income', 'salario', 300000, '2026-09-07'), tx('expense', 'mercado', 50000, '2026-09-08')];
-  assert.deepEqual(F.suggestFromHistory(soMesCorrente, cats, '2026-09', PLANO), { status: 'sem-historico', budgets: {} });
-
-  const semRenda = [tx('expense', 'mercado', 50000, '2026-08-08')];
-  assert.deepEqual(F.suggestFromHistory(semRenda, cats, '2026-09', PLANO), { status: 'sem-renda', budgets: {} });
-});
-
-test('suggestFromHistory usa a renda do mês anterior quando o mês ainda não tem renda', () => {
-  const list = [tx('income', 'salario', 400000, '2026-08-07'), tx('expense', 'mercado', 50000, '2026-08-10')];
-  const r = F.suggestFromHistory(list, cats, '2026-09', PLANO);
-  assert.equal(r.status, 'ok');
-  assert.equal(r.income, 400000);
-  const futuro = cats.filter((c) => c.bucket === 'futuro').reduce((sum, c) => sum + (r.budgets[c.id] || 0), 0);
-  assert.equal(futuro, 80000); // 20% de R$ 4.000, dividido igualmente entre as categorias do Futuro
-});
-
-test('suggestFromHistory: o Futuro segue o plano adaptado e a soma bate com o teto do balde', () => {
-  const list = [tx('income', 'salario', 333300, '2026-09-07'), tx('expense', 'mercado', 50000, '2026-08-10')];
-  for (const plano of [PLANO, { essencial: 60, estilo: 25, futuro: 15 }]) {
-    const r = F.suggestFromHistory(list, cats, '2026-09', plano);
-    const futuro = cats.filter((c) => c.bucket === 'futuro').reduce((sum, c) => sum + (r.budgets[c.id] || 0), 0);
-    assert.equal(futuro, F.bucketCeilings(333300, plano).futuro);
-  }
-});
-
 // ---- Questionário para quem ainda não tem histórico (Parte 3 da reformulação) ----
 
 test('referenceIncome usa a renda do mês ou, sem ela, a do mês anterior', () => {
@@ -754,7 +701,7 @@ test('budgetsFromAnswers monta os limites com o que a pessoa informou e o Futuro
   for (const id of ['lazer', 'compras', 'educacao', 'categoriaQueNaoExiste']) assert.equal(r[id], undefined, id);
   const futuras = cats.filter((c) => c.type === 'expense' && c.bucket === 'futuro');
   assert.equal(futuras.reduce((sum, c) => sum + (r[c.id] || 0), 0), 60000); // 20% de R$ 3.000
-  assert.equal(r.reserva, 15000); // dividido igualmente entre as 4 categorias do Futuro
+  assert.equal(r.reserva, 20000); // dividido igualmente entre as 3 categorias do Futuro (a dívida saiu dele em 02/10/2026)
 });
 
 test('budgetsFromAnswers sem nenhuma resposta ainda devolve só o Futuro, e sem renda devolve nada do Futuro', () => {
@@ -789,9 +736,9 @@ test('budgetVisibleCategories acrescenta o que a pessoa adicionou e o que já te
 });
 
 test('budgetAddable lista só o que ainda não está no orçamento, do balde tocado', () => {
-  assert.deepEqual(ids(F.budgetAddable(cats, 'essencial', {}, [])), ['educacao', 'impostos']);
+  assert.deepEqual(ids(F.budgetAddable(cats, 'essencial', {}, [])), ['educacao', 'impostos', 'dividas']); // a dívida é Essenciais desde 02/10/2026
   assert.deepEqual(ids(F.budgetAddable(cats, 'estilo', {}, [])), ['restaurantes', 'lazer', 'compras', 'assinaturas', 'cuidados', 'presentes', 'outros']);
-  assert.deepEqual(ids(F.budgetAddable(cats, 'futuro', {}, [])), ['investimentos', 'metas', 'dividas']);
+  assert.deepEqual(ids(F.budgetAddable(cats, 'futuro', {}, [])), ['investimentos', 'metas']);
   // depois de adicionar, sai da lista
   assert.ok(!ids(F.budgetAddable(cats, 'estilo', {}, ['lazer'])).includes('lazer'));
   // quem já tem limite também não volta para a lista
@@ -1180,4 +1127,41 @@ test('splitInsights com 3 avisos ou menos mostra todos e não sobra nada', () =>
     assert.equal(shown.length, n);
     assert.equal(rest.length, 0);
   }
+});
+
+// ---------- Dívida é obrigação, não poupança (decisão do Isaac, 02/10/2026) ----------
+
+test('"Quitação de dívidas" é do balde Essenciais: pagar o que se deve é obrigação, não guardar', () => {
+  const dividas = cats.find((c) => c.id === 'dividas');
+  assert.equal(dividas.bucket, 'essencial');
+  assert.equal(dividas.type, 'expense');
+});
+
+test('pagar dívida conta em Gastos e nunca em Guardado', () => {
+  const s = resumo(tx('income', 'salario', 300000, '2026-09-05'), tx('expense', 'dividas', 50000, '2026-09-10'), tx('expense', 'reserva', 20000, '2026-09-11'));
+  assert.equal(s.consumption, 50000); // a dívida é gasto
+  assert.equal(s.saved, 20000); // só a reserva foi guardada
+  assert.equal(s.byBucket.essencial, 50000);
+  assert.equal(s.balance, 230000); // a soma continua fechando: renda − gastos − guardado = sobrou
+  assert.equal(s.income - s.consumption - s.saved, s.balance);
+});
+
+test('dados antigos, com a dívida guardada no Futuro, passam a tratá-la como Essenciais', () => {
+  const antigo = { version: 1, categories: [{ id: 'dividas', name: 'Quitação de dívidas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '⛓️' }] };
+  const migrado = F.normalizeData(antigo).categories.find((c) => c.id === 'dividas');
+  assert.equal(migrado.bucket, 'essencial');
+});
+
+test('a migração da dívida só mexe na categoria padrão que estava no Futuro', () => {
+  const dados = { version: 1, categories: [
+    { id: 'dividas', name: 'Dívida do carro', type: 'expense', bucket: 'estilo', kind: 'fixa', icon: '🚗' },
+    { id: 'outra', name: 'Minha reserva', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '💰' },
+  ] };
+  const cs = F.normalizeData(dados).categories;
+  assert.equal(cs.find((c) => c.id === 'dividas').bucket, 'estilo'); // a pessoa já a tinha em outro balde: fica
+  assert.equal(cs.find((c) => c.id === 'outra').bucket, 'futuro'); // outras categorias não mudam
+});
+
+test('o balde Futuro não promete mais "quitação de dívidas" na descrição', () => {
+  assert.ok(!/dívida/i.test(F.BUCKETS.futuro.description));
 });

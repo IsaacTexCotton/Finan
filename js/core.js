@@ -17,7 +17,7 @@
   const BUCKETS = {
     essencial: { label: 'Essenciais', target: 0.5, description: 'O que você precisa para viver: moradia, mercado, contas, transporte, saúde.' },
     estilo: { label: 'Estilo de vida', target: 0.3, description: 'O que deixa a vida boa, mas é opcional: lazer, delivery, compras, assinaturas.' },
-    futuro: { label: 'Futuro', target: 0.2, description: 'Pague-se primeiro: reserva de emergência, investimentos e quitação de dívidas.' },
+    futuro: { label: 'Futuro', target: 0.2, description: 'Pague-se primeiro: reserva de emergência, investimentos e metas.' },
   };
 
   // Metas padrão dos baldes, em pontos percentuais da renda.
@@ -43,6 +43,7 @@
     { id: 'saude', name: 'Saúde', type: 'expense', bucket: 'essencial', kind: 'variavel', icon: '🩺' },
     { id: 'educacao', name: 'Educação', type: 'expense', bucket: 'essencial', kind: 'fixa', icon: '📚' },
     { id: 'impostos', name: 'Impostos e taxas', type: 'expense', bucket: 'essencial', kind: 'fixa', icon: '🧾' },
+    { id: 'dividas', name: 'Quitação de dívidas', type: 'expense', bucket: 'essencial', kind: 'fixa', icon: '⛓️' }, // pagar o que se deve é obrigação, não poupança
 
     { id: 'restaurantes', name: 'Restaurantes e delivery', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🍔' },
     { id: 'lazer', name: 'Lazer', type: 'expense', bucket: 'estilo', kind: 'variavel', icon: '🎬' },
@@ -55,7 +56,6 @@
     { id: 'reserva', name: 'Reserva de emergência', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '🛟' },
     { id: 'investimentos', name: 'Investimentos', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '📈' },
     { id: 'metas', name: 'Metas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '🎯' },
-    { id: 'dividas', name: 'Quitação de dívidas', type: 'expense', bucket: 'futuro', kind: 'fixa', icon: '⛓️' },
   ];
 
   // Itens que o Orçamento mostra na primeira abertura: só o essencial para viver, mais a reserva
@@ -207,7 +207,7 @@
       byBucket[bucket] += t.amount;
     }
     const consumption = byBucket.essencial + byBucket.estilo; // Gastos: o que foi consumido
-    const saved = byBucket.futuro; // Guardado: reserva, investimentos e dívidas
+    const saved = byBucket.futuro; // Guardado: reserva, investimentos e metas (dívida é gasto)
     const balance = income - expense;
     // Taxa de poupança: só o que foi guardado (Futuro) sobre a renda. A sobra do mês não conta:
     // dinheiro parado na conta ainda não foi guardado.
@@ -503,51 +503,6 @@
       });
     });
     return result;
-  }
-
-  /** Meses anteriores ao informado (do mais recente ao mais antigo) que têm lançamentos, até `count`. */
-  function historyMonths(transactions, key, count = 3) {
-    const months = [];
-    for (let i = 1; i <= count; i++) {
-      const month = shiftMonth(key, -i);
-      if (transactionsOfMonth(transactions, month).length) months.push(month);
-    }
-    return months;
-  }
-
-  /** Limite de uma categoria a partir do que foi gasto: valor pago (fixa) ou média dos meses (variável), em múltiplos de R$ 10 para cima. */
-  function realSpending(category, valuesByRecentMonth) {
-    const real = category.kind === 'fixa'
-      ? valuesByRecentMonth.find((v) => v > 0) || 0
-      : valuesByRecentMonth.reduce((a, b) => a + b, 0) / valuesByRecentMonth.length;
-    return Math.ceil(real / 1000) * 1000;
-  }
-
-  /**
-   * Sugestão de limites a partir do que a pessoa realmente gasta (nunca inventa números):
-   * - Essenciais e Estilo de vida: média dos últimos 3 meses com lançamentos (nas fixas, o valor
-   *   mais recente que foi pago), só para categorias com gasto;
-   * - Futuro: a parte do plano sobre a renda, repartida pelo histórico do próprio Futuro.
-   * O mês informado não entra no histórico. A renda é a do mês ou, sem ela, a do mês anterior.
-   * Devolve { status: 'ok' | 'sem-renda' | 'sem-historico', budgets, months, income }.
-   */
-  function suggestFromHistory(transactions, categories, key, plan) {
-    const income = referenceIncome(transactions, categories, key);
-    if (!(income > 0)) return { status: 'sem-renda', budgets: {} };
-    const months = historyMonths(transactions, key);
-    if (!months.length) return { status: 'sem-historico', budgets: {} };
-
-    const spent = months.map((m) => summarize(transactionsOfMonth(transactions, m), categories).byCategory);
-    const expenses = categories.filter((c) => c.type === 'expense');
-    const budgets = {};
-    const futureHistory = {};
-    for (const c of expenses) {
-      const values = spent.map((byCategory) => byCategory[c.id] || 0);
-      if (c.bucket === 'futuro') futureHistory[c.id] = values.reduce((a, b) => a + b, 0) / values.length;
-      else if (values.some((v) => v > 0)) budgets[c.id] = realSpending(c, values);
-    }
-    Object.assign(budgets, futureBudgets(income, categories, futureHistory, plan));
-    return { status: 'ok', budgets, months: months.length, income };
   }
 
   /** Renda de referência do mês: a do próprio mês ou, sem ela, a do mês anterior (0 se não houver). */
@@ -934,6 +889,14 @@
   }
 
   // Normalizadores: cada um valida e limpa um tipo de dado do backup e devolve só o que presta.
+  // Categorias padrão que mudaram de balde: só migra quem ainda as tem no balde antigo.
+  const MOVED_BUCKETS = { dividas: { from: 'futuro', to: 'essencial' } };
+
+  function currentBucket(c) {
+    const moved = hasOwn(MOVED_BUCKETS, c.id) ? MOVED_BUCKETS[c.id] : null;
+    return moved && c.bucket === moved.from ? moved.to : c.bucket;
+  }
+
   function normalizeCategories(raw) {
     if (!Array.isArray(raw) || !raw.length) return DEFAULT_CATEGORIES.map((c) => ({ ...c }));
     const categories = raw
@@ -943,7 +906,7 @@
         name: c.name.slice(0, 60),
         type: c.type,
         icon: typeof c.icon === 'string' ? c.icon.slice(0, 4) : '•',
-        ...(c.type === 'expense' ? { bucket: hasOwn(BUCKETS, c.bucket) ? c.bucket : 'estilo', kind: c.kind === 'fixa' ? 'fixa' : 'variavel' } : {}),
+        ...(c.type === 'expense' ? { bucket: hasOwn(BUCKETS, currentBucket(c)) ? currentBucket(c) : 'estilo', kind: c.kind === 'fixa' ? 'fixa' : 'variavel' } : {}),
       }));
     // Categorias padrão criadas depois do backup também passam a existir.
     const known = new Set(categories.map((c) => c.id));
@@ -1098,7 +1061,6 @@
     suggestBudgets,
     bucketCeilings,
     bucketBudgetStatus,
-    suggestFromHistory,
     referenceIncome,
     budgetsFromAnswers,
     DEFAULT_BUDGET_ITEMS,

@@ -257,6 +257,26 @@ Defeitos e confusões vistos
       pessoa fica em Lançamentos. Resolvido (02/10/2026): a mensagem diz "Você ainda pode gastar R$ Y
       hoje" (o mesmo número do cartão do Painel); só para gastos novos que não são guardar, e só quando
       o cartão existe (decisão tomada pela IA com o Isaac ausente)
+- [x] "Sugerir pelos meus gastos" guiado pelos dados reais (02/10/2026): renda − necessários − comprometidos
+      = margem, depois piso de vida, metas e gastos flexíveis "até" um valor (`js/sugestao.js`). Dívida
+      virou Essenciais. Sem porcentagem fixa. Decisões 1 a 4 do Isaac; a 5 (criar a reserva sozinho) ficou
+      sem resposta e a IA manteve "só oferecer"
+- [ ] Sugestão, próxima fase: o questionário ainda reparte o Futuro pelo plano (porcentagem). Ideia: usar a
+      mesma conta do motor (metas e reserva pelo prazo) quando a pessoa já tem metas
+- [ ] Sugestão, próxima fase: o "teto do balde" do Orçamento ainda vem do plano 50/30/20 (Isaac decidiu
+      manter na 1ª fase) e pode avisar "passou do teto" mesmo com uma sugestão coerente
+- [ ] Sugestão, próxima fase: avisar uma vez por mês, ao abrir o app, "quer rever seus limites?" (hoje só
+      pelo botão), e avisar quando um limite estoura em 2 dos últimos 3 meses
+- [ ] Sugestão: categorias com gasto só em meses atuais não entram (a janela é de meses anteriores); gastos
+      anuais (IPVA, seguro) só viram provisão se aparecerem na janela de 6 meses
+- [x] Painel enxuto, fase 1 (02/10/2026): cartão "pode gastar" com número e uma linha + "Ver detalhes", baldes
+      e plano em "Como funciona", barras de uma linha
+- [ ] Painel enxuto, fase 2: reordenar (estrela, resumo, 1 aviso, baldes recolhidos com título "Para onde foi
+      o dinheiro")
+- [ ] Painel enxuto, fase 3: lembretes calmos (um por vez, faixa fina, "Agora não" que guarda uma data: mexe
+      em dados, vai por PR)
+- [ ] Painel enxuto, depois: valor sem centavos no destaque ("R$ 46") e trocar balde/envelope/plano por
+      palavras do dia a dia (decisão do Isaac)
 - [ ] Estilo de vida aparece vazio no Orçamento mesmo com gasto (visto): diz "elas já gastaram
       R$ 525,70" sem dizer quais categorias; Restaurantes, Compras e Assinaturas só surgem em "Adicionar".
       Ideia: categorias com gasto no mês aparecem sozinhas
