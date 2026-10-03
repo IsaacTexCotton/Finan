@@ -20,6 +20,8 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ## [Não lançado]
 
+## [0.3.0] - 2026-10-03
+
 ### Adicionado
 - "Sugerir pelos meus gastos" agora mostra a conta inteira antes de aplicar: sua renda, o que você precisa pagar, a margem que sobra, quanto vai para suas metas e quanto dá para gastar em cada coisa, sempre "até" um valor. Só aparece o que você realmente usa, e a tela avisa quando a renda não cobre o básico
 

@@ -1,6 +1,6 @@
 {
   "name": "finan",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Finan — método e app para controlar gastos pessoais (50/30/20 + envelopes + revisão semanal).",
   "private": true,
   "scripts": {
