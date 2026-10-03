@@ -348,6 +348,14 @@
   function renderAllowance(ctx) {
     const { allowance, byPayday } = calcularAllowance(ctx);
     if (!allowance) return '';
+    if (allowance.semRenda) {
+      return `
+      <div class="allowance">
+        <span class="card-label">Você pode gastar hoje</span>
+        <p class="allowance-resumo">Lance sua renda para ver quanto pode gastar.</p>
+        <button type="button" class="btn primary" data-action="quick-add" data-type="income">Lançar renda</button>
+      </div>`;
+    }
     const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
     const periodo = byPayday ? 'desde o último pagamento' : 'no mês';
     const proximo = byPayday ? `${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)}` : '';
@@ -792,7 +800,7 @@
   function restanteDoDia(entry) {
     if (entry.type !== 'expense' || guardaDinheiro(entry)) return '';
     const { allowance } = calcularAllowance(monthContext());
-    return allowance ? ` Você ainda pode gastar ${F.formatBRL(allowance.perDay)} hoje.` : '';
+    return allowance && !allowance.semRenda ? ` Você ainda pode gastar ${F.formatBRL(allowance.perDay)} hoje.` : '';
   }
 
   function submitTx(event) {

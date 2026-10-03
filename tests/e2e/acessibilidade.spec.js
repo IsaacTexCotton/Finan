@@ -218,3 +218,19 @@ test('o cartão do "pode gastar" limitado ao que sobrou, com os detalhes abertos
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
   }
 });
+
+test('o cartão "pode gastar" sem renda no período (com o botão "Lançar renda") não tem violações do axe', async ({ page }) => {
+  const dados = { version: 1, budgets: { mercado: 60000 }, settings: { incomeProfile: 'estavel', paydayBusinessDay: 5 }, transactions: [
+    { id: 'r1', type: 'income', categoryId: 'salario', amount: 300000, date: '2026-10-07', description: '' },
+    { id: 'g1', type: 'expense', categoryId: 'mercado', amount: 37000, date: '2026-10-02', description: '' }] };
+  for (const largura of [320, 390, 1280]) {
+    await page.setViewportSize({ width: largura, height: 900 });
+    await page.clock.setFixedTime(new Date('2026-10-03T12:00:00'));
+    await page.goto(APP);
+    await page.evaluate((d) => localStorage.setItem('finan:data', JSON.stringify(d)), dados);
+    await page.reload();
+    await expect(page.locator('#allowance')).toContainText('Lance sua renda para ver quanto pode gastar.');
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});

@@ -1,6 +1,19 @@
 // GERADO por tools/gerar-novidades.js a partir do CHANGELOG.md. Não edite à mão: rode "node tools/gerar-novidades.js".
 window.FINAN_NOVIDADES = [
   {
+    "versao": null,
+    "rotulo": "Não lançado",
+    "data": null,
+    "secoes": [
+      {
+        "nome": "Corrigido",
+        "itens": [
+          "\"Você pode gastar hoje\" não mostra mais um valor quando ainda não entrou nenhuma renda no período (por exemplo, com o salário marcado para o dia 7): em vez do número, pede para lançar a renda"
+        ]
+      }
+    ]
+  },
+  {
     "versao": "0.3.0",
     "rotulo": null,
     "data": "2026-10-03",

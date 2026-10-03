@@ -20,6 +20,9 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ## [Não lançado]
 
+### Corrigido
+- "Você pode gastar hoje" não mostra mais um valor quando ainda não entrou nenhuma renda no período (por exemplo, com o salário marcado para o dia 7): em vez do número, pede para lançar a renda
+
 ## [0.3.0] - 2026-10-03
 
 ### Adicionado

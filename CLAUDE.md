@@ -113,8 +113,12 @@ Só faça o commit quando todas as respostas forem "sim":
   do cartão é o **menor** entre o que resta nos envelopes variáveis e o Sobrou do período (o mês,
   ou o ciclo do salário quando o dia de pagamento está informado). Assim guardar numa meta baixa o
   valor quando o dinheiro que sobrou fica menor que o prometido pelos envelopes, e o cartão diz
-  por quê ("Limitado ao que sobrou…"). Sobra negativa dá R$ 0. Sem renda registrada no período
-  não há o que comparar e valem só os envelopes. O cartão também mostra quanto já foi guardado.
+  por quê ("Limitado ao que sobrou…"). Sobra negativa dá R$ 0. **Sem nenhuma renda lançada no período
+  (decisão do Isaac, 03/10/2026) o cartão não promete número**: diz "Lance sua renda para ver quanto pode
+  gastar." e traz o botão "Lançar renda" (`semRenda`; a regra de 30/09, "valem só os envelopes", fez o cartão
+  dizer R$ 46 com o salário ainda no dia 7). Um salário com data do próximo pagamento só conta no ciclo
+  novo. A mensagem de "salvar gasto" também não diz quanto pode gastar nesse caso. O cartão também mostra
+  quanto já foi guardado.
 - **Painel enxuto** (consenso de UX, finanças e usuário, decisão do Isaac, 02/10/2026: "uma pergunta, um
   número, um aviso"). Fase 1: o cartão "Você pode gastar hoje" mostra o número e uma linha ("Esse é o
   máximo para hoje, contando até…", com "Limitado ao que sobrou." quando for o caso, para não soar como
