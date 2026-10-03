@@ -119,8 +119,10 @@ Só faça o commit quando todas as respostas forem "sim":
   número, um aviso"). Fase 1: o cartão "Você pode gastar hoje" mostra o número e uma linha ("Esse é o
   máximo para hoje, contando até…", com "Limitado ao que sobrou." quando for o caso, para não soar como
   permissão de gastar); semana, envelopes e o que já guardou ficam em "Ver detalhes" (`.allowance-mais`, que
-  continua aberto depois de redesenhar). Os baldes têm uma frase curta; o texto do método e a explicação do
-  plano vão para "Como funciona"; cada barra tem uma linha. Nada é apagado. Fases seguintes (ainda não
+  continua como a pessoa deixou, aberto ou fechado, mesmo se o cartão sumir num redesenho). Com R$ 0, a linha diz
+  "Hoje não sobra nada para gastar". Os baldes têm uma frase curta; o texto do método e a explicação do plano
+  vão para "Como funciona", **menos quando o plano pede atenção (Ajustando, Crítico): aí a explicação fica à
+  vista**. Cada barra tem uma linha, com o valor, a parte da renda e o limite do plano em % e em R$. Nada é apagado. Fases seguintes (ainda não
   feitas): reordenar (resumo, 1 aviso, baldes recolhidos) e lembretes calmos (um por vez, "Agora não").
   Testes em `tests/e2e/painel-enxuto.spec.js`.
 - **Teto do balde** (decisão do Isaac, 30/09/2026). Cada balde tem um teto: a parte da renda do

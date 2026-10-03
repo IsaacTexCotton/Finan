@@ -119,6 +119,7 @@
     creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
+    allowanceAberto: false, // "Ver detalhes" do cartão do pode gastar: a escolha da pessoa vale mesmo se o cartão sumir num redesenho
     sugestao: null, // resultado da sugestão que está na tela, para "Aplicar como limites"
     undo: null, // cópia dos dados antes de uma exclusão (ou troca geral), para o "Desfazer"
     undoTexto: '', // o que a mensagem diz depois de desfazer
@@ -159,7 +160,7 @@
       }
       if (!alvo && aba && bloco >= 0) alvo = $$('.panel', aba)[bloco]?.querySelector('h2');
       if (!alvo) return;
-      if (!alvo.matches('button, input, select, a[href]')) alvo.tabIndex = -1;
+      if (!alvo.matches('button, input, select, a[href], summary')) alvo.tabIndex = -1;
       alvo.focus();
     };
   }
@@ -349,8 +350,10 @@
     if (!allowance) return '';
     const dias = `${allowance.daysLeft} ${allowance.daysLeft === 1 ? 'dia' : 'dias'}`;
     const periodo = byPayday ? 'desde o último pagamento' : 'no mês';
-    const ate = byPayday ? `, até o próximo pagamento (${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)})` : '';
-    const contando = byPayday ? `contando até o próximo pagamento (${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)})` : 'contando até o fim do mês';
+    const proximo = byPayday ? `${allowance.nextPayday.slice(8, 10)}/${allowance.nextPayday.slice(5, 7)}` : '';
+    const ate = byPayday ? `, até o próximo pagamento (${proximo})` : '';
+    const contando = byPayday ? `contando até o próximo pagamento (${proximo})` : 'contando até o fim do mês';
+    const abertura = allowance.perDay > 0 ? 'Esse é o máximo para hoje' : 'Hoje não sobra nada para gastar';
     // Painel enxuto: o número e uma linha. O resto (semana, envelopes, o que já guardou) fica em "Ver detalhes".
     return `
       <div class="allowance">
@@ -358,9 +361,9 @@
           <span class="card-label">Você pode gastar hoje</span>
           <span class="allowance-value">${money(allowance.perDay)}</span>
         </div>
-        <p class="allowance-resumo">Esse é o máximo para hoje, ${contando}.${allowance.capped ? ' Limitado ao que sobrou.' : ''}</p>
-        <details class="allowance-mais">
-          <summary>Ver detalhes</summary>
+        <p class="allowance-resumo">${abertura}, ${contando}.${allowance.capped ? ' Limitado ao que sobrou.' : ''}</p>
+        <details class="allowance-mais"${state.allowanceAberto ? ' open' : ''}>
+          <summary id="allowance-detalhes">Ver detalhes</summary>
           <p>Nesta semana, até domingo (${allowance.weekDays} ${allowance.weekDays === 1 ? 'dia' : 'dias'}): <strong>${money(allowance.perWeek)}</strong>.</p>
           <p>${allowance.capped ? `Limitado ao que sobrou ${periodo} (${money(allowance.left)})` : `${money(allowance.remaining)} livres nos envelopes variáveis`} para os próximos ${dias}${ate}.</p>
           ${allowance.capped ? `<p>Os envelopes ainda têm ${money(allowance.envelopeRemaining)}, mas esse dinheiro já foi gasto ou guardado.</p>` : ''}
@@ -390,9 +393,7 @@
 
     renderCards(summary, plan);
 
-    const detalhesAbertos = Boolean($('#allowance details[open]')); // redesenhar não pode fechar o que a pessoa abriu
     $('#allowance').innerHTML = renderAllowance(ctx);
-    if (detalhesAbertos && $('#allowance details')) $('#allowance details').open = true;
     renderReviewReminder();
     renderBackupReminder();
 
@@ -430,11 +431,15 @@
 
   function renderBuckets(summary, buckets, plan) {
     const profile = F.PLAN_PROFILES[plan.profile];
+    const descricao = `${profile.description}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${F.formatPercent(plan.essentialShare)} da renda.` : ''}`;
+    const pedeAtencao = plan.profile === 'ajustando' || plan.profile === 'critico'; // aí a explicação fica à vista, no lugar
     $('#plan-info').innerHTML = `
       <span class="badge plan-${esc(plan.profile)}">${esc(profile.label)}</span>
       <strong>${plan.essencial}/${plan.estilo}/${plan.futuro}</strong>
-      <span class="muted small">essenciais / estilo de vida / futuro</span>`;
-    $('#plan-description').textContent = `${profile.description}${plan.essentialShare != null ? ` Essenciais nos últimos 3 meses: ${F.formatPercent(plan.essentialShare)} da renda.` : ''}`;
+      <span class="muted small">essenciais / estilo de vida / futuro</span>
+      ${pedeAtencao ? `<span class="muted">${esc(descricao)}</span>` : ''}`;
+    $('#plan-description').hidden = pedeAtencao;
+    $('#plan-description').textContent = descricao;
     $('#buckets').innerHTML = buckets.map((b) => `
       <div class="bucket">
         <div class="bucket-head">
@@ -443,7 +448,7 @@
         </div>
         ${bar(summary.income > 0 ? b.share : 0, b.status, b.targetRatio)}
         <div class="bucket-foot muted">
-          <span>${money(b.actual)} (${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda) · ${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}</span>
+          <span>${money(b.actual)} (${summary.income > 0 ? esc(F.formatPercent(b.share)) : '—'} da renda) · ${b.id === 'futuro' ? 'mín.' : 'máx.'} ${esc(F.formatPercent(b.targetRatio))}${summary.income > 0 ? ` (${money(b.target)})` : ''}</span>
         </div>
       </div>`).join('');
   }
@@ -1420,6 +1425,7 @@
   });
 
   $('#budget-quiz').addEventListener('submit', submitQuiz);
+  $('#allowance').addEventListener('toggle', (e) => { state.allowanceAberto = e.target.open; }, true); // o evento "toggle" não sobe: captura na ida
 
   $('#review-day').addEventListener('change', (event) => {
     state.data.settings.reviewDay = Number(event.target.value);

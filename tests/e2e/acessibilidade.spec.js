@@ -194,6 +194,26 @@ test('o Painel enxuto, com "Ver detalhes" e "Como funciona" abertos, não tem vi
     await page.locator('#allowance summary').click();
     await page.locator('#tab-painel summary', { hasText: 'Como funciona' }).click();
     await expect(page.locator('#allowance details')).toHaveJSProperty('open', true);
+    await expect(page.locator('#tab-painel summary', { hasText: 'Como funciona' }).locator('..')).toHaveJSProperty('open', true); // o axe só vê o que está aberto
+    const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
+    expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
+  }
+});
+
+test('o cartão do "pode gastar" limitado ao que sobrou, com os detalhes abertos, não tem violações do axe', async ({ page }) => {
+  const dados = { version: 1, budgets: { mercado: 60000 }, settings: { incomeProfile: 'estavel', paydayBusinessDay: 5 }, transactions: [
+    { id: 'r1', type: 'income', categoryId: 'salario', amount: 300000, date: '2026-09-07', description: '' },
+    { id: 'g1', type: 'expense', categoryId: 'mercado', amount: 10000, date: '2026-09-10', description: '' },
+    { id: 'g2', type: 'expense', categoryId: 'reserva', amount: 270000, date: '2026-09-12', description: '' }] };
+  for (const largura of [320, 390, 1280]) {
+    await page.setViewportSize({ width: largura, height: 900 });
+    await page.clock.setFixedTime(new Date('2026-09-20T12:00:00'));
+    await page.goto(APP);
+    await page.evaluate((d) => localStorage.setItem('finan:data', JSON.stringify(d)), dados);
+    await page.reload();
+    await page.locator('#allowance summary').click();
+    await expect(page.locator('#allowance')).toContainText('Limitado ao que sobrou');
+    await expect(page.locator('#allowance').getByText(/Os envelopes ainda têm/)).toBeVisible();
     const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
   }

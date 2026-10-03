@@ -408,7 +408,8 @@ main {
 .more {
   margin: var(--space-3) 0;
 }
-.more summary {
+.more summary,
+.allowance-mais summary {
   display: flex;
   align-items: center;
   min-height: var(--tap);
@@ -416,12 +417,14 @@ main {
   font-weight: 700;
   cursor: pointer;
 }
-.more summary::before {
+.more summary::before,
+.allowance-mais summary::before {
   margin-right: var(--space-2);
   content: "▸";
   content: "▸" / "";
 }
-.more[open] summary::before {
+.more[open] summary::before,
+.allowance-mais[open] summary::before {
   content: "▾";
   content: "▾" / "";
 }
@@ -788,35 +791,10 @@ select:disabled {
   margin: var(--space-1) 0 0;
 }
 
-/* "Ver detalhes" do cartão: o resto fica recolhido, o número e uma linha ficam à vista. */
+/* "Ver detalhes" do cartão: o resto fica recolhido, o número e uma linha ficam à vista. O estilo do
+   resumo é o mesmo de "Mais detalhes" (.more), compartilhado lá em cima. */
 .allowance-mais {
   margin-top: var(--space-2);
-}
-
-.allowance-mais summary {
-  display: flex;
-  align-items: center;
-  min-height: var(--tap);
-  color: var(--primary-strong);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.allowance-mais summary::before {
-  margin-right: var(--space-2);
-  content: "▸";
-  content: "▸" / "";
-}
-
-.allowance-mais[open] summary::before {
-  content: "▾";
-  content: "▾" / "";
-}
-
-@media (min-width: 48rem) {
-  .cards {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 /* ---------- Baldes, barras, selos e mensagens do Painel ---------- */

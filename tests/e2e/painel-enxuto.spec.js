@@ -110,3 +110,56 @@ test('cada barra tem uma linha de texto, com o valor, a parte da renda e o limit
   await expect(linhas.nth(0)).toHaveText(/R\$\s100,00 \(3% da renda\) · máx\. 50%/); // Essenciais: o mercado de R$ 100
   await expect(linhas.nth(2)).toContainText('mín. 20%'); // Futuro
 });
+
+// ---------- Achados da revisão de código (02/10/2026) ----------
+
+test('a barra continua mostrando quanto é o limite do plano em reais, não só em porcentagem', async ({ page }) => {
+  await abrir(page, sem());
+  await expect(page.locator('#buckets .bucket-foot').nth(0)).toHaveText(/máx\. 50% \(R\$\s1\.500,00\)/); // 50% de R$ 3.000
+  await expect(page.locator('#buckets .bucket-foot').nth(2)).toHaveText(/mín\. 20% \(R\$\s600,00\)/);
+});
+
+test('quando o plano pede atenção (essenciais pesados), a explicação dele fica à vista, no lugar', async ({ page }) => {
+  const mes = (m) => [
+    { id: `i${m}`, type: 'income', categoryId: 'salario', amount: 100000, date: `2026-${m}-05`, description: '' },
+    { id: `m${m}`, type: 'expense', categoryId: 'mercado', amount: 90000, date: `2026-${m}-10`, description: '' },
+  ];
+  await abrir(page, { version: 1, transactions: [...mes('06'), ...mes('07'), ...mes('08'), { id: 'a', type: 'income', categoryId: 'salario', amount: 100000, date: '2026-09-05', description: '' }] });
+  await expect(page.locator('#plan-info')).toContainText('Crítico');
+  await expect(page.locator('#plan-info').getByText(/o foco é cortar custos fixos ou aumentar a renda/)).toBeVisible();
+  await expect(page.locator('#plan-info').getByText(/Essenciais nos últimos 3 meses: 90% da renda/)).toBeVisible();
+});
+
+test('quando não sobra nada para hoje, a linha principal diz isso em vez de chamar R$ 0 de "máximo"', async ({ page }) => {
+  await abrir(page, { ...sem(), transactions: [...sem().transactions, { id: 'g9', type: 'expense', categoryId: 'mercado', amount: 50000, date: '2026-09-15', description: '' }] }); // o envelope de R$ 600 acabou
+  await expect(cartao(page).locator('.allowance-value')).toHaveText(/R\$\s0,00/);
+  await expect(cartao(page).locator('.allowance-resumo')).toContainText('Hoje não sobra nada para gastar, contando até o fim do mês.');
+  await expect(cartao(page).locator('.allowance-resumo')).not.toContainText('máximo');
+});
+
+test('"Ver detalhes" aberto continua aberto mesmo se o cartão sumir por um redesenho (ao passar por outro mês)', async ({ page }) => {
+  await abrir(page, sem());
+  await detalhes(page).locator('summary').click();
+  await page.evaluate(() => { document.querySelector('[data-action="prev-month"]').click(); document.querySelector('[data-action="next-month"]').click(); });
+  await expect(cartao(page).locator('.allowance-value')).toBeVisible();
+  await expect(detalhes(page)).toHaveJSProperty('open', true);
+});
+
+test('fechar o "Ver detalhes" também vale depois de redesenhar', async ({ page }) => {
+  await abrir(page, sem());
+  await detalhes(page).locator('summary').click();
+  await detalhes(page).locator('summary').click();
+  await irParaAba(page, 'Orçamento');
+  await page.getByRole('tab', { name: 'Painel' }).click();
+  await expect(detalhes(page)).toHaveJSProperty('open', false);
+});
+
+test('se um redesenho acontece com o foco em "Ver detalhes", o foco continua lá e o botão continua na ordem do Tab', async ({ page }) => {
+  await abrir(page, sem());
+  await detalhes(page).locator('summary').focus();
+  // "Baixar backup" (escondido na aba Método) salva e redesenha a tela, como qualquer ação que muda dados
+  await page.evaluate(() => document.querySelector('[data-action="export-json"]').click());
+  await expect(page.getByRole('status')).toContainText('Backup baixado');
+  await expect(detalhes(page).locator('summary')).toBeFocused();
+  expect(await detalhes(page).locator('summary').evaluate((el) => el.tabIndex)).toBe(0); // não virou tabindex -1
+});
