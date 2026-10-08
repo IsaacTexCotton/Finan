@@ -175,6 +175,19 @@ por testes) e as 5 funções do núcleo sem teste direto (triviais).
 - Categorias personalizadas pela interface
 - Funcionar offline como app instalável (PWA)
 
+## Transferir entre metas e a sobra (08/10/2026)
+Ideia do Isaac: metas (inclusive a reserva) e a sobra do mês poderiam "se conversar" como contas de
+um banco. Dividido em 3 etapas, cada uma por decisão dele:
+- [x] Etapa 1: botão "Transferir" em cada meta move o que já está guardado para outra meta (ou da
+      reserva para uma meta, e vice-versa). Não cria lançamento: não conta como gasto nem muda o
+      Guardado/Sobrou do mês, só realoca o valor (`transferBetweenGoals`)
+- [x] Etapa 2: botão "Tirar" devolve dinheiro guardado numa meta (ou na reserva) para a Sobra do
+      mês de hoje: cria uma retirada (`withdrawFromGoal`), o espelho do depósito, que baixa o
+      Guardado e sobe a Sobra na mesma hora. Avisa (sem bloquear) antes de deixar a reserva abaixo
+      do valor ideal. Por tocar em `normalizeData`, foi por PR com `/security-review`
+- [ ] Etapa 3: a sobra de um mês passa para o próximo, em vez de zerar (mexe nas contas do Painel e
+      do "pode gastar hoje"; etapa mais delicada, por PR com `/security-review`)
+
 ## Dia de pagamento
 - [x] "Você pode gastar hoje" até o próximo pagamento, pelo N-ésimo dia útil (renda estável)
 - [x] "Pode gastar hoje" também mostra quanto dá para gastar até domingo

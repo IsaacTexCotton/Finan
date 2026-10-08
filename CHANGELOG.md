@@ -20,6 +20,10 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ## [Não lançado]
 
+### Adicionado
+- Metas ganham o botão "Transferir": move dinheiro já guardado de uma meta para outra (inclusive da reserva de emergência), sem contar como gasto nem mudar o quanto você guardou no mês
+- Metas ganham o botão "Tirar": devolve dinheiro já guardado numa meta (ou na reserva de emergência) para a sobra do mês, para usar em outra coisa. Avisa antes de deixar a reserva abaixo do valor ideal
+
 ### Corrigido
 - "Você pode gastar hoje" não mostra mais um valor quando ainda não entrou nenhuma renda no período (por exemplo, com o salário marcado para o dia 7): em vez do número, pede para lançar a renda
 

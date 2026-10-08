@@ -526,7 +526,7 @@
             <span class="tx-desc">${esc(t.description || cat.name)}${t.recurring ? ' <span class="tag">fixo</span>' : ''}${t.installment ? ` <span class="tag">${esc(F.installmentLabel(t))}</span>` : ''}</span>
             <span class="tx-cat muted">${esc(cat.name)}</span>
           </span>
-          <span class="tx-amount ${t.type === 'income' ? 'positive' : ''}">${t.type === 'income' ? '+' : '−'} ${money(t.amount)}</span>
+          <span class="tx-amount ${t.type === 'income' || t.withdrawal ? 'positive' : ''}">${t.type === 'income' || t.withdrawal ? '+' : '−'} ${money(t.amount)}</span>
           <span class="tx-actions">
             <button type="button" class="icon-btn" data-action="edit-tx" data-id="${esc(t.id)}" aria-label="Editar ${nome}">✎</button>
             <button type="button" class="icon-btn" data-action="delete-tx" data-id="${esc(t.id)}" aria-label="Excluir ${nome}">🗑</button>
@@ -689,6 +689,8 @@
             <span>${p.done ? 'Meta concluída! 🎉' : `${esc(F.formatPercent(p.ratio))} · faltam ${money(p.remaining)}`}${!p.done && p.monthly ? ` · guarde ${money(p.monthly)}/mês por ${p.monthsLeft} ${p.monthsLeft === 1 ? 'mês' : 'meses'}` : ''}</span>
             <span class="actions">
               ${p.done ? '' : `<button type="button" class="btn small" data-action="deposit-goal" data-id="${esc(g.id)}" aria-label="Guardar valor na meta ${esc(g.name)}">Guardar valor</button>`}
+              ${state.data.goals.length > 1 ? `<button type="button" class="btn small" data-action="transfer-goal" data-id="${esc(g.id)}" aria-label="Transferir valor da meta ${esc(g.name)} para outra meta">Transferir</button>` : ''}
+              ${F.goalSaved(g, state.data.transactions) > 0 ? `<button type="button" class="btn small" data-action="withdraw-goal" data-id="${esc(g.id)}" aria-label="Tirar valor da meta ${esc(g.name)} e devolver à sobra do mês">Tirar</button>` : ''}
               <button type="button" class="icon-btn" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir meta ${esc(g.name)}">🗑</button>
             </span>
           </div>
@@ -1088,6 +1090,69 @@
     commit(`${F.formatBRL(amount)} adicionados à meta.`);
   }
 
+  /**
+   * Transfere dinheiro já guardado de uma meta para outra (ex.: da reserva para uma meta de
+   * viagem). Não cria lançamento: não é gasto nem receita, e não muda o Guardado nem o Sobrou
+   * do mês, só realoca o que já estava guardado.
+   */
+  function transferGoal(id) {
+    const from = state.data.goals.find((g) => g.id === id);
+    if (!from) return;
+    const outras = state.data.goals.filter((g) => g.id !== id);
+    if (!outras.length) return;
+    const lista = outras.map((g, i) => `${i + 1}. ${g.name}`).join('\n');
+    const escolha = perguntar(`Transferir de "${from.name}" para qual meta? Digite o número:\n${lista}`);
+    if (escolha == null) return;
+    const to = outras[Number(escolha) - 1];
+    if (!to) {
+      toast('Meta inválida.');
+      return;
+    }
+    const input = perguntar(`Quanto transferir de "${from.name}" para "${to.name}"? (R$)`);
+    if (input == null) return;
+    const amount = F.parseAmount(input);
+    if (!(amount > 0)) {
+      toast('Valor inválido.');
+      return;
+    }
+    const r = F.transferBetweenGoals(state.data.goals, state.data.transactions, from.id, to.id, amount);
+    if (!r.ok) {
+      toast(r.error);
+      return;
+    }
+    state.data.goals = r.goals;
+    commit(`${F.formatBRL(amount)} transferidos de "${from.name}" para "${to.name}".`);
+  }
+
+  /**
+   * Tira dinheiro já guardado numa meta e devolve para a Sobra do mês (o espelho de "Guardar
+   * valor"): não é gasto, e baixa o Guardado do mês de hoje. Avisa antes de esvaziar a reserva
+   * de emergência abaixo do valor ideal, mas não bloqueia: a pessoa decide.
+   */
+  function withdrawGoal(id) {
+    const goal = state.data.goals.find((g) => g.id === id);
+    if (!goal) return;
+    const input = perguntar(`Quanto tirar de "${goal.name}" e devolver para a sobra do mês? (R$)`);
+    if (input == null) return;
+    const amount = F.parseAmount(input);
+    if (!(amount > 0)) {
+      toast('Valor inválido.');
+      return;
+    }
+    const r = F.withdrawFromGoal(goal, state.data.transactions, amount, F.todayISO(), newId());
+    if (!r.ok) {
+      toast(r.error);
+      return;
+    }
+    const restante = F.goalSaved(goal, state.data.transactions) - amount;
+    if (F.isReserveGoal(goal) && restante < goal.target) {
+      const pergunta = `Isso deixa sua reserva em ${F.formatBRL(restante)}, abaixo do ideal de ${F.formatBRL(goal.target)}. Tirar mesmo assim?`;
+      if (!confirmar(pergunta)) return;
+    }
+    state.data.transactions.push(r.transaction);
+    commit(`${F.formatBRL(amount)} tirados de "${goal.name}" e somados à sobra do mês.`);
+  }
+
   function submitGoal(event) {
     event.preventDefault();
     const form = event.target;
@@ -1249,6 +1314,8 @@
     'create-emergency': (el) => criarReserva(el),
     'update-emergency': (el) => atualizarReserva(el),
     'deposit-goal': (el) => depositGoal(el.dataset.id),
+    'transfer-goal': (el) => transferGoal(el.dataset.id),
+    'withdraw-goal': (el) => withdrawGoal(el.dataset.id),
     'delete-goal': (el) => excluirMeta(el),
     'export-json': () => exportarBackup(),
     'load-demo': () => carregarExemplo(),

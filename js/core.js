@@ -201,10 +201,13 @@
         income += t.amount;
         continue;
       }
-      expense += t.amount;
-      byCategory[t.categoryId] = (byCategory[t.categoryId] || 0) + t.amount;
+      // Uma retirada de meta (withdrawal) é o espelho de um depósito: desfaz o que ele somou no
+      // Guardado daquele mês, devolvendo o valor para a Sobra. Por isso entra com sinal trocado.
+      const valor = t.withdrawal ? -t.amount : t.amount;
+      expense += valor;
+      byCategory[t.categoryId] = (byCategory[t.categoryId] || 0) + valor;
       const bucket = (cats[t.categoryId] && cats[t.categoryId].bucket) || 'estilo';
-      byBucket[bucket] += t.amount;
+      byBucket[bucket] += valor;
     }
     const consumption = byBucket.essencial + byBucket.estilo; // Gastos: o que foi consumido
     const saved = byBucket.futuro; // Guardado: reserva, investimentos e metas (dívida é gasto)
@@ -582,7 +585,8 @@
    * Assim o valor da meta e o "Guardado" do Painel vêm dos mesmos lançamentos.
    */
   function goalSaved(goal, transactions = []) {
-    return goal.saved + transactions.filter((t) => t.goalId === goal.id && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    return goal.saved + transactions.filter((t) => t.goalId === goal.id && t.type === 'expense')
+      .reduce((sum, t) => sum + (t.withdrawal ? -t.amount : t.amount), 0);
   }
 
   // Categoria do balde Futuro em que se lança direto numa meta (a reserva usa "Reserva de emergência").
@@ -622,6 +626,30 @@
     return updated;
   }
 
+  /**
+   * Move dinheiro já guardado de uma meta para outra (ex.: da reserva para uma meta, ou entre duas
+   * metas), sem criar lançamento e sem afetar Gastos, Guardado ou Sobrou do mês: é só uma
+   * realocação do que já estava guardado. Função pura: devolve uma cópia da lista de metas.
+   */
+  function transferBetweenGoals(goals, transactions, fromId, toId, amount) {
+    if (fromId === toId) return { ok: false, error: 'Escolha duas metas diferentes.' };
+    if (!Number.isInteger(amount) || amount <= 0) return { ok: false, error: 'Informe um valor válido.' };
+    const from = goals.find((g) => g.id === fromId);
+    const to = goals.find((g) => g.id === toId);
+    if (!from || !to) return { ok: false, error: 'Meta não encontrada.' };
+    if (goalSaved(from, transactions) < amount) {
+      return { ok: false, error: `"${from.name}" só tem ${formatBRL(goalSaved(from, transactions))} guardado.` };
+    }
+    return {
+      ok: true,
+      goals: goals.map((g) => {
+        if (g.id === fromId) return { ...g, saved: g.saved - amount };
+        if (g.id === toId) return { ...g, saved: g.saved + amount };
+        return g;
+      }),
+    };
+  }
+
   /** A meta de reserva de emergência é reconhecida pelo nome ("reserva"). */
   function isReserveGoal(goal) {
     return /reserva/i.test(goal.name);
@@ -655,6 +683,34 @@
       recurring: false,
       goalId: goal.id,
       createdAt: Date.now(),
+    };
+  }
+
+  /**
+   * Tira dinheiro já guardado numa meta e devolve para a Sobra do mês: é o espelho exato do
+   * depósito (`createGoalDeposit`), com `withdrawal: true` para `summarize` e `goalSaved`
+   * saberem que é o contrário. Recusa tirar mais do que a meta tem (contando os depósitos já
+   * lançados, não só o valor inicial).
+   */
+  function withdrawFromGoal(goal, transactions, amount, date, id) {
+    if (!goal) return { ok: false, error: 'Meta não encontrada.' };
+    if (!Number.isInteger(amount) || amount <= 0) return { ok: false, error: 'Informe um valor válido.' };
+    const saved = goalSaved(goal, transactions);
+    if (saved < amount) return { ok: false, error: `"${goal.name}" só tem ${formatBRL(saved)} guardado.` };
+    return {
+      ok: true,
+      transaction: {
+        id,
+        type: 'expense',
+        categoryId: isReserveGoal(goal) ? 'reserva' : GOALS_CATEGORY,
+        amount,
+        date,
+        description: `Retirada: ${goal.name}`.slice(0, 120),
+        recurring: false,
+        goalId: goal.id,
+        withdrawal: true,
+        createdAt: Date.now(),
+      },
     };
   }
 
@@ -929,6 +985,7 @@
         recurring: Boolean(t.recurring),
         createdAt: Number.isFinite(t.createdAt) ? t.createdAt : 0,
         ...(typeof t.goalId === 'string' && t.goalId ? { goalId: t.goalId.slice(0, 80) } : {}),
+        ...(t.withdrawal === true ? { withdrawal: true } : {}),
         ...(validInstallment(t.installment) ? { installment: { group: t.installment.group, n: t.installment.n, of: t.installment.of } } : {}),
       }));
   }
@@ -1015,11 +1072,11 @@
       const cat = cats[t.categoryId] || {};
       rows.push([
         t.date,
-        t.type === 'income' ? 'Receita' : 'Despesa',
+        t.type === 'income' ? 'Receita' : (t.withdrawal ? 'Retirada' : 'Despesa'),
         cat.name || t.categoryId,
         cat.bucket ? BUCKETS[cat.bucket].label : '',
         t.installment ? `${t.description} (${installmentLabel(t)})`.trim() : t.description,
-        ((t.type === 'income' ? 1 : -1) * t.amount / 100).toFixed(2).replace('.', ','),
+        ((t.type === 'income' || t.withdrawal ? 1 : -1) * t.amount / 100).toFixed(2).replace('.', ','),
         t.recurring ? 'Sim' : 'Não',
       ]);
     }
@@ -1073,7 +1130,9 @@
     emergencyFundTarget,
     goalSaved,
     createGoalDeposit,
+    withdrawFromGoal,
     goalProgress,
+    transferBetweenGoals,
     recurringForMonth,
     MAX_INSTALLMENTS,
     GOALS_CATEGORY,
