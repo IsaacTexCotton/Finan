@@ -31,4 +31,24 @@ async function lancar(page, { tipo, valor, categoria, descricao }) {
   await formulario.getByRole('button', { name: 'Salvar' }).click();
 }
 
-module.exports = { APP, lancar, abrirDetalhes, irParaAba };
+/** Painel "Movimentar" de uma meta (aberto). */
+const painelMover = (page) => page.getByRole('dialog', { name: /Movimentar/ });
+
+/**
+ * Abre o painel "Movimentar" da meta e faz a ação, como a pessoa faz.
+ * `acao`: 'Guardar mais' | 'Transferir para outra meta' | 'Tirar e usar em outra coisa'.
+ * `destino` é o nome da meta de destino (só em transferir); `aceitar` marca a caixa do aviso.
+ * Sem `confirmar: false`, toca em "Confirmar" no fim.
+ */
+async function movimentar(page, nomeMeta, { acao, valor, destino, aceitar, confirmar = true }) {
+  await page.locator('#goal-list .goal').filter({ hasText: nomeMeta }).getByRole('button', { name: /Movimentar/ }).click();
+  const painel = painelMover(page);
+  await painel.locator('label.pilula', { hasText: acao }).click();
+  if (destino) await painel.getByLabel('Para qual meta?').selectOption({ label: destino });
+  if (valor !== undefined) await painel.getByLabel(/^Valor a /).fill(valor);
+  if (aceitar) await painel.getByLabel('Entendo, quero continuar assim.').check();
+  if (confirmar) await painel.getByRole('button', { name: 'Confirmar' }).click();
+  return painel;
+}
+
+module.exports = { APP, lancar, abrirDetalhes, irParaAba, movimentar, painelMover };

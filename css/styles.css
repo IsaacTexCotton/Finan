@@ -1506,3 +1506,148 @@ dialog#novidades::backdrop {
 .novidade li {
   margin-bottom: var(--space-1);
 }
+
+/* ---------- Painel "Movimentar": guardar, transferir ou tirar de uma meta ---------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+dialog#mover-meta {
+  width: min(28rem, 100%);
+  max-width: 100%;
+  max-height: 90vh;
+  max-height: 90dvh;
+  margin: auto auto 0; /* colado embaixo no celular, ao alcance do polegar */
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+dialog#mover-meta::backdrop {
+  background: var(--shadow);
+}
+
+@media (min-width: 40rem) {
+  dialog#mover-meta {
+    margin: auto;
+    border-radius: var(--radius);
+  }
+}
+
+.mover-corpo {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.mover-corpo h2 {
+  margin: 0;
+}
+
+.mover-corpo p {
+  margin: 0;
+}
+
+.mover-acoes {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mover-campos {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Cada ação é uma pílula; a escolhida fica cheia e ganha um ✓ (nunca só cor). */
+.pilula {
+  position: relative;
+  display: flex;
+  flex-direction: row; /* o label global é uma coluna */
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--tap);
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pilula input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.pilula .marca {
+  display: none;
+}
+
+.pilula:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.pilula:has(input:checked) .marca {
+  display: block;
+}
+
+.pilula:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.pilula:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.faixa-aviso {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+}
+
+/* Os botões ficam colados no fim do painel: em tela pequena, com o aviso aberto, nunca saem da vista. */
+.mover-botoes {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  background: var(--surface);
+}
+
+.mover-botoes .btn {
+  flex: 1;
+}
+
+.btn.primary:disabled {
+  border-color: var(--track);
+  background: var(--track);
+  color: var(--muted);
+  cursor: not-allowed;
+}

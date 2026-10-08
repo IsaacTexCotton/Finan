@@ -65,7 +65,7 @@ Só faça o commit quando todas as respostas forem "sim":
   não é "despesa" para o usuário, embora seja uma saída da conta. A **taxa de poupança** é o
   Guardado ÷ renda; a sobra do mês não conta, porque dinheiro parado ainda não foi guardado.
   Ninguém recebe "Excelente!" por ter sobrado dinheiro sem guardar.
-- **Guardar numa meta é guardar** (decisão do Isaac, 30/09/2026). "Guardar valor" cria um
+- **Guardar numa meta é guardar** (decisão do Isaac, 30/09/2026). "Guardar mais", no painel "Movimentar" da meta (antes "Guardar valor"), cria um
   lançamento do balde Futuro, ligado à meta por `goalId`, datado de hoje: a categoria é
   "Reserva de emergência" para a meta de reserva e "Metas" para as demais. O valor da meta é
   o valor inicial (o que já tinha ao criá-la) + os depósitos (`goalSaved`), e o Painel conta os
@@ -83,7 +83,7 @@ Só faça o commit quando todas as respostas forem "sim":
   valendo em qualquer dia e fecha por semana, de segunda a domingo. O app não manda alarme com
   ele fechado (não tem servidor); o lembrete só aparece com o app aberto, e a tela diz isso.
 - **Sobrou pode ficar negativo, mas o app avisa antes de deixar guardar** (decisão do Isaac,
-  30/09/2026). Ao lançar uma despesa do balde Futuro ou usar "Guardar valor" numa meta, se o
+  30/09/2026). Ao lançar uma despesa do balde Futuro ou usar "Guardar mais" numa meta, se o
   valor passar do que sobrou no mês (`leftAfterSaving`), o app pergunta "Quer guardar mesmo
   assim?" e a pessoa decide. Sem renda registrada no mês não há o que comparar e não avisa.
   Gastar (Essenciais e Estilo de vida) além da renda não gera esse aviso: o Painel já alerta.
@@ -119,6 +119,15 @@ Só faça o commit quando todas as respostas forem "sim":
   dizer R$ 46 com o salário ainda no dia 7). Um salário com data do próximo pagamento só conta no ciclo
   novo. A mensagem de "salvar gasto" também não diz quanto pode gastar nesse caso. O cartão também mostra
   quanto já foi guardado.
+- **Painel "Movimentar" da meta** (decisão do Isaac, 09/10/2026; especificação em `docs/ux-estrategia.md`).
+  Cada meta tem um só botão, "Movimentar", que abre um painel na própria tela (`<dialog id="mover-meta">`,
+  `abrirMover`) com três ações: **Guardar mais** (lançamento do Futuro ligado à meta), **Transferir para outra
+  meta** (só realoca; não é lançamento) e **Tirar e usar em outra coisa** (retirada que volta para a sobra do
+  mês, ver `withdrawFromGoal`). Nada de `prompt()` no app (`tests/app-estrutura.test.js` vigia). O botão
+  "Confirmar" fica cinza ("Preencha o valor", "Corrija o valor" ou "Confirme o aviso") até o valor estar certo; os
+  avisos ("no vermelho", reserva abaixo do ideal) aparecem no painel e pedem a caixa "Entendo, quero continuar
+  assim.". Os botões do painel ficam colados no fim, sempre à vista em 320px. As contas continuam no núcleo.
+  Testes em `tests/e2e/mover-meta.spec.js`, `transferir-meta.spec.js` e `tirar-meta.spec.js`.
 - **Painel enxuto** (consenso de UX, finanças e usuário, decisão do Isaac, 02/10/2026: "uma pergunta, um
   número, um aviso"). Fase 1: o cartão "Você pode gastar hoje" mostra o número e uma linha ("Esse é o
   máximo para hoje, contando até…", com "Limitado ao que sobrou." quando for o caso, para não soar como
@@ -241,7 +250,7 @@ Só faça o commit quando todas as respostas forem "sim":
   controle novo entra nesse teste. Nos testes, `irParaAba(page, 'Metas')` abre o "Mais" sozinho.
 - Em listas de escolha (`<select>`), o texto de cada opção começa pelo nome, nunca por emoji:
   o navegador acha a opção pelas primeiras letras digitadas.
-- Botões que se repetem numa lista (Editar, Excluir, Guardar valor) têm `aria-label` com o
+- Botões que se repetem numa lista (Editar, Excluir, Movimentar) têm `aria-label` com o
   item a que se referem, para o leitor de tela distinguir um do outro.
 - Campos com fonte de pelo menos 16px (senão o celular dá zoom ao digitar).
 - Respeitar `prefers-reduced-motion` e o atributo `hidden`.

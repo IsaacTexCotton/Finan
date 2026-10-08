@@ -21,8 +21,10 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 ## [Não lançado]
 
 ### Adicionado
-- Metas ganham o botão "Transferir": move dinheiro já guardado de uma meta para outra (inclusive da reserva de emergência), sem contar como gasto nem mudar o quanto você guardou no mês
-- Metas ganham o botão "Tirar": devolve dinheiro já guardado numa meta (ou na reserva de emergência) para a sobra do mês, para usar em outra coisa. Avisa antes de deixar a reserva abaixo do valor ideal
+- Cada meta ganha o botão "Movimentar", que abre um painel com três opções: guardar mais, transferir para outra meta (inclusive da reserva de emergência, sem contar como gasto nem mudar o quanto você guardou no mês) e tirar o dinheiro da meta para a sobra do mês. Avisa antes de deixar a reserva abaixo do valor ideal
+
+### Alterado
+- Guardar dinheiro numa meta deixou de abrir a janelinha cinza do navegador: agora tudo acontece num painel na própria tela, com o botão "Confirmar" só liberando quando o valor está certo, e os avisos aparecendo ali dentro
 
 ### Corrigido
 - "Você pode gastar hoje" não mostra mais um valor quando ainda não entrou nenhuma renda no período (por exemplo, com o salário marcado para o dia 7): em vez do número, pede para lançar a renda

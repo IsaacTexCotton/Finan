@@ -8,8 +8,13 @@ window.FINAN_NOVIDADES = [
       {
         "nome": "Adicionado",
         "itens": [
-          "Metas ganham o botão \"Transferir\": move dinheiro já guardado de uma meta para outra (inclusive da reserva de emergência), sem contar como gasto nem mudar o quanto você guardou no mês",
-          "Metas ganham o botão \"Tirar\": devolve dinheiro já guardado numa meta (ou na reserva de emergência) para a sobra do mês, para usar em outra coisa. Avisa antes de deixar a reserva abaixo do valor ideal"
+          "Cada meta ganha o botão \"Movimentar\", que abre um painel com três opções: guardar mais, transferir para outra meta (inclusive da reserva de emergência, sem contar como gasto nem mudar o quanto você guardou no mês) e tirar o dinheiro da meta para a sobra do mês. Avisa antes de deixar a reserva abaixo do valor ideal"
+        ]
+      },
+      {
+        "nome": "Alterado",
+        "itens": [
+          "Guardar dinheiro numa meta deixou de abrir a janelinha cinza do navegador: agora tudo acontece num painel na própria tela, com o botão \"Confirmar\" só liberando quando o valor está certo, e os avisos aparecendo ali dentro"
         ]
       },
       {

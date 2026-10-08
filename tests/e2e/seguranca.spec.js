@@ -152,3 +152,28 @@ test('nome de categoria com HTML também é só texto na mensagem "Para rever pr
   await expect(page.locator('#sugestao img')).toHaveCount(0);
   expect(await page.evaluate(() => window.__xss)).toBe(0);
 });
+
+test('nome de meta com HTML aparece como texto no painel "Movimentar" e nas mensagens, e não executa', async ({ page }) => {
+  const malicioso = '<img src=x onerror="window.__invadido=1"><b>Viagem</b>';
+  await page.goto(APP);
+  await irParaAba(page, 'Metas');
+  await page.locator('#goal-form').getByLabel('Nome').fill(malicioso);
+  await page.locator('#goal-form').getByLabel('Valor total (R$)').fill('1000');
+  await page.locator('#goal-form').getByLabel('Já guardado (R$)').fill('500');
+  await page.locator('#goal-form').getByRole('button', { name: 'Criar meta' }).click();
+
+  await page.locator('#goal-list .goal').getByRole('button', { name: /Movimentar/ }).click();
+  const painel = page.getByRole('dialog', { name: /Movimentar/ });
+  await expect(painel.getByRole('heading')).toContainText(malicioso); // o texto digitado, literal
+  await painel.getByLabel('Valor a guardar').fill('10');
+  await painel.getByRole('button', { name: 'Confirmar' }).click();
+  await expect(page.getByRole('status')).toContainText('R$ 10,00 adicionados à meta');
+
+  await page.locator('#goal-list .goal').getByRole('button', { name: /Movimentar/ }).click();
+  await page.locator('label.pilula', { hasText: 'Tirar' }).click();
+  await painel.getByLabel('Valor a tirar').fill('99999');
+  await expect(painel).toContainText(`"${malicioso}" só tem`); // mensagem de erro também como texto
+
+  expect(await page.evaluate(() => window.__invadido)).toBeUndefined();
+  await expect(painel.locator('img, b')).toHaveCount(0);
+});

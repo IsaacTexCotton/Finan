@@ -36,7 +36,7 @@ test('lançamento sem descrição usa a categoria, e parcela diz qual é', async
 test('botões das metas dizem de qual meta são', async ({ page }) => {
   await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
   await irParaAba(page, 'Metas');
-  await expect(page.getByRole('button', { name: 'Guardar valor na meta Viagem de férias' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Movimentar a meta Viagem de férias' })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Excluir meta Viagem de férias' })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Excluir meta Reserva de emergência' })).toHaveCount(1);
 });

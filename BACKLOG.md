@@ -185,6 +185,10 @@ um banco. Dividido em 3 etapas, cada uma por decisão dele:
       mês de hoje: cria uma retirada (`withdrawFromGoal`), o espelho do depósito, que baixa o
       Guardado e sobe a Sobra na mesma hora. Avisa (sem bloquear) antes de deixar a reserva abaixo
       do valor ideal. Por tocar em `normalizeData`, foi por PR com `/security-review`
+- [x] Interface das etapas 1 e 2 (09/10/2026): botão único "Movimentar" abre um painel na tela (`<dialog>`),
+      no lugar das janelas `prompt()`/`confirm()`: Guardar mais, Transferir e Tirar. Autorizado pelo Isaac,
+      que também liberou reescrever só a parte de interação dos testes que respondiam a `prompt()`.
+      Especificação em `docs/ux-estrategia.md` (Etapa 6)
 - [ ] Etapa 3: a sobra de um mês passa para o próximo, em vez de zerar (mexe nas contas do Painel e
       do "pode gastar hoje"; etapa mais delicada, por PR com `/security-review`)
 

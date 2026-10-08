@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar, irParaAba } = require('./ajuda');
+const { APP, lancar, irParaAba, movimentar } = require('./ajuda');
 
 // Decisão do Isaac (30/09/2026): "Sobrou" pode ficar negativo, mas o app avisa ANTES de deixar
 // guardar mais do que sobrou, e a pessoa escolhe se guarda mesmo assim.
@@ -12,8 +12,7 @@ test.beforeEach(async ({ page }) => {
   aceitar = false;
   page.on('dialog', async (d) => {
     avisos.push(d.message());
-    if (d.type() === 'prompt') await d.accept('300');
-    else if (aceitar) await d.accept();
+    if (aceitar) await d.accept();
     else await d.dismiss();
   });
   await page.goto(APP);
@@ -66,16 +65,16 @@ test('o mesmo aviso vale para "Guardar valor" numa meta', async ({ page }) => {
   await mesComSobraDe200(page);
   await irParaAba(page, 'Metas');
   await page.getByRole('button', { name: 'Criar meta de reserva' }).click();
-  avisos = [];
-  aceitar = false;
-  await page.getByRole('button', { name: /Guardar valor/ }).click(); // o prompt responde R$ 300
-  expect(avisos.some((a) => /Guardar R\$\s300,00 deixa .* no vermelho/.test(a))).toBe(true);
+  // O aviso agora aparece dentro do painel "Movimentar": a pessoa lê e só confirma se marcar a caixa.
+  const painel = await movimentar(page, 'Reserva de emergência', { acao: 'Guardar mais', valor: '300', confirmar: false });
+  await expect(painel).toContainText(/Guardar R\$\s300,00 deixa .* no vermelho/);
+  await expect(painel.getByRole('button', { name: 'Confirme o aviso' })).toBeDisabled();
+  await painel.getByRole('button', { name: 'Cancelar' }).click(); // desistir não salva nada
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
   await expect(page.locator('#tx-list .tx').filter({ hasText: 'Meta: Reserva de emergência' })).toHaveCount(0);
 
-  aceitar = true;
   await irParaAba(page, 'Metas');
-  await page.getByRole('button', { name: /Guardar valor/ }).click();
+  await movimentar(page, 'Reserva de emergência', { acao: 'Guardar mais', valor: '300', aceitar: true });
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
   await expect(page.locator('#tx-list .tx').filter({ hasText: 'Meta: Reserva de emergência' })).toHaveCount(1);
 });

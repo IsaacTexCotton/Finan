@@ -187,14 +187,9 @@
     return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   }
 
-  // Único ponto das janelas nativas do navegador (confirm e prompt): trocar por uma janela própria,
-  // ou ganhar um "desfazer", muda só aqui. Hoje abrem a mesma janela de sempre.
+  // Único ponto da janela nativa de confirmação do navegador: trocar por uma janela própria muda só aqui.
   function confirmar(texto) {
     return window.confirm(texto);
-  }
-
-  function perguntar(texto) {
-    return window.prompt(texto);
   }
 
   function money(cents) {
@@ -688,9 +683,7 @@
           <div class="goal-foot muted small">
             <span>${p.done ? 'Meta concluída! 🎉' : `${esc(F.formatPercent(p.ratio))} · faltam ${money(p.remaining)}`}${!p.done && p.monthly ? ` · guarde ${money(p.monthly)}/mês por ${p.monthsLeft} ${p.monthsLeft === 1 ? 'mês' : 'meses'}` : ''}</span>
             <span class="actions">
-              ${p.done ? '' : `<button type="button" class="btn small" data-action="deposit-goal" data-id="${esc(g.id)}" aria-label="Guardar valor na meta ${esc(g.name)}">Guardar valor</button>`}
-              ${state.data.goals.length > 1 ? `<button type="button" class="btn small" data-action="transfer-goal" data-id="${esc(g.id)}" aria-label="Transferir valor da meta ${esc(g.name)} para outra meta">Transferir</button>` : ''}
-              ${F.goalSaved(g, state.data.transactions) > 0 ? `<button type="button" class="btn small" data-action="withdraw-goal" data-id="${esc(g.id)}" aria-label="Tirar valor da meta ${esc(g.name)} e devolver à sobra do mês">Tirar</button>` : ''}
+              <button type="button" class="btn small" data-action="mover-meta" data-id="${esc(g.id)}" aria-label="Movimentar a meta ${esc(g.name)}">Movimentar</button>
               <button type="button" class="icon-btn" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir meta ${esc(g.name)}">🗑</button>
             </span>
           </div>
@@ -1074,84 +1067,192 @@
     return entry.type === 'expense' && Boolean(categoria) && categoria.bucket === 'futuro';
   }
 
-  function depositGoal(id) {
-    const goal = state.data.goals.find((g) => g.id === id);
-    if (!goal) return;
-    const input = perguntar(`Quanto você guardou para "${goal.name}"? (R$)`);
-    if (input == null) return;
-    const amount = F.parseAmount(input);
-    if (!(amount > 0)) {
-      toast('Valor inválido.');
-      return;
-    }
-    if (!confirmarGuardar(amount, F.monthKey(F.todayISO()))) return;
-    // Guardar numa meta é guardar: vira um lançamento do Futuro, ligado à meta, que conta no Painel.
-    state.data.transactions.push(F.createGoalDeposit(goal, amount, F.todayISO(), newId()));
-    commit(`${F.formatBRL(amount)} adicionados à meta.`);
+  // ---------- Painel "Movimentar": guardar, transferir ou tirar de uma meta ----------
+  // Fica numa janela da própria página (<dialog>), no lugar das janelas nativas do navegador.
+  // As contas continuam no núcleo (createGoalDeposit, transferBetweenGoals, withdrawFromGoal).
+
+  const MOVER_ACOES = [
+    { id: 'guardar', texto: 'Guardar mais', campo: 'Valor a guardar' },
+    { id: 'transferir', texto: 'Transferir para outra meta', campo: 'Valor a transferir' },
+    { id: 'tirar', texto: 'Tirar e usar em outra coisa', campo: 'Valor a tirar' },
+  ];
+  const MARCA_SVG = '<svg class="marca" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
+  const mover = { id: null, acao: 'guardar', aviso: '' };
+
+  function moverMeta() {
+    return state.data.goals.find((g) => g.id === mover.id);
   }
 
-  /**
-   * Transfere dinheiro já guardado de uma meta para outra (ex.: da reserva para uma meta de
-   * viagem). Não cria lançamento: não é gasto nem receita, e não muda o Guardado nem o Sobrou
-   * do mês, só realoca o que já estava guardado.
-   */
-  function transferGoal(id) {
-    const from = state.data.goals.find((g) => g.id === id);
-    if (!from) return;
-    const outras = state.data.goals.filter((g) => g.id !== id);
-    if (!outras.length) return;
-    const lista = outras.map((g, i) => `${i + 1}. ${g.name}`).join('\n');
-    const escolha = perguntar(`Transferir de "${from.name}" para qual meta? Digite o número:\n${lista}`);
-    if (escolha == null) return;
-    const to = outras[Number(escolha) - 1];
-    if (!to) {
-      toast('Meta inválida.');
-      return;
-    }
-    const input = perguntar(`Quanto transferir de "${from.name}" para "${to.name}"? (R$)`);
-    if (input == null) return;
-    const amount = F.parseAmount(input);
-    if (!(amount > 0)) {
-      toast('Valor inválido.');
-      return;
-    }
-    const r = F.transferBetweenGoals(state.data.goals, state.data.transactions, from.id, to.id, amount);
-    if (!r.ok) {
-      toast(r.error);
-      return;
-    }
-    state.data.goals = r.goals;
-    commit(`${F.formatBRL(amount)} transferidos de "${from.name}" para "${to.name}".`);
+  function moverCamposHtml(goal, outras) {
+    const acao = MOVER_ACOES.find((a) => a.id === mover.acao);
+    const destino = mover.acao === 'transferir'
+      ? `<label>Para qual meta?
+           <select id="mover-destino">${outras.map((g) => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('')}</select>
+         </label>`
+      : '';
+    const disponivel = mover.acao === 'guardar' ? '' : `<p class="hint" id="mover-disponivel">Disponível: ${money(F.goalSaved(goal, state.data.transactions))}</p>`;
+    return `${destino}
+      <label>${esc(acao.campo)}
+        <input id="mover-valor" type="text" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" aria-describedby="mover-erro">
+      </label>
+      ${disponivel}`;
   }
 
-  /**
-   * Tira dinheiro já guardado numa meta e devolve para a Sobra do mês (o espelho de "Guardar
-   * valor"): não é gasto, e baixa o Guardado do mês de hoje. Avisa antes de esvaziar a reserva
-   * de emergência abaixo do valor ideal, mas não bloqueia: a pessoa decide.
-   */
-  function withdrawGoal(id) {
-    const goal = state.data.goals.find((g) => g.id === id);
-    if (!goal) return;
-    const input = perguntar(`Quanto tirar de "${goal.name}" e devolver para a sobra do mês? (R$)`);
-    if (input == null) return;
-    const amount = F.parseAmount(input);
-    if (!(amount > 0)) {
-      toast('Valor inválido.');
-      return;
+  function moverHtml(goal) {
+    const outras = state.data.goals.filter((g) => g.id !== goal.id);
+    const pilulas = MOVER_ACOES.map((a) => {
+      const bloqueada = a.id === 'transferir' && !outras.length;
+      return `<label class="pilula"><input type="radio" name="acao" value="${a.id}" ${a.id === mover.acao ? 'checked' : ''} ${bloqueada ? 'disabled' : ''}><span>${esc(a.texto)}</span>${MARCA_SVG}</label>`;
+    }).join('');
+    return `
+      <form class="mover-corpo" id="mover-form" novalidate>
+        <h2 id="mover-titulo" tabindex="-1">Movimentar “${esc(goal.name)}”</h2>
+        <p class="muted small">Escolha o que você quer fazer com o dinheiro guardado nessa meta.</p>
+        <fieldset class="mover-acoes">
+          <legend class="sr-only">O que fazer</legend>
+          ${pilulas}
+        </fieldset>
+        ${outras.length ? '' : '<p class="hint">Crie outra meta para poder transferir.</p>'}
+        <div class="mover-campos">${moverCamposHtml(goal, outras)}</div>
+        <p class="form-error" id="mover-erro" role="alert"></p>
+        <div class="faixa-aviso" id="mover-aviso" role="status" hidden>
+          <span id="mover-aviso-texto"></span>
+          <label class="check"><input type="checkbox" id="mover-aceito"> Entendo, quero continuar assim.</label>
+        </div>
+        <div class="mover-botoes">
+          <button type="button" class="btn" data-mover="cancelar">Cancelar</button>
+          <button type="submit" class="btn primary" id="mover-ok" disabled>Preencha o valor</button>
+        </div>
+      </form>`;
+  }
+
+  /** Lê o painel e diz o que ele mostra: valor, erro, aviso e se dá para confirmar. */
+  function moverEstado() {
+    const goal = moverMeta();
+    const texto = $('#mover-valor').value.trim();
+    const valor = texto === '' ? null : F.parseAmount(texto);
+    const estado = { valor, erro: '', aviso: '', pronto: false, rotulo: 'Preencha o valor' };
+    if (valor === null) return estado;
+    if (!Number.isInteger(valor) || valor <= 0) {
+      estado.erro = 'Informe um valor maior que zero.';
+      return estado;
     }
-    const r = F.withdrawFromGoal(goal, state.data.transactions, amount, F.todayISO(), newId());
-    if (!r.ok) {
-      toast(r.error);
-      return;
+    const disponivel = F.goalSaved(goal, state.data.transactions);
+    if (mover.acao !== 'guardar' && valor > disponivel) {
+      estado.erro = `"${goal.name}" só tem ${F.formatBRL(disponivel)} guardado.`;
+      estado.rotulo = 'Corrija o valor';
+      return estado;
     }
-    const restante = F.goalSaved(goal, state.data.transactions) - amount;
-    if (F.isReserveGoal(goal) && restante < goal.target) {
-      const pergunta = `Isso deixa sua reserva em ${F.formatBRL(restante)}, abaixo do ideal de ${F.formatBRL(goal.target)}. Tirar mesmo assim?`;
-      if (!confirmar(pergunta)) return;
+    estado.aviso = moverAviso(goal, valor, disponivel);
+    estado.pronto = !estado.aviso || $('#mover-aceito').checked;
+    estado.rotulo = estado.pronto ? 'Confirmar' : 'Confirme o aviso';
+    return estado;
+  }
+
+  function moverAviso(goal, valor, disponivel) {
+    if (mover.acao === 'guardar') {
+      const mes = F.monthKey(F.todayISO());
+      const resumo = F.summarize(F.transactionsOfMonth(state.data.transactions, mes), state.data.categories);
+      const depois = F.leftAfterSaving(resumo, valor);
+      if (depois !== null && depois < 0) {
+        return `Guardar ${F.formatBRL(valor)} deixa ${F.monthLabel(mes)} no vermelho: depois de guardar, faltariam ${F.formatBRL(-depois)}.`;
+      }
     }
+    if (mover.acao === 'tirar' && F.isReserveGoal(goal) && disponivel - valor < goal.target) {
+      return `Isso deixa sua reserva em ${F.formatBRL(disponivel - valor)}, abaixo do ideal de ${F.formatBRL(goal.target)}.`;
+    }
+    return '';
+  }
+
+  /** Atualiza erro, aviso e botão sem redesenhar o painel (o foco fica no campo). */
+  function moverAtualizar() {
+    const estado = moverEstado();
+    if (estado.aviso !== mover.aviso) {
+      mover.aviso = estado.aviso; // aviso novo pede um novo aceite
+      $('#mover-aceito').checked = false;
+    }
+    const final = moverEstado();
+    $('#mover-erro').textContent = final.erro;
+    $('#mover-valor').toggleAttribute('aria-invalid', Boolean(final.erro));
+    $('#mover-aviso').hidden = !final.aviso;
+    $('#mover-aviso-texto').textContent = final.aviso;
+    const ok = $('#mover-ok');
+    ok.disabled = !final.pronto;
+    ok.textContent = final.rotulo;
+    return final;
+  }
+
+  function moverRender() {
+    const goal = moverMeta();
+    $('#mover-meta').innerHTML = moverHtml(goal);
+    mover.aviso = '';
+    moverAtualizar();
+  }
+
+  function abrirMover(id) {
+    if (!state.data.goals.some((g) => g.id === id)) return;
+    mover.id = id;
+    mover.acao = 'guardar';
+    moverRender();
+    $('#mover-meta').showModal();
+    $('#mover-titulo').focus();
+  }
+
+  /** Faz a ação escolhida. Devolve a mensagem de sucesso, ou null (e mostra o erro no painel). */
+  function moverExecutar(estado) {
+    const goal = moverMeta();
+    const hoje = F.todayISO();
+    if (mover.acao === 'guardar') {
+      state.data.transactions.push(F.createGoalDeposit(goal, estado.valor, hoje, newId())); // guardar numa meta é guardar
+      return `${F.formatBRL(estado.valor)} adicionados à meta.`;
+    }
+    if (mover.acao === 'transferir') {
+      const destino = state.data.goals.find((g) => g.id === $('#mover-destino').value);
+      const r = F.transferBetweenGoals(state.data.goals, state.data.transactions, goal.id, destino && destino.id, estado.valor);
+      if (!r.ok) return moverFalhou(r.error);
+      state.data.goals = r.goals;
+      return `${F.formatBRL(estado.valor)} transferidos de "${goal.name}" para "${destino.name}".`;
+    }
+    const r = F.withdrawFromGoal(goal, state.data.transactions, estado.valor, hoje, newId());
+    if (!r.ok) return moverFalhou(r.error);
     state.data.transactions.push(r.transaction);
-    commit(`${F.formatBRL(amount)} tirados de "${goal.name}" e somados à sobra do mês.`);
+    return `${F.formatBRL(estado.valor)} tirados de "${goal.name}" e somados à sobra do mês.`;
   }
+
+  function moverFalhou(erro) {
+    $('#mover-erro').textContent = erro;
+    return null;
+  }
+
+  function moverConfirmar() {
+    const estado = moverAtualizar();
+    if (!estado.pronto) return;
+    const mensagem = moverExecutar(estado);
+    if (mensagem === null) return;
+    $('#mover-meta').close(); // o foco volta ao botão "Movimentar"; commit() o devolve depois de redesenhar
+    commit(mensagem);
+  }
+
+  (function ligarMover() {
+    const dialogo = $('#mover-meta');
+    dialogo.addEventListener('change', (event) => {
+      if (event.target.name === 'acao') {
+        mover.acao = event.target.value;
+        moverRender();
+        $(`input[name="acao"][value="${mover.acao}"]`).focus();
+      } else {
+        moverAtualizar();
+      }
+    });
+    dialogo.addEventListener('input', () => moverAtualizar());
+    dialogo.addEventListener('submit', (event) => {
+      event.preventDefault();
+      moverConfirmar();
+    });
+    dialogo.addEventListener('click', (event) => {
+      if (event.target === dialogo || event.target.closest('[data-mover="cancelar"]')) dialogo.close(); // fora do painel ou Cancelar
+    });
+  })();
 
   function submitGoal(event) {
     event.preventDefault();
@@ -1313,9 +1414,7 @@
     'go-metas': () => irParaMetas(),
     'create-emergency': (el) => criarReserva(el),
     'update-emergency': (el) => atualizarReserva(el),
-    'deposit-goal': (el) => depositGoal(el.dataset.id),
-    'transfer-goal': (el) => transferGoal(el.dataset.id),
-    'withdraw-goal': (el) => withdrawGoal(el.dataset.id),
+    'mover-meta': (el) => abrirMover(el.dataset.id),
     'delete-goal': (el) => excluirMeta(el),
     'export-json': () => exportarBackup(),
     'load-demo': () => carregarExemplo(),

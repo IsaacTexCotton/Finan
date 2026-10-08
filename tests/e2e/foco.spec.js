@@ -31,13 +31,15 @@ test.describe('o controle continua lá depois do redesenho', () => {
     await expect(item).toBeFocused();
   });
 
-  test('Metas: "Guardar valor" mantém o foco no mesmo botão', async ({ page }) => {
+  test('Metas: "Movimentar" devolve o foco ao mesmo botão depois de guardar, só com o teclado', async ({ page }) => {
     await irParaAba(page, 'Metas');
-    const botao = page.locator('#goal-list .goal').first().getByRole('button', { name: 'Guardar valor' });
+    const botao = page.locator('#goal-list .goal').first().getByRole('button', { name: /Movimentar/ });
     await botao.focus();
     await page.keyboard.press('Enter');
+    await page.getByLabel('Valor a guardar').fill('300');
+    await page.keyboard.press('Enter'); // envia o painel
     await expect(page.getByRole('status')).toContainText(/R\$\s300,00 adicionados à meta/);
-    await expect(page.locator('#goal-list .goal').first().getByRole('button', { name: 'Guardar valor' })).toBeFocused();
+    await expect(page.locator('#goal-list .goal').first().getByRole('button', { name: /Movimentar/ })).toBeFocused();
   });
 
   test('Lançamentos: excluir pelo teclado leva o foco ao lançamento que ocupou o lugar', async ({ page }) => {

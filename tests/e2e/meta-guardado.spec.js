@@ -1,14 +1,10 @@
 const { test, expect } = require('@playwright/test');
-const { APP, irParaAba } = require('./ajuda');
+const { APP, irParaAba, movimentar, painelMover } = require('./ajuda');
 
 // Guardar dinheiro numa meta é guardar: entra no cartão Guardado do Painel, no balde Futuro,
 // e aparece na lista de lançamentos. Dados de exemplo: Guardado do mês = R$ 900,00.
 
-let resposta;
-
 test.beforeEach(async ({ page }) => {
-  resposta = '300';
-  page.on('dialog', (d) => d.accept(d.type() === 'prompt' ? resposta : undefined));
   await page.goto(APP);
   await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
 });
@@ -20,7 +16,7 @@ test('guardar numa meta aumenta a meta e também o Guardado do Painel', async ({
   await expect(guardado(page)).toContainText(/R\$\s900,00/);
 
   await irParaAba(page, 'Metas');
-  await meta(page, 'Viagem de férias').getByRole('button', { name: /Guardar valor/ }).click();
+  await movimentar(page, 'Viagem de férias', { acao: 'Guardar mais', valor: '300' });
   await expect(page.getByRole('status')).toContainText(/R\$\s300,00 adicionados à meta/);
   await expect(meta(page, 'Viagem de férias')).toContainText(/R\$\s1\.500,00 de R\$\s6\.000,00/); // 1.200 que já tinha + 300
 
@@ -35,7 +31,7 @@ test('guardar numa meta aumenta a meta e também o Guardado do Painel', async ({
 
 test('excluir o depósito da lista desfaz o valor da meta e do Guardado', async ({ page }) => {
   await irParaAba(page, 'Metas');
-  await meta(page, 'Viagem de férias').getByRole('button', { name: /Guardar valor/ }).click();
+  await movimentar(page, 'Viagem de férias', { acao: 'Guardar mais', valor: '300' });
   await expect(meta(page, 'Viagem de férias')).toContainText(/R\$\s1\.500,00 de/);
 
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
@@ -49,7 +45,7 @@ test('excluir o depósito da lista desfaz o valor da meta e do Guardado', async 
 
 test('o depósito na meta de reserva entra na categoria Reserva de emergência', async ({ page }) => {
   await irParaAba(page, 'Metas');
-  await meta(page, 'Reserva de emergência').getByRole('button', { name: /Guardar valor/ }).click();
+  await movimentar(page, 'Reserva de emergência', { acao: 'Guardar mais', valor: '300' });
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
   await expect(page.locator('#tx-list .tx').filter({ hasText: 'Meta: Reserva de emergência' })).toContainText('Reserva de emergência');
 });
@@ -59,9 +55,11 @@ test('valor que não é um número positivo é recusado e não cria lançamento'
   const antes = await page.locator('#tx-list .tx').count();
   await irParaAba(page, 'Metas');
   for (const invalido of ['abc', '0', '-50']) {
-    resposta = invalido;
-    await meta(page, 'Viagem de férias').getByRole('button', { name: /Guardar valor/ }).click();
-    await expect(page.getByRole('status')).toContainText('Valor inválido');
+    const painel = await movimentar(page, 'Viagem de férias', { acao: 'Guardar mais', valor: invalido, confirmar: false });
+    await expect(painel).toContainText('Informe um valor maior que zero.');
+    await expect(painel.getByRole('button', { name: 'Preencha o valor' })).toBeDisabled();
+    await painel.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(painelMover(page)).toBeHidden();
   }
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
   await expect(page.locator('#tx-list .tx')).toHaveCount(antes);
