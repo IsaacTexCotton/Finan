@@ -142,7 +142,7 @@ Decisões do Isaac aplicadas (30/09/2026)
 ## Refatorações (parecer do tech lead, 01/10/2026)
 Ordem escolhida: só refatorar o que destrava algo que o Isaac quer. Critério de aceite de todas: **nenhum
 teste existente muda, todos continuam passando e a pessoa não vê diferença** (por isso não entram no
-`CHANGELOG.md`). Hoje o lint tem 1 aviso: `parseAmount`.
+`CHANGELOG.md`). Hoje o lint tem 2 avisos: `parseAmount` e, desde 03/10/2026, `renderAllowance` (complexidade 16, de `app.js`; o cartão ganhou o ramo `semRenda`). Ideia: separar o cartão sem renda e o cartão com número em duas funções.
 - [x] 1. Regras de negócio que moravam na tela voltaram ao núcleo (`core.js`): divisão em parcelas e o
       que apagar, montar e editar um lançamento, metas, soma dos limites e "bateu a meta de guardar".
       Prepara o "desfazer ao excluir" e a fatura do cartão (7 → 6 avisos)
@@ -277,6 +277,12 @@ Defeitos e confusões vistos
       em dados, vai por PR)
 - [ ] Painel enxuto, depois: valor sem centavos no destaque ("R$ 46") e trocar balde/envelope/plano por
       palavras do dia a dia (decisão do Isaac)
+- [ ] "A receber" (visto pelo Isaac em 03/10/2026): uma receita com data depois de hoje (salário no dia 7)
+      ainda entra em Receitas, Sobrou, taxa de poupança e no aviso antes de guardar, porque essas contas usam
+      o mês inteiro. Proposta feita e NÃO decidida: receita com data futura vira "a receber" (linha pequena no
+      Painel, entra sozinha no dia). Perguntas abertas: gasto com data futura continua contando? a sugestão
+      de limites continua enxergando essa renda como esperada? o mês seguinte aparece com Receitas zeradas?
+      (O cartão "pode gastar" já não depende disso: ver `semRenda`.)
 - [ ] Estilo de vida aparece vazio no Orçamento mesmo com gasto (visto): diz "elas já gastaram
       R$ 525,70" sem dizer quais categorias; Restaurantes, Compras e Assinaturas só surgem em "Adicionar".
       Ideia: categorias com gasto no mês aparecem sozinhas
