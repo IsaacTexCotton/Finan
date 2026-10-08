@@ -327,3 +327,156 @@ porcentagem.
 O Isaac aplica o roteiro; traz as fichas; fazemos a análise (seção 9) e voltamos ao design. Em
 paralelo, a **Etapa 6: Handoff** (especificações para implementar) só deve começar depois do teste,
 para não especificar o que o teste pode derrubar.
+
+## Etapa 6 — Handoff: painel "Movimentar" (especificação para implementar)
+
+**Funções atuando:** Design Ops / Design Engineer, com o Especialista em Acessibilidade. Esta
+especificação **só vale depois do teste da Etapa 5**: se o teste derrubar algo, ela muda. Nada
+aqui foi implementado, e nenhum teste existente foi alterado (ver seção 8).
+
+Fonte visual: Artifact de Design "Finan — Movimentar metas e Onboarding" (artboard `Main`).
+
+### 1. O que muda no código (e o que não muda)
+
+| Hoje | Depois |
+|---|---|
+| 3 botões por meta: "Guardar valor", "Transferir", "Tirar" (+ lixeira) | 1 botão "Movimentar" (+ lixeira) |
+| `depositGoal`, `transferGoal`, `withdrawGoal` abrem `prompt()`/`confirm()` | Painel na tela; as 3 funções viram o que o painel chama ao confirmar |
+| Erro vira mensagem passageira (toast) depois de confirmar | Erro aparece dentro do painel, junto do campo, antes de confirmar |
+| Aviso de esvaziar a reserva é um `confirm()` | Faixa amarela no painel + caixa "Entendo, quero continuar assim" |
+
+**Não muda (regras de negócio já decididas, em `core.js`):** `createGoalDeposit`,
+`transferBetweenGoals`, `withdrawFromGoal`, `goalSaved`, `leftAfterSaving`, o aviso "Quer guardar
+mesmo assim?" (guardar mais do que sobrou no mês) e o texto das mensagens de sucesso. O painel é
+só uma nova forma de chamar as mesmas funções. Valor continua em centavos inteiros, lido por
+`parseAmount`.
+
+### 2. Estrutura (HTML)
+
+Usar o elemento nativo `<dialog>` aberto com `showModal()`: já traz sozinho o travamento do foco
+dentro do painel, o fechamento com Esc e a camada escura de fundo, sem biblioteca e sem build.
+Um único `<dialog id="mover-meta">` no `index.html`, preenchido pela tela (texto sempre por
+`esc()`/`textContent`; o nome da meta vem do usuário).
+
+```
+<dialog id="mover-meta" aria-labelledby="mover-titulo">
+  <form method="dialog">
+    <h2 id="mover-titulo">Movimentar "<nome da meta>"</h2>
+    <p class="muted small">Escolha o que você quer fazer com o dinheiro guardado nessa meta.</p>
+    <fieldset> <legend class="sr-only">O que fazer</legend>
+      3 x <label class="pilula"><input type="radio" name="acao"> <span>texto</span></label>
+    </fieldset>
+    [campos conforme a ação]  [mensagem de erro, role="alert"]  [faixa de aviso]
+    <button type="button">Cancelar</button> <button type="submit">Confirmar</button>
+  </form>
+</dialog>
+```
+
+Os 3 `radio` ficam, escondidos só visualmente (não com `display:none`), dentro de um `label` em
+forma de pílula. Assim teclado, setas e leitor de tela funcionam como em qualquer grupo de
+escolha. Antes de seguir, conferir se já existe uma classe para texto só de leitor de tela em
+`css/styles.css`; se não existir, criar uma, usando só os tokens do `:root`.
+
+### 3. Especificação por componente
+
+| Componente | Medidas e visual (tokens) | Estados | Comportamento | Acessibilidade |
+|---|---|---|---|---|
+| **Painel** (`dialog`) | Colado embaixo, largura total; padding `--space-4`; cantos de cima `--radius`; sombra `0 2px 8px var(--shadow)` (como o botão flutuante); fundo `--surface`; camada escura `::backdrop` na cor `--shadow` | fechado, aberto | Abre ao tocar "Movimentar"; fecha com Cancelar, Esc, toque na camada escura, ou ao confirmar com sucesso | Foco vai ao título ao abrir; ao fechar volta ao botão "Movimentar" da mesma meta (`commit()` já cuida do redesenho) |
+| **Pílula de ação** | Altura mínima `--tap`, cantos totalmente redondos (a própria altura), padding horizontal `--space-4`, texto `--fs-body` em negrito | normal: fundo `--surface`, borda `--border-strong`, texto `--text`. Selecionada: fundo `--primary`, texto `--on-primary` **e ícone de check**. Foco: anel `--focus`. Desabilitada ("Transferir" com 1 meta só) | Trocar de ação limpa o valor e os erros | Selecionado nunca é só cor (tem o check); desabilitada tem texto "Crie outra meta para poder transferir." |
+| **Campo de valor** | Altura mínima `--tap`, borda `2px --border-strong`, cantos `--radius`, fonte `--fs-body` (nunca menor que 16px) | vazio, preenchido, erro (borda `--danger-fg` + texto de erro) | `inputmode="decimal"`, `autocomplete="off"`; valida ao digitar e ao sair do campo; **não** usa máscara nesta versão | `<label>` visível; erro ligado por `aria-describedby`; `aria-invalid="true"` no erro |
+| **Lista de meta de destino** (`<select>`) | Igual ao campo | normal, erro | Só aparece em "Transferir"; opções são as outras metas, texto começando pelo **nome** | Sem emoji no começo (regra do projeto) |
+| **Texto "Disponível: R$ X"** | `--fs-small`, `--muted` | sempre visível em "Tirar" e "Transferir" | Mostra `goalSaved(meta)`; ajuda a não errar | Parte do `aria-describedby` do campo |
+| **Faixa de aviso da reserva** | Fundo `--warn-bg`, texto `--warn-fg`, cantos `--radius`, padding `--space-3` | só em "Tirar" na meta de reserva, quando o valor deixa o total abaixo do ideal | Mostra o novo total ("Isso deixa a reserva em R$ X, abaixo do ideal de R$ Y."); "Confirmar" só libera depois de marcar a caixa | `role="status"` para ser lida quando aparecer; caixa de marcar nativa com alvo de `--tap` |
+| **Confirmar** | Altura mínima `--tap`, cantos `--radius`, negrito | **Desabilitado:** fundo `--track`, texto `--muted`, rótulo "Preencha o valor", atributo `disabled`. **Pronto:** fundo `--primary`, texto `--on-primary`, rótulo "Confirmar" | Pronto = valor válido (> 0, inteiro em centavos) e, em "Tirar" da reserva abaixo do ideal, aviso aceito. Ao confirmar, chama a função da regra e `commit(mensagem)` | O estado desabilitado também fala por texto; botão nativo (não `div`) |
+| **Cancelar** | Igual ao "Confirmar", contorno `2px --primary`, fundo `--surface` | normal | Fecha sem mudar dados | — |
+
+### 4. Textos finais (copy)
+
+| Onde | Texto |
+|---|---|
+| Título | `Movimentar "<nome da meta>"` |
+| Apoio | Escolha o que você quer fazer com o dinheiro guardado nessa meta. |
+| Pílulas | Guardar mais · Transferir para outra meta · Tirar e usar em outra coisa |
+| Campos | Valor a guardar · Valor a transferir · Valor a tirar · Para qual meta? |
+| Confirmar (pronto / vazio) | Confirmar · Preencha o valor |
+| Erro: valor vazio ou inválido | Informe um valor maior que zero. |
+| Erro: passa do guardado | "<meta>" só tem R$ X guardado. (mesma frase de `core.js`) |
+| Aviso da reserva | Isso deixa a reserva em R$ X, abaixo do ideal de R$ Y. |
+| Caixa do aviso | Entendo, quero continuar assim. |
+| Sucesso | As mesmas de hoje: "R$ X adicionados à meta.", "R$ X transferidos de … para …", "R$ X tirados de … e somados à sobra do mês." |
+
+### 5. Fluxos e regras (passo a passo)
+
+1. Tocar "Movimentar" → abre com "Guardar mais" marcada e o foco no título.
+2. Escolher a ação → aparece só o que ela precisa (valor; ou meta de destino + valor; ou valor +
+   "Disponível" + aviso se for o caso).
+3. Digitar → o botão sai de "Preencha o valor" (cinza) para "Confirmar" (verde) quando válido.
+4. "Guardar mais": antes de gravar, se o valor passa do que sobrou no mês, mostrar dentro do painel
+   "Quer guardar mesmo assim?" com um segundo toque de confirmação (hoje é `confirm()`; mesma
+   regra de `confirmarGuardar`, só a forma muda).
+5. Confirmar → função de regra → se der erro, mostrar no painel e **não fechar**; se der certo,
+   fechar e `commit(mensagem)` (nunca `render()` direto: perde o foco).
+6. Persistência: nada novo. Os dados continuam no mesmo formato.
+
+### 6. Responsivo
+
+- **Celular (320 a 480px):** painel colado embaixo, largura total, altura pelo conteúdo, rolagem
+  interna se não couber; pílulas uma embaixo da outra; teclado numérico não pode cobrir o botão
+  "Confirmar" (rolar o campo para a vista ao ganhar foco).
+- **Tela larga (acima de 480px):** painel centralizado, largura máxima ~`28rem` via token de
+  medida (se não houver, decidir com o Isaac antes de criar token novo), cantos arredondados em
+  cima e embaixo.
+- Em 320px nada pode cortar texto nem gerar rolagem para o lado.
+
+### 7. Acessibilidade (obrigatório, vira teste)
+
+- Travar o foco no painel, fechar com Esc e devolver o foco ao "Movimentar" (o `<dialog>` faz o
+  travamento e o Esc; o retorno do foco é por código).
+- Contraste: texto 4,5:1 e bordas de controle 3:1. **Divergência do protótipo:** a borda dos
+  campos e das pílulas não selecionadas usou `--border` (#c9d8d6), que não chega a 3:1; na
+  implementação usar `--border-strong`, como os campos de hoje. O cinza do botão desabilitado
+  (`--muted` sobre `--track`) dá cerca de 5:1.
+- Alvos de 44px (`--tap`), fonte mínima de 16px nos campos.
+- Respeitar `prefers-reduced-motion`: abrir/fechar sem animação nesse caso.
+- `tests/e2e/acessibilidade.spec.js` (axe) precisa incluir o painel aberto nas 3 ações, com zero
+  violações; vale também para o "Mais" aberto, que continua como está.
+
+### 8. Testes e o que precisa de decisão do Isaac
+
+**Testes novos** (escrever antes do código e ver falhar): abrir/fechar (botão, Esc, camada
+escura) com retorno do foco; Confirmar cinza → verde; cada uma das 3 ações com sucesso; erro de
+valor maior que o guardado dentro do painel; aviso da reserva exigindo a caixa; "Transferir"
+desabilitado com 1 meta; 320px sem rolagem lateral; axe com o painel aberto.
+
+**Testes existentes que quebram** (hoje respondem a `prompt()`/`confirm()`), e que **só mudam com
+autorização do Isaac**: `meta-guardado.spec.js`, `transferir-meta.spec.js`, `tirar-meta.spec.js`
+e, onde olharem os botões da meta, `visual-metas.spec.js` e `metas-e-dados.spec.js`. A regra
+testada (valores, Guardado, Sobra) continua igual; muda só **como** a pessoa chega lá. Proposta:
+reescrever só a parte de interação (clicar no painel em vez de responder ao `prompt`) e manter as
+conferências de resultado idênticas.
+
+### 9. Ordem sugerida de implementação (uma tarefa por vez, um commit cada)
+
+1. Painel vazio + botão "Movimentar" (abre, fecha, foco), com testes e axe.
+2. Ação "Guardar mais" completa (inclui o "Quer guardar mesmo assim?"), trocando o antigo botão.
+3. Ação "Transferir".
+4. Ação "Tirar" + aviso da reserva.
+5. Remover os 3 botões antigos e o código de `prompt()` das metas; atualizar `CHANGELOG.md`.
+
+### Decisões tomadas nesta etapa
+- Usar `<dialog>` nativo (sem biblioteca, sem build, foco e Esc de graça).
+- As funções de regra não mudam; o painel só as chama.
+- Tela larga e cantos do painel ficam dentro dos tokens existentes.
+
+### Riscos
+- Reescrever 3 a 5 testes existentes (exige sua decisão).
+- Teclado numérico do celular cobrindo o botão.
+- `<dialog>` em navegadores muito antigos; testar no Chromium do projeto e, quando possível, num
+  Safari/iPhone real (ainda nunca testado).
+
+### Pontos a validar
+- Resultado do teste da Etapa 5 (H1 e H2) antes de começar o código.
+
+### Próximo passo recomendado
+Aplicar o teste da Etapa 5. Se o painel passar, o Isaac decide sobre os testes existentes e
+começamos pela tarefa 1 da seção 9.
