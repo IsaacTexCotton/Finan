@@ -432,10 +432,10 @@ escolha. Antes de seguir, conferir se já existe uma classe para texto só de le
 
 - Travar o foco no painel, fechar com Esc e devolver o foco ao "Movimentar" (o `<dialog>` faz o
   travamento e o Esc; o retorno do foco é por código).
-- Contraste: texto 4,5:1 e bordas de controle 3:1. **Divergência do protótipo:** a borda dos
-  campos e das pílulas não selecionadas usou `--border` (#c9d8d6), que não chega a 3:1; na
-  implementação usar `--border-strong`, como os campos de hoje. O cinza do botão desabilitado
-  (`--muted` sobre `--track`) dá cerca de 5:1.
+- Contraste: texto 4,5:1 e bordas de controle 3:1. Campos, lista e pílulas não selecionadas usam
+  `--border-strong` (#5f7c79), como os campos de hoje; `--border` (#c9d8d6) fica só para bordas
+  de cartão, que não são controles. O protótipo tinha usado `--border` nos controles e foi
+  corrigido. O cinza do botão desabilitado (`--muted` sobre `--track`) dá cerca de 5:1.
 - Alvos de 44px (`--tap`), fonte mínima de 16px nos campos.
 - Respeitar `prefers-reduced-motion`: abrir/fechar sem animação nesse caso.
 - `tests/e2e/acessibilidade.spec.js` (axe) precisa incluir o painel aberto nas 3 ações, com zero
