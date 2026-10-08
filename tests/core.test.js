@@ -435,6 +435,40 @@ test('goalProgress usa os depósitos ligados à meta', () => {
   assert.equal(F.goalProgress(meta, '2026-09-29').remaining, 800000); // sem a lista, como antes
 });
 
+test('transferBetweenGoals move dinheiro já guardado de uma meta para outra', () => {
+  const reserva = { id: 'g1', name: 'Reserva de emergência', target: 1000000, saved: 500000, deadline: '' };
+  const viagem = { id: 'g2', name: 'Viagem', target: 600000, saved: 100000, deadline: '' };
+  const r = F.transferBetweenGoals([reserva, viagem], [], 'g1', 'g2', 200000);
+  assert.equal(r.ok, true);
+  const novaReserva = r.goals.find((g) => g.id === 'g1');
+  const novaViagem = r.goals.find((g) => g.id === 'g2');
+  assert.equal(novaReserva.saved, 300000);
+  assert.equal(novaViagem.saved, 300000);
+  // a meta original não é alterada (função pura)
+  assert.equal(reserva.saved, 500000);
+});
+
+test('transferBetweenGoals conta também os depósitos lançados, não só o valor inicial', () => {
+  const a = { id: 'g1', name: 'A', target: 1000000, saved: 50000, deadline: '' };
+  const b = { id: 'g2', name: 'B', target: 1000000, saved: 0, deadline: '' };
+  const depositos = [tx('expense', 'metas', 100000, '2026-09-10', { goalId: 'g1' })];
+  const r = F.transferBetweenGoals([a, b], depositos, 'g1', 'g2', 150000);
+  assert.equal(r.ok, true);
+  assert.equal(r.goals.find((g) => g.id === 'g1').saved, -100000);
+});
+
+test('transferBetweenGoals recusa mover mais do que a meta tem, mesma meta, valor inválido ou meta inexistente', () => {
+  const a = { id: 'g1', name: 'A', target: 1000000, saved: 50000, deadline: '' };
+  const b = { id: 'g2', name: 'B', target: 1000000, saved: 0, deadline: '' };
+  assert.equal(F.transferBetweenGoals([a, b], [], 'g1', 'g2', 60000).ok, false);
+  assert.equal(F.transferBetweenGoals([a, b], [], 'g1', 'g1', 10000).ok, false);
+  assert.equal(F.transferBetweenGoals([a, b], [], 'g1', 'g2', 0).ok, false);
+  assert.equal(F.transferBetweenGoals([a, b], [], 'g1', 'g2', -100).ok, false);
+  assert.equal(F.transferBetweenGoals([a, b], [], 'g1', 'g2', 1.5).ok, false);
+  assert.equal(F.transferBetweenGoals([a, b], [], 'gx', 'g2', 1000).ok, false);
+  assert.equal(F.transferBetweenGoals([a, b], [], 'g1', 'gx', 1000).ok, false);
+});
+
 test('normalizeData preserva o vínculo do lançamento com a meta', () => {
   const base = tx('expense', 'metas', 1000, '2026-09-01');
   const data = F.normalizeData({ transactions: [{ ...base, id: 'a', goalId: 'g1' }, { ...base, id: 'b', goalId: 42 }, { ...base, id: 'c' }] });

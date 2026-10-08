@@ -20,6 +20,9 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ## [Não lançado]
 
+### Adicionado
+- Metas ganham o botão "Transferir": move dinheiro já guardado de uma meta para outra (inclusive da reserva de emergência), sem contar como gasto nem mudar o quanto você guardou no mês
+
 ### Corrigido
 - "Você pode gastar hoje" não mostra mais um valor quando ainda não entrou nenhuma renda no período (por exemplo, com o salário marcado para o dia 7): em vez do número, pede para lançar a renda
 

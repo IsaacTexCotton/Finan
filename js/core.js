@@ -622,6 +622,30 @@
     return updated;
   }
 
+  /**
+   * Move dinheiro já guardado de uma meta para outra (ex.: da reserva para uma meta, ou entre duas
+   * metas), sem criar lançamento e sem afetar Gastos, Guardado ou Sobrou do mês: é só uma
+   * realocação do que já estava guardado. Função pura: devolve uma cópia da lista de metas.
+   */
+  function transferBetweenGoals(goals, transactions, fromId, toId, amount) {
+    if (fromId === toId) return { ok: false, error: 'Escolha duas metas diferentes.' };
+    if (!Number.isInteger(amount) || amount <= 0) return { ok: false, error: 'Informe um valor válido.' };
+    const from = goals.find((g) => g.id === fromId);
+    const to = goals.find((g) => g.id === toId);
+    if (!from || !to) return { ok: false, error: 'Meta não encontrada.' };
+    if (goalSaved(from, transactions) < amount) {
+      return { ok: false, error: `"${from.name}" só tem ${formatBRL(goalSaved(from, transactions))} guardado.` };
+    }
+    return {
+      ok: true,
+      goals: goals.map((g) => {
+        if (g.id === fromId) return { ...g, saved: g.saved - amount };
+        if (g.id === toId) return { ...g, saved: g.saved + amount };
+        return g;
+      }),
+    };
+  }
+
   /** A meta de reserva de emergência é reconhecida pelo nome ("reserva"). */
   function isReserveGoal(goal) {
     return /reserva/i.test(goal.name);
@@ -1074,6 +1098,7 @@
     goalSaved,
     createGoalDeposit,
     goalProgress,
+    transferBetweenGoals,
     recurringForMonth,
     MAX_INSTALLMENTS,
     GOALS_CATEGORY,

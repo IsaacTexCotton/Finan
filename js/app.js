@@ -689,6 +689,7 @@
             <span>${p.done ? 'Meta concluída! 🎉' : `${esc(F.formatPercent(p.ratio))} · faltam ${money(p.remaining)}`}${!p.done && p.monthly ? ` · guarde ${money(p.monthly)}/mês por ${p.monthsLeft} ${p.monthsLeft === 1 ? 'mês' : 'meses'}` : ''}</span>
             <span class="actions">
               ${p.done ? '' : `<button type="button" class="btn small" data-action="deposit-goal" data-id="${esc(g.id)}" aria-label="Guardar valor na meta ${esc(g.name)}">Guardar valor</button>`}
+              ${state.data.goals.length > 1 ? `<button type="button" class="btn small" data-action="transfer-goal" data-id="${esc(g.id)}" aria-label="Transferir valor da meta ${esc(g.name)} para outra meta">Transferir</button>` : ''}
               <button type="button" class="icon-btn" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir meta ${esc(g.name)}">🗑</button>
             </span>
           </div>
@@ -1088,6 +1089,40 @@
     commit(`${F.formatBRL(amount)} adicionados à meta.`);
   }
 
+  /**
+   * Transfere dinheiro já guardado de uma meta para outra (ex.: da reserva para uma meta de
+   * viagem). Não cria lançamento: não é gasto nem receita, e não muda o Guardado nem o Sobrou
+   * do mês, só realoca o que já estava guardado.
+   */
+  function transferGoal(id) {
+    const from = state.data.goals.find((g) => g.id === id);
+    if (!from) return;
+    const outras = state.data.goals.filter((g) => g.id !== id);
+    if (!outras.length) return;
+    const lista = outras.map((g, i) => `${i + 1}. ${g.name}`).join('\n');
+    const escolha = perguntar(`Transferir de "${from.name}" para qual meta? Digite o número:\n${lista}`);
+    if (escolha == null) return;
+    const to = outras[Number(escolha) - 1];
+    if (!to) {
+      toast('Meta inválida.');
+      return;
+    }
+    const input = perguntar(`Quanto transferir de "${from.name}" para "${to.name}"? (R$)`);
+    if (input == null) return;
+    const amount = F.parseAmount(input);
+    if (!(amount > 0)) {
+      toast('Valor inválido.');
+      return;
+    }
+    const r = F.transferBetweenGoals(state.data.goals, state.data.transactions, from.id, to.id, amount);
+    if (!r.ok) {
+      toast(r.error);
+      return;
+    }
+    state.data.goals = r.goals;
+    commit(`${F.formatBRL(amount)} transferidos de "${from.name}" para "${to.name}".`);
+  }
+
   function submitGoal(event) {
     event.preventDefault();
     const form = event.target;
@@ -1249,6 +1284,7 @@
     'create-emergency': (el) => criarReserva(el),
     'update-emergency': (el) => atualizarReserva(el),
     'deposit-goal': (el) => depositGoal(el.dataset.id),
+    'transfer-goal': (el) => transferGoal(el.dataset.id),
     'delete-goal': (el) => excluirMeta(el),
     'export-json': () => exportarBackup(),
     'load-demo': () => carregarExemplo(),

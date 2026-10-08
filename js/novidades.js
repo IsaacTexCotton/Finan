@@ -6,6 +6,12 @@ window.FINAN_NOVIDADES = [
     "data": null,
     "secoes": [
       {
+        "nome": "Adicionado",
+        "itens": [
+          "Metas ganham o botão \"Transferir\": move dinheiro já guardado de uma meta para outra (inclusive da reserva de emergência), sem contar como gasto nem mudar o quanto você guardou no mês"
+        ]
+      },
+      {
         "nome": "Corrigido",
         "itens": [
           "\"Você pode gastar hoje\" não mostra mais um valor quando ainda não entrou nenhuma renda no período (por exemplo, com o salário marcado para o dia 7): em vez do número, pede para lançar a renda"
