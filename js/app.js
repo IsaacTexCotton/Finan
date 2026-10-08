@@ -526,7 +526,7 @@
             <span class="tx-desc">${esc(t.description || cat.name)}${t.recurring ? ' <span class="tag">fixo</span>' : ''}${t.installment ? ` <span class="tag">${esc(F.installmentLabel(t))}</span>` : ''}</span>
             <span class="tx-cat muted">${esc(cat.name)}</span>
           </span>
-          <span class="tx-amount ${t.type === 'income' ? 'positive' : ''}">${t.type === 'income' ? '+' : '−'} ${money(t.amount)}</span>
+          <span class="tx-amount ${t.type === 'income' || t.withdrawal ? 'positive' : ''}">${t.type === 'income' || t.withdrawal ? '+' : '−'} ${money(t.amount)}</span>
           <span class="tx-actions">
             <button type="button" class="icon-btn" data-action="edit-tx" data-id="${esc(t.id)}" aria-label="Editar ${nome}">✎</button>
             <button type="button" class="icon-btn" data-action="delete-tx" data-id="${esc(t.id)}" aria-label="Excluir ${nome}">🗑</button>
@@ -690,6 +690,7 @@
             <span class="actions">
               ${p.done ? '' : `<button type="button" class="btn small" data-action="deposit-goal" data-id="${esc(g.id)}" aria-label="Guardar valor na meta ${esc(g.name)}">Guardar valor</button>`}
               ${state.data.goals.length > 1 ? `<button type="button" class="btn small" data-action="transfer-goal" data-id="${esc(g.id)}" aria-label="Transferir valor da meta ${esc(g.name)} para outra meta">Transferir</button>` : ''}
+              ${F.goalSaved(g, state.data.transactions) > 0 ? `<button type="button" class="btn small" data-action="withdraw-goal" data-id="${esc(g.id)}" aria-label="Tirar valor da meta ${esc(g.name)} e devolver à sobra do mês">Tirar</button>` : ''}
               <button type="button" class="icon-btn" data-action="delete-goal" data-id="${esc(g.id)}" aria-label="Excluir meta ${esc(g.name)}">🗑</button>
             </span>
           </div>
@@ -1123,6 +1124,35 @@
     commit(`${F.formatBRL(amount)} transferidos de "${from.name}" para "${to.name}".`);
   }
 
+  /**
+   * Tira dinheiro já guardado numa meta e devolve para a Sobra do mês (o espelho de "Guardar
+   * valor"): não é gasto, e baixa o Guardado do mês de hoje. Avisa antes de esvaziar a reserva
+   * de emergência abaixo do valor ideal, mas não bloqueia: a pessoa decide.
+   */
+  function withdrawGoal(id) {
+    const goal = state.data.goals.find((g) => g.id === id);
+    if (!goal) return;
+    const input = perguntar(`Quanto tirar de "${goal.name}" e devolver para a sobra do mês? (R$)`);
+    if (input == null) return;
+    const amount = F.parseAmount(input);
+    if (!(amount > 0)) {
+      toast('Valor inválido.');
+      return;
+    }
+    const r = F.withdrawFromGoal(goal, state.data.transactions, amount, F.todayISO(), newId());
+    if (!r.ok) {
+      toast(r.error);
+      return;
+    }
+    const restante = F.goalSaved(goal, state.data.transactions) - amount;
+    if (F.isReserveGoal(goal) && restante < goal.target) {
+      const pergunta = `Isso deixa sua reserva em ${F.formatBRL(restante)}, abaixo do ideal de ${F.formatBRL(goal.target)}. Tirar mesmo assim?`;
+      if (!confirmar(pergunta)) return;
+    }
+    state.data.transactions.push(r.transaction);
+    commit(`${F.formatBRL(amount)} tirados de "${goal.name}" e somados à sobra do mês.`);
+  }
+
   function submitGoal(event) {
     event.preventDefault();
     const form = event.target;
@@ -1285,6 +1315,7 @@
     'update-emergency': (el) => atualizarReserva(el),
     'deposit-goal': (el) => depositGoal(el.dataset.id),
     'transfer-goal': (el) => transferGoal(el.dataset.id),
+    'withdraw-goal': (el) => withdrawGoal(el.dataset.id),
     'delete-goal': (el) => excluirMeta(el),
     'export-json': () => exportarBackup(),
     'load-demo': () => carregarExemplo(),

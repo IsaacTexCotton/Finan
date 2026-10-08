@@ -8,7 +8,8 @@ window.FINAN_NOVIDADES = [
       {
         "nome": "Adicionado",
         "itens": [
-          "Metas ganham o botão \"Transferir\": move dinheiro já guardado de uma meta para outra (inclusive da reserva de emergência), sem contar como gasto nem mudar o quanto você guardou no mês"
+          "Metas ganham o botão \"Transferir\": move dinheiro já guardado de uma meta para outra (inclusive da reserva de emergência), sem contar como gasto nem mudar o quanto você guardou no mês",
+          "Metas ganham o botão \"Tirar\": devolve dinheiro já guardado numa meta (ou na reserva de emergência) para a sobra do mês, para usar em outra coisa. Avisa antes de deixar a reserva abaixo do valor ideal"
         ]
       },
       {

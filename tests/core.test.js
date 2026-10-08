@@ -426,6 +426,62 @@ test('createGoalDeposit cria um lançamento do Futuro ligado à meta', () => {
   assert.equal(s.balance, 470000);
 });
 
+test('withdrawFromGoal cria uma retirada que desfaz um depósito: some da meta, some do Guardado, volta para a Sobra', () => {
+  const viagem = { id: 'g1', name: 'Viagem de férias', target: 600000, saved: 120000, deadline: '' };
+  const r = F.withdrawFromGoal(viagem, [], 50000, '2026-09-15', 'novo-id');
+  assert.equal(r.ok, true);
+  const saida = r.transaction;
+  assert.equal(saida.id, 'novo-id');
+  assert.equal(saida.type, 'expense');
+  assert.equal(saida.amount, 50000);
+  assert.equal(saida.date, '2026-09-15');
+  assert.equal(saida.goalId, 'g1');
+  assert.equal(saida.categoryId, 'metas');
+  assert.equal(saida.description, 'Retirada: Viagem de férias');
+  assert.equal(saida.withdrawal, true);
+
+  const reserva = { id: 'g2', name: 'Reserva de emergência', target: 1800000, saved: 450000, deadline: '' };
+  assert.equal(F.withdrawFromGoal(reserva, [], 10000, '2026-09-15', 'x').transaction.categoryId, 'reserva');
+
+  // some da meta...
+  assert.equal(F.goalSaved(viagem, [saida]), 70000); // 120.000 - 50.000
+
+  // ...e some do Guardado do mês, voltando para a Sobra (o espelho do depósito)
+  const s = F.summarize([tx('income', 'salario', 500000, '2026-09-01'), saida], cats);
+  assert.equal(s.saved, -50000);
+  assert.equal(s.consumption, 0);
+  assert.equal(s.balance, 550000); // 500.000 - (-50.000)
+});
+
+test('withdrawFromGoal recusa tirar mais do que a meta tem, valor inválido, zero ou meta inexistente', () => {
+  const viagem = { id: 'g1', name: 'Viagem', target: 600000, saved: 120000, deadline: '' };
+  assert.equal(F.withdrawFromGoal(viagem, [], 120001, '2026-09-15', 'x').ok, false);
+  assert.equal(F.withdrawFromGoal(viagem, [], 0, '2026-09-15', 'x').ok, false);
+  assert.equal(F.withdrawFromGoal(viagem, [], -100, '2026-09-15', 'x').ok, false);
+  assert.equal(F.withdrawFromGoal(viagem, [], 1.5, '2026-09-15', 'x').ok, false);
+  assert.equal(F.withdrawFromGoal(null, [], 100, '2026-09-15', 'x').ok, false);
+  // conta os depósitos já feitos, não só o valor inicial
+  const dep = tx('expense', 'metas', 30000, '2026-09-10', { goalId: 'g1' });
+  assert.equal(F.withdrawFromGoal(viagem, [dep], 150000, '2026-09-15', 'x').ok, true);
+});
+
+test('normalizeData preserva a marca de retirada (withdrawal) do lançamento', () => {
+  const base = tx('expense', 'metas', 1000, '2026-09-01', { goalId: 'g1' });
+  const data = F.normalizeData({ transactions: [{ ...base, id: 'a', withdrawal: true }, { ...base, id: 'b' }, { ...base, id: 'c', withdrawal: 'sim' }] });
+  assert.equal(data.transactions[0].withdrawal, true);
+  assert.equal(data.transactions[1].withdrawal, undefined);
+  assert.equal(data.transactions[2].withdrawal, undefined);
+});
+
+test('toCSV mostra a retirada como "Retirada", com sinal positivo (ela some do Gasto futuro, não é gasto)', () => {
+  const saida = { ...tx('expense', 'metas', 5000, '2026-09-10', { goalId: 'g1', withdrawal: true }) };
+  const csv = F.toCSV([saida], cats);
+  const linha = csv.split('\n')[1];
+  assert.match(linha, /Retirada/);
+  assert.match(linha, /50,00/);
+  assert.doesNotMatch(linha, /-50,00/);
+});
+
 test('goalProgress usa os depósitos ligados à meta', () => {
   const meta = { id: 'g1', name: 'Viagem', target: 1000000, saved: 200000, deadline: '' };
   const lista = [tx('expense', 'metas', 300000, '2026-09-10', { goalId: 'g1' })];
