@@ -49,6 +49,10 @@
 
 - **Agentes e subagentes usam o Haiku 5.5** (decisão do Isaac, 09/10/2026): `.claude/settings.json` define
   `CLAUDE_CODE_SUBAGENT_MODEL=claude-haiku-5-5`. A conversa principal continua no modelo que o Isaac escolher.
+  **Exceção** (decisão do Isaac, 09/10/2026): o ajudante da **revisão de segurança** (`/security-review`) e o das
+  **revisões de mudanças grandes** (contas do núcleo, `normalizeData`, várias telas de uma vez) usam o **Opus 5.5**,
+  escolhido na hora de chamar o ajudante (`model: "opus"`). O Haiku é mais fraco em achar falhas escondidas, e um
+  "nenhum problema" errado ali passa sem ninguém notar.
 
 ## Antes de cada commit
 Só faça o commit quando todas as respostas forem "sim":
