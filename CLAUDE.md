@@ -47,6 +47,9 @@
   direto no `main` também o que tem risco, depois do `npm run check`; mesmo assim a IA roda o `/security-review`
   antes de empurrar o que mexe nessas áreas e relata o resultado.
 
+- **Agentes e subagentes usam o Haiku 5.5** (decisão do Isaac, 09/10/2026): `.claude/settings.json` define
+  `CLAUDE_CODE_SUBAGENT_MODEL=claude-haiku-5-5`. A conversa principal continua no modelo que o Isaac escolher.
+
 ## Antes de cada commit
 Só faça o commit quando todas as respostas forem "sim":
 - [ ] `npm run check` passou (código de saída 0)?
