@@ -116,3 +116,46 @@ test.describe('acessibilidade e tela estreita', () => {
     }
   });
 });
+
+// O Tostão (a moeda do logo que ganhou vida) aparece em cada passo, numa pose própria. É enfeite: o texto
+// já diz tudo, então o leitor de tela pula o desenho. Decisão do Isaac, 09/10/2026 (Tostão v4, cor aprovada).
+test.describe('o Tostão em cada passo', () => {
+  const POSES = ['acenando', 'cadeado', 'joinha'];
+
+  for (const [i, pose] of POSES.entries()) {
+    test(`o passo ${i + 1} mostra o Tostão ${pose}, escondido do leitor de tela`, async ({ page }) => {
+      for (let n = 0; n < i; n++) await onb(page).getByRole('button', { name: 'Próximo' }).click();
+      const tostao = onb(page).locator('svg.tostao');
+      await expect(tostao).toHaveCount(1);
+      await expect(tostao).toBeVisible();
+      await expect(tostao).toHaveAttribute('data-pose', pose);
+      await expect(tostao).toHaveAttribute('aria-hidden', 'true');
+    });
+  }
+
+  test('a moeda do Tostão tem a cor de conquista do logo (--conquista)', async ({ page }) => {
+    const cor = await onb(page).locator('svg.tostao .t-moeda').first().evaluate((el) => getComputedStyle(el).fill);
+    expect(cor).toBe('rgb(95, 211, 154)');
+  });
+
+  test('em 360x640 o título e o botão Próximo do passo 1 aparecem sem rolar', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+    await page.reload();
+    await expect(onb(page).getByRole('heading', { name: 'Seu dinheiro em três baldes simples' })).toBeInViewport({ ratio: 1 });
+    await expect(onb(page).getByRole('button', { name: 'Próximo' })).toBeInViewport({ ratio: 1 });
+  });
+});
+
+test('em 360x640 o botão "+ Lançar" não cobre o Próximo dos passos 1 e 2 (o Tostão não empurra o botão para baixo)', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.reload();
+  const fab = await page.locator('.fab').boundingBox();
+  for (const passo of [1, 2]) {
+    await expect(onb(page)).toContainText(`Passo ${passo} de 3`);
+    const proximo = onb(page).getByRole('button', { name: 'Próximo' });
+    const caixa = await proximo.boundingBox();
+    const sobrepoe = caixa.x < fab.x + fab.width && fab.x < caixa.x + caixa.width && caixa.y < fab.y + fab.height && fab.y < caixa.y + caixa.height;
+    expect(sobrepoe, `passo ${passo}`).toBe(false);
+    await proximo.click();
+  }
+});

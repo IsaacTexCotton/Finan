@@ -1705,29 +1705,52 @@ dialog#mover-meta::backdrop {
   font-weight: 700;
 }
 
+/* O Tostão: a moeda do logo (--conquista) que ganhou vida. Desenho v4, decisão do Isaac (09/10/2026). */
 .onb-icone {
-  width: 6rem;
-  height: 6rem;
+  width: 5.8rem;
+  height: 6rem; /* a mesma altura do ícone antigo: o "+ Lançar" não pode cobrir o "Próximo" */
 }
 
-.onb-icone .a { fill: var(--primary); }
-.onb-icone .b { fill: var(--ok-fill); }
-.onb-icone .c { fill: var(--primary-strong); }
-.onb-icone .d { fill: var(--on-primary); }
+.tostao .t-moeda { fill: var(--conquista); }
+.tostao .t-borda { fill: var(--ok-fill); }
+.tostao .t-cheio { fill: var(--primary-strong); }
+.tostao .t-cadeado { fill: var(--primary); }
+.tostao .t-brilho { fill: var(--on-primary); }
+.tostao .t-sombra { fill: var(--primary-strong); opacity: 0.12; }
+.tostao .t-bochecha { fill: var(--ok-fill); opacity: 0.35; }
 
-.onb-icone .a-traco {
+.tostao .t-olho {
+  fill: var(--on-primary);
+  stroke: var(--primary-strong);
+  stroke-width: 2.5;
+}
+
+.tostao .t-serrilha,
+.tostao .t-anel,
+.tostao .t-luz,
+.tostao .t-aceno,
+.tostao .t-fino,
+.tostao .t-medio,
+.tostao .t-membro,
+.tostao .t-alca,
+.tostao .t-polegar,
+.tostao .t-fechadura {
   fill: none;
-  stroke: var(--primary);
-  stroke-width: 7;
+  stroke: var(--primary-strong);
   stroke-linecap: round;
 }
 
-.onb-icone .d-traco {
-  fill: none;
-  stroke: var(--on-primary);
-  stroke-width: 7;
-  stroke-linecap: round;
-}
+.tostao .t-serrilha { stroke: var(--primary); stroke-width: 3; stroke-linecap: butt; stroke-dasharray: 1.2 2.2; }
+.tostao .t-anel { stroke: var(--ok-fill); stroke-width: 2.4; stroke-dasharray: 0 4.87; }
+.tostao .t-luz { stroke: var(--on-primary); stroke-width: 4; opacity: 0.85; }
+.tostao .t-aceno { stroke: var(--ok-fill); stroke-width: 3; }
+.tostao .t-fino { stroke-width: 3; }
+.tostao .t-medio { stroke-width: 3.5; }
+.tostao .t-membro { stroke-width: 5; }
+.tostao .t-alca,
+.tostao .t-polegar { stroke-width: 4.5; }
+.tostao .t-fechadura { stroke: var(--conquista); stroke-width: 3; }
+.tostao .t-boca { stroke: var(--primary-strong); stroke-width: 2.5; stroke-linejoin: round; }
 
 .onb-pontos {
   display: flex;

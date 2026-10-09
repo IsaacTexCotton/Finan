@@ -275,9 +275,16 @@ Só faça o commit quando todas as respostas forem "sim":
   ícones" (opção F). A marca está em `icons/icon.svg` (ícones do app, gerados por `node tools/gerar-icones.js`,
   com o símbolo dentro do círculo seguro de 40% para o Android recortar) e no topo (`h1.brand`, `svg.marca`).
   No celular só a marca aparece; o nome "Finan" escrito, a partir de 30rem (`.brand-nome`).
-- `--conquista` **não é cor de estado**: só a moeda do logo e, no futuro, metas atingidas. Contraste 3:1 sobre
+- `--conquista` **não é cor de estado**: só a moeda do logo, o **Tostão** (que é essa moeda; decisão do Isaac,
+  09/10/2026) e, no futuro, metas atingidas. Contraste 3:1 sobre
   `--primary-strong` conferido em `tests/css.test.js`. A `theme-color` do site e do manifesto é a mesma cor do
   topo (`--primary-strong`, #084c45), conferido em `tests/identidade.test.js`.
+- **Tostão** (decisão do Isaac, 09/10/2026: desenho v4, nome Tostão, cor aprovada): a moeda verde do logo que virou
+  personagem (Artifact de Design "Finan — Identidade visual e ícones", artboard Tostão v4). Está nos 3 passos do
+  onboarding (`tostaoSvg`, poses `acenando`, `cadeado`, `joinha`), é enfeite (`aria-hidden`) e pinta-se só pelas
+  classes `.t-*` do CSS. Regras: sempre moeda (borda serrilhada à direita, anel de pontinhos); olhos e sobrancelhas
+  atuam; nunca bravo nem culpando; brilho e pulo só em conquista; aparece em momentos, não em toda tela. O desenho
+  tem a altura do ícone antigo para o "+ Lançar" não cobrir o "Próximo" (`tests/e2e/onboarding.spec.js`).
 - **Ícones**: conjunto **Lucide** (ISC), copiado para dentro do projeto, sem CDN. Ainda em andamento: ver
   "Identidade visual e ícones" no `BACKLOG.md` (as categorias e as ações ainda usam emoji).
 - Testes em `tests/identidade.test.js` e `tests/e2e/identidade.spec.js` (o PNG do ícone é lido pixel a pixel:

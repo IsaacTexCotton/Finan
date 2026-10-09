@@ -193,7 +193,12 @@ conjunto de ícones **Lucide** (ISC). Passos, um commit cada:
       `settings.onboardingVisto` gravado nos dados (decisões do Isaac: botões de lançar e de exemplo só no passo 3,
       e gravar o "visto"). Os testes que clicavam em "Ver com dados de exemplo" na primeira tela passaram a usar o
       ajudante `carregarExemplo` (só o começo mudou)
-- [ ] Sugestão: o passo 1 ainda não mostra os três baldes com os nomes e cores do Painel; o ícone é provisório
+- [x] Tostão nos 3 passos (acenando, abraçando o cadeado, joinha), no lugar dos ícones provisórios (09/10/2026, decisão
+      do Isaac: desenho v4, nome Tostão, cor de conquista aprovada)
+- [ ] Sugestão: o passo 1 ainda não mostra os três baldes com os nomes e cores do Painel
+- [ ] Sugestão: as outras poses do Tostão v4 (tela vazia, meta atingida, mês apertado) em outros momentos do app
+- [ ] Defeito antigo (visto em 360x640): no passo 3, o "+ Lançar" flutuante cobre parte do botão "Ver com dados de
+      exemplo"; o botão continua tocável pela esquerda. Ideia: esconder o "+ Lançar" enquanto o onboarding está na tela
 - [ ] Sugestão: depois de testar com pessoas (roteiro da Etapa 5), rever o texto dos 3 passos
 
 ## Transferir entre metas e a sobra (08/10/2026)

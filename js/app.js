@@ -380,21 +380,70 @@
   // 3 passos (baldes, privacidade, primeiro lançamento), só enquanto não há lançamentos. O passo vive na
   // memória; "onboardingVisto" (nos dados) grava que a pessoa já passou por aqui. Especificação: docs/ux-estrategia.md.
 
+  // O Tostão (a moeda do logo que ganhou vida; desenho v4 no Artifact "Finan — Identidade visual e ícones").
+  // Só formas fixas, sem texto da pessoa; as cores vêm das classes .t-* do CSS (variáveis do :root).
+  const TOSTAO_MOEDA = `
+    <circle class="t-borda" cx="63" cy="56" r="36"/>
+    <circle class="t-serrilha" cx="63" cy="56" r="34.5"/>
+    <circle class="t-moeda" cx="60" cy="56" r="36"/>
+    <circle class="t-anel" cx="60" cy="56" r="31"/>
+    <path class="t-luz" d="M33 46A29 29 0 0 1 45.5 31"/>
+    <ellipse class="t-bochecha" cx="37" cy="71" rx="4.5" ry="2.6"/>
+    <ellipse class="t-bochecha" cx="83" cy="71" rx="4.5" ry="2.6"/>`;
+  const TOSTAO_SOMBRA = '<ellipse class="t-sombra" cx="60" cy="124" rx="26" ry="3"/>';
+  const TOSTAO_PERNAS = `<path class="t-membro" d="M52 88v24M68 88v24"/>
+    <ellipse class="t-cheio" cx="48" cy="116" rx="8.5" ry="4.5"/><ellipse class="t-cheio" cx="72" cy="116" rx="8.5" ry="4.5"/>`;
+  const tostaoOlho = (x) => `<ellipse class="t-olho" cx="${x}" cy="58" rx="7" ry="8.5"/>
+    <circle class="t-cheio" cx="${x + 1.5}" cy="59.5" r="4"/><circle class="t-brilho" cx="${x + 3}" cy="57.5" r="1.3"/>`;
+
+  const TOSTAO_POSES = {
+    acenando: `${TOSTAO_SOMBRA}${TOSTAO_PERNAS}
+      <path class="t-membro" d="M27 68Q16 80 18 92M94 62Q110 52 108 31"/>
+      <circle class="t-cheio" cx="18" cy="93" r="4.5"/><circle class="t-cheio" cx="108" cy="29" r="4.5"/>
+      <path class="t-aceno" d="M115 20q4-4 2-9M101 18q-1-5 2-8"/>
+      ${TOSTAO_MOEDA}${tostaoOlho(48)}${tostaoOlho(72)}
+      <path class="t-fino" d="M41 45q7-5 14-1M65 44q7-4 14 1"/>
+      <path class="t-cheio t-boca" d="M51 71q9 10 18 0z"/>`,
+    cadeado: `<ellipse class="t-sombra" cx="60" cy="126" rx="26" ry="3"/>
+      <path class="t-membro" d="M52 88v28M68 88v28"/>
+      <ellipse class="t-cheio" cx="46" cy="120" rx="8.5" ry="4.5"/><ellipse class="t-cheio" cx="74" cy="120" rx="8.5" ry="4.5"/>
+      ${TOSTAO_MOEDA}
+      <path class="t-medio" d="M41 58q7 6 14 0M65 58q7 6 14 0"/>
+      <path class="t-fino" d="M41 47q7-3 14 0M65 47q7-3 14 0M54 71q6 5 12 0"/>
+      <path class="t-alca" d="M52 92v-4a8 8 0 0 1 16 0v4"/>
+      <rect class="t-cadeado" x="42" y="92" width="36" height="24" rx="6"/>
+      <circle class="t-moeda" cx="60" cy="102" r="3.5"/><path class="t-fechadura" d="M60 103v6"/>
+      <path class="t-membro" d="M27 70Q22 98 41 104M93 70Q98 98 79 104"/>
+      <circle class="t-cheio" cx="42" cy="104" r="4.5"/><circle class="t-cheio" cx="78" cy="104" r="4.5"/>`,
+    joinha: `${TOSTAO_SOMBRA}${TOSTAO_PERNAS}
+      <path class="t-membro" d="M27 66Q12 74 26 84M94 66Q110 62 108 46"/>
+      <circle class="t-cheio" cx="27" cy="84" r="4.5"/><circle class="t-cheio" cx="108" cy="44" r="5.5"/>
+      <path class="t-polegar" d="M108 39v-7"/>
+      ${TOSTAO_MOEDA}${tostaoOlho(48)}
+      <path class="t-medio" d="M65 59q7-6 14 0M50 70q11 10 20-2"/>
+      <path class="t-fino" d="M41 43q7-5 14-1M65 49q7-2 14 0"/>`,
+  };
+
+  /** Desenho do Tostão numa pose (enfeite: o leitor de tela pula). */
+  function tostaoSvg(pose) {
+    return `<svg class="onb-icone tostao" data-pose="${pose}" viewBox="0 6 120 124" aria-hidden="true" focusable="false">${TOSTAO_POSES[pose]}</svg>`;
+  }
+
   const ONBOARDING = [
     {
       titulo: 'Seu dinheiro em três baldes simples',
       texto: 'Essenciais, Estilo de vida e Futuro. Cada real que entra já sabe para onde vai.',
-      icone: '<rect class="a" x="4" y="4" width="26" height="88" rx="12"/><rect class="b" x="35" y="4" width="26" height="88" rx="12"/><rect class="c" x="66" y="4" width="26" height="88" rx="12"/>',
+      pose: 'acenando',
     },
     {
       titulo: 'Seus dados nunca saem do seu celular',
       texto: 'Sem servidor, sem conta, sem nuvem. Só você vê o que você lança.',
-      icone: '<path class="a-traco" d="M30 38V26a18 18 0 0 1 36 0v12"/><rect class="a" x="18" y="38" width="60" height="46" rx="10"/><circle class="d" cx="48" cy="58" r="7"/><rect class="d" x="45" y="58" width="6" height="14" rx="3"/>',
+      pose: 'cadeado',
     },
     {
       titulo: 'Vamos fazer seu primeiro lançamento?',
       texto: 'Leva menos de 10 segundos. Comece pelo que você tiver à mão: um gasto ou sua renda.',
-      icone: '<circle class="b" cx="48" cy="48" r="44"/><path class="d-traco" d="M48 28v40M28 48h40"/>',
+      pose: 'joinha',
     },
   ];
 
@@ -413,7 +462,7 @@
           <span class="onb-passo">Passo ${passo} de ${ONBOARDING.length}</span>
           <button type="button" class="btn small" data-action="onboarding-pular">Pular</button>
         </div>
-        <svg class="onb-icone" viewBox="0 0 96 96" aria-hidden="true">${p.icone}</svg>
+        ${tostaoSvg(p.pose)}
         ${passo === 1 ? '<p class="onb-boasvindas">Bem-vindo ao Finan</p>' : ''}
         <h2 id="onb-titulo" tabindex="-1">${esc(p.titulo)}</h2>
         <p>${esc(p.texto)}</p>
