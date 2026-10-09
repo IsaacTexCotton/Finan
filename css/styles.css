@@ -25,6 +25,9 @@
   --on-primary: #ffffff;
   --primary-soft: #e0f1ef;
 
+  /* Cor de conquista: só a moeda do logo e, no futuro, metas atingidas. Não é uma cor de estado. */
+  --conquista: #5fd39a;
+
   /* Foco do teclado e trilho das barras */
   --focus: #174ea6;
   --track: #d3e0de;
@@ -202,16 +205,37 @@ main:focus-visible {
 }
 
 .brand {
-  /* título principal da página: no celular fica escondido só da vista, não do leitor de tela */
+  /* título principal da página: a marca (F com moeda) fica sempre; o nome escrito só em telas largas */
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  white-space: nowrap;
+}
+
+.marca {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.marca .f {
+  fill: var(--on-primary);
+}
+
+.marca .moeda {
+  fill: var(--conquista);
+}
+
+/* no celular o nome fica escondido só da vista, não do leitor de tela */
+.brand-nome {
   position: absolute;
   width: 1px;
   height: 1px;
-  margin: -1px;
   padding: 0;
   overflow: hidden;
-  clip: rect(0 0 0 0);
-  font-size: var(--fs-body);
-  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 .month-picker {
@@ -353,13 +377,12 @@ main {
 }
 
 @media (min-width: 30rem) {
-  .brand {
+  .brand-nome {
     position: static;
     width: auto;
     height: auto;
-    margin: 0;
     overflow: visible;
-    clip: auto;
+    clip-path: none;
   }
 }
 

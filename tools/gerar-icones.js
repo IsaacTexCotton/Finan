@@ -9,7 +9,7 @@ const svg = fs.readFileSync(path.join(pasta, 'icon.svg'), 'utf8');
 const ICONES = [
   ['icon-192.png', 192],
   ['icon-512.png', 512],
-  ['icon-maskable-512.png', 512], // a letra já fica na área segura central: o Android pode recortar as bordas
+  ['icon-maskable-512.png', 512], // o símbolo já fica na área segura central: o Android pode recortar as bordas
   ['apple-touch-icon.png', 180],
 ];
 

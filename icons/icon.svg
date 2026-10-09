@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" fill="#084c45"/>
-  <g fill="#ffffff">
-    <rect x="176" y="140" width="48" height="232"/>
-    <rect x="176" y="140" width="176" height="48"/>
-    <rect x="176" y="232" width="128" height="44"/>
+  <!-- Símbolo "F com moeda" no centro (58% do lado): cabe no círculo seguro de 40% que o Android preserva ao recortar -->
+  <g transform="translate(106.67 106.67) scale(3.111)">
+    <rect x="18" y="6" width="26" height="84" rx="13" fill="#ffffff"/>
+    <rect x="18" y="6" width="62" height="26" rx="13" fill="#ffffff"/>
+    <circle cx="64" cy="62" r="15" fill="#5fd39a"/>
   </g>
 </svg>

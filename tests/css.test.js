@@ -47,6 +47,7 @@ const PARES = [
   ['on-primary', 'primary', 4.5], ['on-primary', 'primary-strong', 4.5],
   ['primary', 'surface', 4.5], ['primary', 'bg', 4.5],
   ['primary-strong', 'primary-soft', 4.5],
+  ['conquista', 'primary-strong', 3], // a moeda do logo sobre o topo e o ícone do app
   ['ok-fg', 'ok-bg', 4.5], ['warn-fg', 'warn-bg', 4.5], ['danger-fg', 'danger-bg', 4.5], ['info-fg', 'info-bg', 4.5],
   ['ok-fg', 'surface', 4.5], ['danger-fg', 'surface', 4.5],
   ['border-strong', 'surface', 3], ['border-strong', 'bg', 3],

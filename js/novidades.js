@@ -15,6 +15,7 @@ window.FINAN_NOVIDADES = [
       {
         "nome": "Alterado",
         "itens": [
+          "O Finan ganhou identidade própria: um novo ícone (um F com uma moeda verde-clara) no celular e na aba do navegador, e a mesma marca no topo do app no lugar do 💰. A barra do navegador agora combina com o topo",
           "Guardar dinheiro numa meta deixou de abrir a janelinha cinza do navegador: agora tudo acontece num painel na própria tela, com o botão \"Confirmar\" só liberando quando o valor está certo, e os avisos aparecendo ali dentro"
         ]
       },

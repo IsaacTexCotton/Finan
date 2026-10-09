@@ -266,6 +266,20 @@ Só faça o commit quando todas as respostas forem "sim":
 - Ao mudar o visual ou o comportamento de uma tela, rodar `npm run test:e2e` (navegador de
   celular de verdade) e olhar a captura.
 
+# Identidade visual (decisão do Isaac, 09/10/2026)
+- **Símbolo "F com moeda"**: um F de traço grosso e cantos totalmente redondos cujo braço do meio é uma moeda
+  verde-clara (`--conquista`, #5fd39a). Fonte do desenho: Artifact de Design "Finan — Identidade visual e
+  ícones" (opção F). A marca está em `icons/icon.svg` (ícones do app, gerados por `node tools/gerar-icones.js`,
+  com o símbolo dentro do círculo seguro de 40% para o Android recortar) e no topo (`h1.brand`, `svg.marca`).
+  No celular só a marca aparece; o nome "Finan" escrito, a partir de 30rem (`.brand-nome`).
+- `--conquista` **não é cor de estado**: só a moeda do logo e, no futuro, metas atingidas. Contraste 3:1 sobre
+  `--primary-strong` conferido em `tests/css.test.js`. A `theme-color` do site e do manifesto é a mesma cor do
+  topo (`--primary-strong`, #084c45), conferido em `tests/identidade.test.js`.
+- **Ícones**: conjunto **Lucide** (ISC), copiado para dentro do projeto, sem CDN. Ainda em andamento: ver
+  "Identidade visual e ícones" no `BACKLOG.md` (as categorias e as ações ainda usam emoji).
+- Testes em `tests/identidade.test.js` e `tests/e2e/identidade.spec.js` (o PNG do ícone é lido pixel a pixel:
+  fora do círculo seguro só pode haver o fundo).
+
 # App instalável (PWA)
 - O Finan é instalável e abre sem internet (decisão do Isaac, 01/10/2026: entrega por link de
   acesso, instalado no celular). `manifest.webmanifest`, `sw.js` e `icons/` (PNG gerados de

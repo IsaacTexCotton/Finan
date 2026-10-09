@@ -175,6 +175,19 @@ por testes) e as 5 funções do núcleo sem teste direto (triviais).
 - Categorias personalizadas pela interface
 - Funcionar offline como app instalável (PWA)
 
+## Identidade visual e ícones (09/10/2026)
+Decisão do Isaac: símbolo **F com moeda** (opção F do Design; a 1ª rodada, A–C, foi recusada por genérica) e
+conjunto de ícones **Lucide** (ISC). Passos, um commit cada:
+- [x] 1. Ícone do app, `theme-color` e logo do topo (a marca aparece também no celular; o nome escrito, só em tela
+      larga). Nova cor `--conquista` (#5fd39a), só para a moeda do logo e, no futuro, metas atingidas
+- [ ] 2. `js/icones.js` com os SVG do Lucide (cópia dentro do projeto, sem CDN) e as ações: lixeira, lápis, mais,
+      meta, reserva. Entra no `sw.js` e guarda o aviso da licença ISC
+- [ ] 3. Ícones das categorias no lugar dos emojis, com migração dos dados antigos em `normalizeCategories`
+      (área de risco: vai com `/security-review`); nas listas `<option>` fica só o nome
+- [ ] 4. Tirar os emojis restantes dos textos (👋 🎉 💪)
+- [ ] Sugestão: usar `--conquista` quando uma meta for atingida (hoje só aparece no logo)
+- [ ] Sugestão: atualizar o Design System do Finan (Artifact) com a cor de conquista e o novo símbolo
+
 ## Onboarding (09/10/2026)
 - [x] Onboarding de 3 passos na primeira abertura (baldes, privacidade, primeiro lançamento), com "Pular" e
       `settings.onboardingVisto` gravado nos dados (decisões do Isaac: botões de lançar e de exemplo só no passo 3,

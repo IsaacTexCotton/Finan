@@ -480,3 +480,12 @@ conferências de resultado idênticas.
 ### Próximo passo recomendado
 Aplicar o teste da Etapa 5. Se o painel passar, o Isaac decide sobre os testes existentes e
 começamos pela tarefa 1 da seção 9.
+
+## Identidade visual: símbolo escolhido (09/10/2026)
+
+- 1ª rodada (A: três baldes, B: monograma F, C: balde enchendo): **recusada pelo Isaac por parecer genérica**.
+- 2ª rodada (D: "fi" com moeda, E: fatias 50/30/20, F: F com moeda): **escolhida a F**. O F tem o braço do
+  meio trocado por uma moeda verde-clara, o dinheiro que se guarda primeiro.
+- Cor de conquista `--conquista` #5fd39a, só no logo (e, depois, em metas atingidas). Conjunto de ícones: Lucide (ISC).
+- Implementado: ícone do app, `theme-color` e logo do topo. Falta (ver `BACKLOG.md`): ícones das categorias e das
+  ações, e tirar os emojis dos textos.
