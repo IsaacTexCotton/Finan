@@ -23,6 +23,8 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 ### Adicionado
 - Cada meta ganha o botão "Movimentar", que abre um painel com três opções: guardar mais, transferir para outra meta (inclusive da reserva de emergência, sem contar como gasto nem mudar o quanto você guardou no mês) e tirar o dinheiro da meta para a sobra do mês. Avisa antes de deixar a reserva abaixo do valor ideal
 
+- Quem abre o app pela primeira vez vê 3 passos curtos antes de começar: os três baldes, a garantia de que os dados ficam só no celular e o convite para lançar o primeiro gasto ou a renda (ou ver com dados de exemplo). Dá para pular a qualquer momento, e ele só aparece enquanto não há lançamentos
+
 ### Alterado
 - Guardar dinheiro numa meta deixou de abrir a janelinha cinza do navegador: agora tudo acontece num painel na própria tela, com o botão "Confirmar" só liberando quando o valor está certo, e os avisos aparecendo ali dentro
 

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, irParaAba } = require('./ajuda');
+const { APP, irParaAba, carregarExemplo } = require('./ajuda');
 
 // Visual da tela Metas: reserva de emergência legível e cada meta num cartão.
 
@@ -7,7 +7,7 @@ test.use({ viewport: { width: 320, height: 800 } });
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await irParaAba(page, 'Metas');
 });
 

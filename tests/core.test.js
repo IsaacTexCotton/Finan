@@ -1288,3 +1288,22 @@ test('dailyAllowance avisa `semRenda` quando o mês não tem renda; sem resumo (
   assert.equal(F.dailyAllowance(rows, '2026-09', hoje, comRenda).semRenda, false);
   assert.equal(F.dailyAllowance(rows, '2026-09', hoje).semRenda, false); // sem resumo, o chamador não tem como saber
 });
+
+test('settings.onboardingVisto começa falso e só vale true de verdade (o resto num backup vira falso)', () => {
+  assert.equal(F.emptyData().settings.onboardingVisto, false);
+  assert.equal(F.normalizeData({}).settings.onboardingVisto, false);
+  assert.equal(F.normalizeData({ settings: { onboardingVisto: true } }).settings.onboardingVisto, true);
+  for (const invalido of ['true', 'sim', 1, 0, null, [], {}, undefined]) {
+    assert.equal(F.normalizeData({ settings: { onboardingVisto: invalido } }).settings.onboardingVisto, false, String(invalido));
+  }
+});
+
+test('onboardingVisto atravessa um backup (exportar e importar de novo) e não mexe nas outras configurações', () => {
+  const dados = F.emptyData();
+  dados.settings.onboardingVisto = true;
+  dados.settings.reviewDay = 3;
+  const volta = F.normalizeData(JSON.parse(JSON.stringify(dados)));
+  assert.equal(volta.settings.onboardingVisto, true);
+  assert.equal(volta.settings.reviewDay, 3);
+  assert.equal(volta.settings.incomeProfile, 'estavel');
+});

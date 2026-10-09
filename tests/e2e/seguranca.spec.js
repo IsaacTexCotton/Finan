@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar, irParaAba } = require('./ajuda');
+const { APP, lancar, irParaAba, carregarExemplo } = require('./ajuda');
 
 // Se algum destes textos virar HTML de verdade, o navegador executa o código
 // e a variável window.__xss deixa de ser 0.
@@ -71,7 +71,7 @@ test('o app não faz nenhuma requisição de rede, nem ao exportar os dados', as
   page.on('dialog', (d) => d.accept());
 
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   for (const aba of ['Painel', 'Lançamentos', 'Orçamento', 'Metas', 'Método']) {
     await irParaAba(page, aba);
   }

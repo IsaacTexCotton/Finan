@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { AxeBuilder } = require('@axe-core/playwright');
-const { APP, irParaAba, movimentar, painelMover } = require('./ajuda');
+const { APP, irParaAba, movimentar, painelMover, carregarExemplo } = require('./ajuda');
 
 // Painel "Movimentar" da meta: troca as janelas nativas (prompt/confirm) por um painel na tela.
 // Dados de exemplo: Reserva de emergência R$ 4.500,00 de R$ 18.000,00; Viagem de férias
@@ -12,7 +12,7 @@ const botao = (page, nome) => meta(page, nome).getByRole('button', { name: /Movi
 test.beforeEach(async ({ page }) => {
   page.on('dialog', (d) => { throw new Error(`janela nativa inesperada: ${d.message()}`); }); // nada de prompt/confirm
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await irParaAba(page, 'Metas');
 });
 

@@ -921,7 +921,7 @@
   // ---------- Importação / exportação ----------
 
   function defaultSettings() {
-    return { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7, budgetItems: [], lastBackup: '' };
+    return { incomeProfile: 'estavel', paydayBusinessDay: 0, reviewDay: 7, budgetItems: [], lastBackup: '', onboardingVisto: false };
   }
 
   function emptyData() {
@@ -1032,6 +1032,7 @@
     if (integerInRange(s.reviewDay, 1, 7)) settings.reviewDay = s.reviewDay;
     if (integerInRange(s.paydayBusinessDay, 1, 10)) settings.paydayBusinessDay = s.paydayBusinessDay;
     if (isRealDate(s.lastBackup)) settings.lastBackup = s.lastBackup;
+    if (s.onboardingVisto === true) settings.onboardingVisto = true; // só um true de verdade vale
     if (Array.isArray(s.budgetItems)) {
       const expenseIds = new Set(categories.filter((c) => c.type === 'expense').map((c) => c.id));
       settings.budgetItems = [...new Set(s.budgetItems.filter((id) => typeof id === 'string' && expenseIds.has(id)))];

@@ -1,12 +1,12 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, carregarExemplo } = require('./ajuda');
 
 // Consultar o Painel tem que ser rápido: na primeira tela do celular a pessoa vê os quatro
 // números e quanto pode gastar hoje, sem rolar e sem ler texto de ajuda.
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
 });
 
 test('os quatro números e o "pode gastar hoje" aparecem na primeira tela do celular', async ({ page }) => {

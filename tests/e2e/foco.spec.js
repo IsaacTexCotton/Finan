@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar, irParaAba } = require('./ajuda');
+const { APP, lancar, irParaAba, carregarExemplo, pularOnboarding } = require('./ajuda');
 
 // Quem usa teclado ou leitor de tela precisa continuar no mesmo lugar depois de cada ação.
 // Antes, a tela era redesenhada e o foco voltava para o início da página.
@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('o controle continua lá depois do redesenho', () => {
   test.beforeEach(async ({ page }) => {
-    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await carregarExemplo(page);
   });
 
   test('Orçamento: digitar um limite e apertar Tab leva ao campo seguinte', async ({ page }) => {
@@ -80,6 +80,7 @@ test.describe('o controle em que a pessoa estava some', () => {
   });
 
   test('carregar os dados de exemplo pelo teclado leva o foco ao início do Painel', async ({ page }) => {
+    await pularOnboarding(page); // a tela de boas-vindas (com o botão de exemplo) vem depois do onboarding
     await page.getByRole('button', { name: 'Ver com dados de exemplo' }).focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('heading', { name: 'Seus baldes' })).toBeFocused();

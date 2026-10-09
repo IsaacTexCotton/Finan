@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, irParaAba } = require('./ajuda');
+const { APP, irParaAba, carregarExemplo } = require('./ajuda');
 
 // "Desfazer" também para "Restaurar backup" e "Carregar exemplo" (decisão tomada pela IA com o Isaac
 // ausente, 02/10/2026): os dois trocam todos os dados, então guardam uma cópia e a mensagem ganha o
@@ -61,7 +61,7 @@ test('carregar o exemplo por cima de dados pode ser desfeito', async ({ page }) 
 
 test('na tela vazia, "Ver com dados de exemplo" não traz botão Desfazer (não havia nada a perder)', async ({ page }) => {
   await abrir(page);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await expect(aviso(page)).toContainText('Dados de exemplo carregados.');
   await expect(desfazer(page)).toHaveCount(0);
 });

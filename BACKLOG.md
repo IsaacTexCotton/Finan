@@ -175,6 +175,14 @@ por testes) e as 5 funções do núcleo sem teste direto (triviais).
 - Categorias personalizadas pela interface
 - Funcionar offline como app instalável (PWA)
 
+## Onboarding (09/10/2026)
+- [x] Onboarding de 3 passos na primeira abertura (baldes, privacidade, primeiro lançamento), com "Pular" e
+      `settings.onboardingVisto` gravado nos dados (decisões do Isaac: botões de lançar e de exemplo só no passo 3,
+      e gravar o "visto"). Os testes que clicavam em "Ver com dados de exemplo" na primeira tela passaram a usar o
+      ajudante `carregarExemplo` (só o começo mudou)
+- [ ] Sugestão: o passo 1 ainda não mostra os três baldes com os nomes e cores do Painel; o ícone é provisório
+- [ ] Sugestão: depois de testar com pessoas (roteiro da Etapa 5), rever o texto dos 3 passos
+
 ## Transferir entre metas e a sobra (08/10/2026)
 Ideia do Isaac: metas (inclusive a reserva) e a sobra do mês poderiam "se conversar" como contas de
 um banco. Dividido em 3 etapas, cada uma por decisão dele:

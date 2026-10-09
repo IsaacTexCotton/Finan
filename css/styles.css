@@ -1651,3 +1651,78 @@ dialog#mover-meta::backdrop {
   color: var(--muted);
   cursor: not-allowed;
 }
+
+/* ---------- Onboarding da primeira abertura (3 passos) ---------- */
+
+.onb {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.onb p,
+.onb h2 {
+  margin: 0;
+}
+
+.onb-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.onb-passo {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+
+.onb-boasvindas {
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+
+.onb-icone {
+  width: 6rem;
+  height: 6rem;
+}
+
+.onb-icone .a { fill: var(--primary); }
+.onb-icone .b { fill: var(--ok-fill); }
+.onb-icone .c { fill: var(--primary-strong); }
+.onb-icone .d { fill: var(--on-primary); }
+
+.onb-icone .a-traco {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.onb-icone .d-traco {
+  fill: none;
+  stroke: var(--on-primary);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.onb-pontos {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.onb-pontos span {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.onb-pontos span.atual {
+  background: var(--primary);
+}
+
+.onb-acoes {
+  display: grid;
+  gap: var(--space-2);
+}

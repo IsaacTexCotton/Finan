@@ -1,12 +1,12 @@
 const { test, expect } = require('@playwright/test');
-const { APP, irParaAba, movimentar, painelMover } = require('./ajuda');
+const { APP, irParaAba, movimentar, painelMover, carregarExemplo } = require('./ajuda');
 
 // Guardar dinheiro numa meta é guardar: entra no cartão Guardado do Painel, no balde Futuro,
 // e aparece na lista de lançamentos. Dados de exemplo: Guardado do mês = R$ 900,00.
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
 });
 
 const meta = (page, nome) => page.locator('#goal-list .goal').filter({ hasText: nome });

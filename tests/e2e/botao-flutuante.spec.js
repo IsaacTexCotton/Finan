@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, irParaAba } = require('./ajuda');
+const { APP, irParaAba, carregarExemplo } = require('./ajuda');
 
 // A ação mais usada ("+ Lançar") fica sempre no mesmo canto, ao alcance do polegar,
 // em qualquer aba e em qualquer ponto da rolagem. Só não aparece em Lançamentos (decisão do
@@ -83,7 +83,7 @@ test('na aba Lançamentos o "+ Lançar" não aparece, porque o formulário já e
 
 test('a mensagem de confirmação aparece acima do "+ Lançar", sem cobri-lo', async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   const aviso = page.locator('#toast.show');
   await expect(aviso).toBeVisible();
   // O aviso sobe ao aparecer (transição de 0,2 s): só se mede depois que ele parou, senão a

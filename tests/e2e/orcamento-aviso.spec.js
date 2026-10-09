@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, carregarExemplo } = require('./ajuda');
 
 // Quem digita um limite precisa saber que ele foi salvo (e quem usa leitor de tela, ouvir isso).
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await page.getByRole('tab', { name: 'Orçamento' }).click();
 });
 

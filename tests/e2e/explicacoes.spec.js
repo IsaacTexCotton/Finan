@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, carregarExemplo } = require('./ajuda');
 
 // O app é para quem não entende de finanças: toda palavra do método é explicada em linguagem
 // simples, no lugar onde aparece.
@@ -35,7 +35,7 @@ test('as etiquetas das categorias dizem "variável", com acento', async ({ page 
 });
 
 test('avisos do orçamento falam de "destino" para cada real, não de "função"', async ({ page }) => {
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await page.getByRole('tab', { name: 'Orçamento' }).click();
   await expect(page.locator('#zero-based')).toContainText(/sem destino/);
   await expect(page.locator('#zero-based')).not.toContainText(/função/);

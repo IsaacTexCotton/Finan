@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, irParaAba, movimentar } = require('./ajuda');
+const { APP, irParaAba, movimentar, carregarExemplo } = require('./ajuda');
 
 // "Tirar" devolve dinheiro já guardado numa meta para a Sobra do mês: é o espelho de "Guardar
 // mais". Não é gasto; some do Guardado de hoje e aumenta a Sobra. Dados de exemplo: Reserva de
@@ -16,7 +16,7 @@ const valorCard = async (card) => numero(await card.locator('.card-value').inner
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
 });
 
 test('tirar baixa a meta e o Guardado do mês, e aumenta a Sobra na mesma hora', async ({ page }) => {

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, lancar, abrirDetalhes, irParaAba } = require('./ajuda');
+const { APP, lancar, abrirDetalhes, irParaAba, carregarExemplo } = require('./ajuda');
 
 // Um leitor de tela lê só o nome do botão. "Editar" repetido 17 vezes não diz o que editar.
 
@@ -34,7 +34,7 @@ test('lançamento sem descrição usa a categoria, e parcela diz qual é', async
 });
 
 test('botões das metas dizem de qual meta são', async ({ page }) => {
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await irParaAba(page, 'Metas');
   await expect(page.getByRole('button', { name: 'Movimentar a meta Viagem de férias' })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Excluir meta Viagem de férias' })).toHaveCount(1);

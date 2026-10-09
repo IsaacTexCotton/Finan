@@ -6,8 +6,10 @@ test('"Lançar minha renda" abre o formulário já como Receita e o salário ent
   page.on('pageerror', (e) => erros.push(e.message));
   const formulario = page.locator('#tx-form');
 
-  // 1. Pessoa nova, app vazio, clica no botão da tela de boas-vindas
+  // 1. Pessoa nova, app vazio: passa pelo onboarding e clica no botão do passo 3
   await page.goto(APP);
+  await page.locator('#onboarding').getByRole('button', { name: 'Próximo' }).click();
+  await page.locator('#onboarding').getByRole('button', { name: 'Próximo' }).click();
   await page.getByRole('button', { name: 'Lançar minha renda' }).click();
 
   // 2. O formulário já está pronto para uma renda: Receita, categoria Salário, cursor no valor

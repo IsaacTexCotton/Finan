@@ -119,6 +119,15 @@ Só faça o commit quando todas as respostas forem "sim":
   dizer R$ 46 com o salário ainda no dia 7). Um salário com data do próximo pagamento só conta no ciclo
   novo. A mensagem de "salvar gasto" também não diz quanto pode gastar nesse caso. O cartão também mostra
   quanto já foi guardado.
+- **Onboarding da primeira abertura** (decisão do Isaac, 09/10/2026; especificação em `docs/ux-estrategia.md`).
+  No Painel, enquanto **não há lançamentos**, a pessoa vê 3 passos (`onboardingHtml`): os três baldes, "seus dados
+  nunca saem do seu celular" e o primeiro lançamento (**"Lançar um gasto"**, **"Lançar minha renda"** e
+  **"Ver com dados de exemplo"**, só no passo 3). "Pular" está sempre à vista, o passo aparece escrito ("Passo 1 de
+  3", os pontinhos são só enfeite) e o foco vai ao título a cada "Próximo". `settings.onboardingVisto` (só `true`
+  de verdade passa por `normalizeData`) grava que a pessoa já passou: depois de "Pular" ou de uma ação do passo 3,
+  o Painel vazio mostra a tela de boas-vindas de sempre (`boasVindasHtml`, com os mesmos botões). "Apagar tudo"
+  zera isso e volta ao passo 1. Nos testes, `carregarExemplo(page)` e `pularOnboarding(page)` (em `ajuda.js`)
+  passam por ele. Testes em `tests/e2e/onboarding.spec.js`.
 - **Painel "Movimentar" da meta** (decisão do Isaac, 09/10/2026; especificação em `docs/ux-estrategia.md`).
   Cada meta tem um só botão, "Movimentar", que abre um painel na própria tela (`<dialog id="mover-meta">`,
   `abrirMover`) com três ações: **Guardar mais** (lançamento do Futuro ligado à meta), **Transferir para outra

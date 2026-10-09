@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, irParaAba, movimentar, painelMover } = require('./ajuda');
+const { APP, irParaAba, movimentar, painelMover, carregarExemplo } = require('./ajuda');
 
 // Transferir entre metas move o que já estava guardado (ex.: da reserva para uma meta de viagem),
 // sem criar lançamento: o Guardado e o Sobrou do mês não mudam. Dados de exemplo: Reserva de
@@ -11,7 +11,7 @@ const guardado = (page) => page.locator('#summary-cards .card').filter({ hasText
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
 });
 
 test('transferir move o valor entre as metas sem mudar o Guardado do Painel', async ({ page }) => {

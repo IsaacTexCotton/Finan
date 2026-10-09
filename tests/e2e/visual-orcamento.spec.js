@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP } = require('./ajuda');
+const { APP, carregarExemplo } = require('./ajuda');
 
 // Visual da tela Orçamento: cada envelope é um bloco legível, com o selo de status na linha do nome,
 // campo de limite fácil de tocar, grupos separados e o aviso da renda em destaque.
@@ -8,7 +8,7 @@ const { APP } = require('./ajuda');
 async function abrir(page, largura) {
   await page.setViewportSize({ width: largura, height: 900 });
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await page.getByRole('tab', { name: 'Orçamento' }).click();
 }
 

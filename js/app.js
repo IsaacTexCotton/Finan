@@ -119,6 +119,7 @@
     creating: false, // formulário "Criar" aberto dentro da lista
     filterText: '',
     filterCategory: '',
+    onboardingPasso: 1, // passo do onboarding da primeira abertura (1 a 3); só vive na memória
     allowanceAberto: false, // "Ver detalhes" do cartão do pode gastar: a escolha da pessoa vale mesmo se o cartão sumir num redesenho
     sugestao: null, // resultado da sugestão que está na tela, para "Aplicar como limites"
     undo: null, // cópia dos dados antes de uma exclusão (ou troca geral), para o "Desfazer"
@@ -375,11 +376,55 @@
       </div>`;
   }
 
-  function renderDashboard(ctx) {
-    const { summary, buckets, budgetRows, previousSummary, commitments, plan } = ctx;
-    const hasData = state.data.transactions.length > 0;
+  // ---------- Onboarding da primeira abertura ----------
+  // 3 passos (baldes, privacidade, primeiro lançamento), só enquanto não há lançamentos. O passo vive na
+  // memória; "onboardingVisto" (nos dados) grava que a pessoa já passou por aqui. Especificação: docs/ux-estrategia.md.
 
-    $('#onboarding').innerHTML = hasData ? '' : `
+  const ONBOARDING = [
+    {
+      titulo: 'Seu dinheiro em três baldes simples',
+      texto: 'Essenciais, Estilo de vida e Futuro. Cada real que entra já sabe para onde vai.',
+      icone: '<rect class="a" x="4" y="4" width="26" height="88" rx="12"/><rect class="b" x="35" y="4" width="26" height="88" rx="12"/><rect class="c" x="66" y="4" width="26" height="88" rx="12"/>',
+    },
+    {
+      titulo: 'Seus dados nunca saem do seu celular',
+      texto: 'Sem servidor, sem conta, sem nuvem. Só você vê o que você lança.',
+      icone: '<path class="a-traco" d="M30 38V26a18 18 0 0 1 36 0v12"/><rect class="a" x="18" y="38" width="60" height="46" rx="10"/><circle class="d" cx="48" cy="58" r="7"/><rect class="d" x="45" y="58" width="6" height="14" rx="3"/>',
+    },
+    {
+      titulo: 'Vamos fazer seu primeiro lançamento?',
+      texto: 'Leva menos de 10 segundos. Comece pelo que você tiver à mão: um gasto ou sua renda.',
+      icone: '<circle class="b" cx="48" cy="48" r="44"/><path class="d-traco" d="M48 28v40M28 48h40"/>',
+    },
+  ];
+
+  function onboardingHtml(passo) {
+    const p = ONBOARDING[passo - 1];
+    const ultimo = passo === ONBOARDING.length;
+    const acoes = ultimo
+      ? `<button type="button" class="btn primary" data-action="onboarding-gasto" data-type="expense">Lançar um gasto</button>
+         <button type="button" class="btn" data-action="onboarding-renda" data-type="income">Lançar minha renda</button>
+         <button type="button" class="btn" data-action="onboarding-exemplo">Ver com dados de exemplo</button>`
+      : '<button type="button" class="btn primary" data-action="onboarding-proximo">Próximo</button>';
+    const pontos = ONBOARDING.map((_, i) => `<span${i + 1 === passo ? ' class="atual"' : ''}></span>`).join('');
+    return `
+      <article class="panel welcome onb" aria-labelledby="onb-titulo">
+        <div class="onb-topo">
+          <span class="onb-passo">Passo ${passo} de ${ONBOARDING.length}</span>
+          <button type="button" class="btn small" data-action="onboarding-pular">Pular</button>
+        </div>
+        <svg class="onb-icone" viewBox="0 0 96 96" aria-hidden="true">${p.icone}</svg>
+        ${passo === 1 ? '<p class="onb-boasvindas">Bem-vindo ao Finan</p>' : ''}
+        <h2 id="onb-titulo" tabindex="-1">${esc(p.titulo)}</h2>
+        <p>${esc(p.texto)}</p>
+        <div class="onb-pontos" aria-hidden="true">${pontos}</div>
+        <div class="onb-acoes">${acoes}</div>
+      </article>`;
+  }
+
+  /** Tela de sempre para quem pulou o onboarding e ainda não tem lançamentos. */
+  function boasVindasHtml() {
+    return `
       <article class="panel welcome">
         <h2>Bem-vindo ao Finan 👋</h2>
         <p>Comece em 3 minutos:</p>
@@ -393,7 +438,27 @@
           <button type="button" class="btn" data-action="load-demo">Ver com dados de exemplo</button>
         </div>
       </article>`;
+  }
 
+  function onboardingProximo() {
+    state.onboardingPasso = Math.min(state.onboardingPasso + 1, ONBOARDING.length);
+    redesenhar();
+    $('#onb-titulo').focus();
+  }
+
+  /** Grava que a pessoa já passou pelo onboarding (por "Pular" ou por uma das ações do passo 3). */
+  function onboardingVisto() {
+    state.onboardingPasso = 1;
+    if (state.data.settings.onboardingVisto) return;
+    state.data.settings.onboardingVisto = true;
+    saveData();
+  }
+
+  function renderDashboard(ctx) {
+    const { summary, buckets, budgetRows, previousSummary, commitments, plan } = ctx;
+    const hasData = state.data.transactions.length > 0;
+
+    $('#onboarding').innerHTML = hasData ? '' : state.data.settings.onboardingVisto ? boasVindasHtml() : onboardingHtml(state.onboardingPasso);
     renderCards(summary, plan);
 
     $('#allowance').innerHTML = renderAllowance(ctx);
@@ -1393,6 +1458,7 @@
     if (!confirmar('Apagar TODOS os lançamentos, orçamentos e metas deste navegador? Você terá 10 segundos para desfazer.')) return;
     const antes = copiarDados();
     state.data = F.emptyData();
+    state.onboardingPasso = 1;
     resetTxForm();
     commit('Dados apagados.', antes);
   }
@@ -1402,6 +1468,11 @@
     'prev-month': () => mudarMes(-1),
     'next-month': () => mudarMes(1),
     'quick-add': (el) => lancarRapido(el),
+    'onboarding-proximo': () => onboardingProximo(),
+    'onboarding-pular': () => { onboardingVisto(); redesenhar(); },
+    'onboarding-gasto': (el) => { onboardingVisto(); lancarRapido(el); },
+    'onboarding-renda': (el) => { onboardingVisto(); lancarRapido(el); },
+    'onboarding-exemplo': () => { onboardingVisto(); carregarExemplo(); },
     'cancel-edit': () => resetTxForm(),
     'edit-tx': (el) => startEdit(el.dataset.id),
     'delete-tx': (el) => deleteTransaction(el.dataset.id),

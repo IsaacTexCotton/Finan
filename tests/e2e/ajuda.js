@@ -51,4 +51,16 @@ async function movimentar(page, nomeMeta, { acao, valor, destino, aceitar, confi
   return painel;
 }
 
-module.exports = { APP, lancar, abrirDetalhes, irParaAba, movimentar, painelMover };
+/** Passa pelo onboarding da primeira abertura (se ele estiver na tela), como a pessoa que toca em "Pular". */
+async function pularOnboarding(page) {
+  const pular = page.locator('#onboarding').getByRole('button', { name: 'Pular' });
+  if (await pular.isVisible()) await pular.click();
+}
+
+/** Carrega os dados de exemplo a partir do app novo (a tela de boas-vindas vem depois do onboarding). */
+async function carregarExemplo(page) {
+  await pularOnboarding(page);
+  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+}
+
+module.exports = { APP, lancar, abrirDetalhes, irParaAba, movimentar, painelMover, pularOnboarding, carregarExemplo };

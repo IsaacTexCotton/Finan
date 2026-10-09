@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { AxeBuilder } = require('@axe-core/playwright');
-const { APP, irParaAba } = require('./ajuda');
+const { APP, irParaAba, carregarExemplo } = require('./ajuda');
 
 // Verificador automático de acessibilidade (axe-core) em todas as telas, celular e PC.
 // Pega contraste, nomes que faltam, títulos, regiões e outros problemas conhecidos.
@@ -12,7 +12,7 @@ for (const largura of [390, 1280]) {
   test(`nenhuma violação do axe em nenhuma tela (${largura}px)`, async ({ page }) => {
     await page.setViewportSize({ width: largura, height: 900 });
     await page.goto(APP);
-    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await carregarExemplo(page);
     for (const aba of ABAS) {
       await irParaAba(page, aba);
       const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
@@ -24,7 +24,7 @@ for (const largura of [390, 1280]) {
 
 test('o campo "Para qual meta?" do formulário não tem violações do axe', async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await page.getByRole('tab', { name: 'Lançamentos' }).click();
   await page.locator('#tx-form').getByLabel('Categoria').selectOption('metas');
   await expect(page.locator('#tx-form').getByLabel('Para qual meta?')).toBeVisible();
@@ -35,7 +35,7 @@ test('o campo "Para qual meta?" do formulário não tem violações do axe', asy
 test('o lembrete da revisão semanal e o seletor do dia não têm violações do axe', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-09-27T12:00:00')); // domingo: dia padrão da revisão
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await expect(page.locator('#review-reminder')).toContainText('Hoje é o seu dia de revisão semanal');
   for (const aba of ['Painel', 'Método']) {
     await irParaAba(page, aba);
@@ -46,7 +46,7 @@ test('o lembrete da revisão semanal e o seletor do dia não têm violações do
 
 test('o "Como funciona" do Orçamento, fechado e aberto, não tem violações do axe', async ({ page }) => {
   await page.goto(APP);
-  await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+  await carregarExemplo(page);
   await page.getByRole('tab', { name: 'Orçamento' }).click();
   for (const aberto of [false, true]) {
     if (aberto) await page.getByRole('tabpanel', { name: 'Orçamento' }).locator('details.how summary').click();
@@ -116,7 +116,7 @@ test('a mensagem com o botão "Desfazer" (depois de excluir) não tem violaçõe
     await page.goto(APP);
     await page.evaluate(() => localStorage.clear()); // cada volta começa com o app vazio
     await page.reload();
-    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click(); // app vazio: não pergunta nada
+    await carregarExemplo(page); // app vazio: não pergunta nada
     await irParaAba(page, 'Lançamentos');
     page.once('dialog', (d) => d.accept());
     await page.getByRole('button', { name: /^Excluir/ }).first().click();
@@ -133,7 +133,7 @@ test('o lembrete de backup no Painel (dados de exemplo, nenhum backup baixado) n
     await page.goto(APP);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await carregarExemplo(page);
     await expect(page.locator('#backup-reminder')).toContainText('Você ainda não baixou nenhum backup'); // o exemplo tem mais de 5 lançamentos
     const { violations } = await new AxeBuilder({ page }).withTags(REGRAS).analyze();
     expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes[0].target.join(' ')}`), `a ${largura}px`).toEqual([]);
@@ -190,7 +190,7 @@ test('o Painel enxuto, com "Ver detalhes" e "Como funciona" abertos, não tem vi
     await page.goto(APP);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await carregarExemplo(page);
     await page.locator('#allowance summary').click();
     await page.locator('#tab-painel summary', { hasText: 'Como funciona' }).click();
     await expect(page.locator('#allowance details')).toHaveJSProperty('open', true);

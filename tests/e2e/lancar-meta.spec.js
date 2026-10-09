@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { APP, abrirDetalhes, irParaAba } = require('./ajuda');
+const { APP, abrirDetalhes, irParaAba, carregarExemplo } = require('./ajuda');
 
 // No formulário de lançamento, o balde Futuro tem a categoria "Metas". Ao escolhê-la, abre a lista
 // das metas da pessoa ("Para qual meta?"). Sem nenhuma meta, a categoria nem aparece.
@@ -20,7 +20,7 @@ test.describe('com metas', () => {
   test.beforeEach(async ({ page }) => {
     page.on('dialog', (d) => d.accept());
     await page.goto(APP);
-    await page.getByRole('button', { name: 'Ver com dados de exemplo' }).click();
+    await carregarExemplo(page);
     await page.getByRole('tab', { name: 'Lançamentos' }).click();
   });
 
