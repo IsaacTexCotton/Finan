@@ -314,8 +314,14 @@ Defeitos e confusões vistos
       anuais (IPVA, seguro) só viram provisão se aparecerem na janela de 6 meses
 - [x] Painel enxuto, fase 1 (02/10/2026): cartão "pode gastar" com número e uma linha + "Ver detalhes", baldes
       e plano em "Como funciona", barras de uma linha
-- [ ] Painel enxuto, fase 2: reordenar (estrela, resumo, 1 aviso, baldes recolhidos com título "Para onde foi
-      o dinheiro")
+- [x] Painel enxuto, fase 2, parte 1 (09/10/2026, plano aprovado pelo Isaac, feito com a habilidade frontend-design):
+      o "pode gastar hoje" vem primeiro, numa faixa verde-escura que continua o topo; o resumo do mês virou um bloco
+      só, em linhas no celular e lado a lado no computador
+- [ ] Painel enxuto, fase 2, parte 2: avisos sem a faixa grossa à esquerda e com texto mais calmo ("Desacelere" soa
+      como bronca), baldes e categorias recolhidos ("Para onde foi o dinheiro"). Falta o Isaac decidir: 1 ou 3
+      avisos à vista (a fase 2 fala em 1; a regra de hoje deixa 3)
+- [ ] Sugestão (revisão de design, 09/10/2026): linhas de números colados com "·" nos baldes e no Orçamento
+      ("R$ 2.301,20 (44% da renda) · máx. 55% (R$ 2.860,00)") são difíceis de ler; o Orçamento e o Método estão longos
 - [ ] Painel enxuto, fase 3: lembretes calmos (um por vez, faixa fina, "Agora não" que guarda uma data: mexe
       em dados, vai por PR)
 - [ ] Painel enxuto, depois: valor sem centavos no destaque ("R$ 46") e trocar balde/envelope/plano por

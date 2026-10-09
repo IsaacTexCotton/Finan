@@ -750,60 +750,42 @@ select:disabled {
   }
 }
 
-/* ---------- Cartões de resumo e "pode gastar hoje" ---------- */
+/* ---------- "Pode gastar hoje" e resumo do mês (Painel enxuto, fase 2) ---------- */
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.card-label {
-  color: var(--muted);
-  font-size: var(--fs-body);
-  font-weight: 600;
-}
-
-.card-value {
-  font-size: var(--fs-number);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-.card-hint {
-  color: var(--muted);
-  font-size: var(--fs-small);
-}
-
+/* "Você pode gastar hoje": a primeira coisa do Painel, numa faixa verde-escura que continua a barra do
+   topo. É o único destaque forte da tela; o resto fica calmo. O main tem respiro de --space-4 em cima e
+   --space-3 dos lados: a faixa sobe e alarga essa mesma medida para colar no topo e nas bordas. Como ela
+   continua ocupando o lugar de antes, o vão de --space-4 que sobra embaixo é o respiro até o resumo. */
 .allowance {
+  position: relative;
+  top: calc(var(--space-4) * -1);
+  left: calc(var(--space-3) * -1);
+  width: calc(100% + var(--space-3) * 2);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--primary-strong);
+  color: var(--on-primary);
+}
+
+/* Com o onboarding na tela, a faixa vem depois dele, como um bloco comum: não sobe para o topo. */
+#onboarding:not(:empty) + #allowance .allowance {
+  top: 0;
+  left: 0;
+  width: auto;
   margin-bottom: var(--space-4);
-  padding: var(--space-4);
-  border: 2px solid var(--primary);
   border-radius: var(--radius);
-  background: var(--primary-soft);
 }
 
 .allowance .card-label {
   display: block;
-  color: var(--text);
+  color: var(--on-primary);
+  font-size: var(--fs-body);
+  font-weight: 600;
 }
 
 .allowance-value {
   display: block;
-  color: var(--primary-strong);
+  color: var(--on-primary);
   font-size: var(--fs-display);
   font-weight: 800;
   line-height: 1.2;
@@ -814,10 +796,96 @@ select:disabled {
   margin: var(--space-1) 0 0;
 }
 
-/* "Ver detalhes" do cartão: o resto fica recolhido, o número e uma linha ficam à vista. O estilo do
-   resumo é o mesmo de "Mais detalhes" (.more), compartilhado lá em cima. */
+.allowance .muted {
+  color: var(--on-primary);
+}
+
+/* Sobre o verde, o botão é branco e o foco é um contorno branco (o azul do foco some no verde). */
+.allowance .btn.primary {
+  margin-top: var(--space-3);
+  background: var(--on-primary);
+  color: var(--primary-strong);
+}
+
+.allowance :focus-visible {
+  outline-color: var(--on-primary);
+}
+
+/* "Ver detalhes" da faixa: o resto fica recolhido, o número e uma linha ficam à vista. O estilo do
+   resumo é o mesmo de "Mais detalhes" (.more), compartilhado lá em cima, só que em branco. */
 .allowance-mais {
   margin-top: var(--space-2);
+}
+
+.allowance .allowance-mais summary {
+  color: var(--on-primary);
+}
+
+/* Resumo do mês: um bloco só, com uma linha por número (nome à esquerda, valor à direita). Os quatro
+   somam a renda: Receitas = Gastos + Guardado + Sobrou. */
+.cards {
+  margin-bottom: var(--space-4);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.card + .card {
+  border-top: 1px solid var(--border);
+}
+
+.card-label {
+  color: var(--text);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.card-value {
+  font-size: var(--fs-number);
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.card-hint {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+
+/* Em tela larga, uma linha de ponta a ponta afasta demais o nome do valor: os quatro ficam lado a lado,
+   cada um com o nome em cima e o valor embaixo, separados por um filete. */
+@media (min-width: 48rem) {
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 0;
+  }
+
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    padding: var(--space-4);
+  }
+
+  .card + .card {
+    border-top: 0;
+    border-left: 1px solid var(--border);
+  }
+
+  .card-value {
+    text-align: left;
+  }
 }
 
 /* ---------- Baldes, barras, selos e mensagens do Painel ---------- */

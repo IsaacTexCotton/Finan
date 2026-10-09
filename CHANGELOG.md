@@ -27,6 +27,7 @@ Não escreva aqui dados pessoais nem sensíveis: o texto fica no site publicado.
 
 ### Alterado
 - O Finan ganhou identidade própria: um novo ícone (um F com uma moeda verde-clara) no celular e na aba do navegador, e a mesma marca no topo do app no lugar do 💰. A barra do navegador agora combina com o topo
+- O Painel agora começa pelo "Você pode gastar hoje", numa faixa verde logo abaixo do topo, e o resumo do mês (Receitas, Gastos, Guardado e Sobrou) virou um bloco só, mais fácil de ler: uma linha por número no celular e os quatro lado a lado no computador
 - Os 3 passos da primeira abertura ganharam o Tostão, a moeda verde do logo que virou personagem: ele dá oi, abraça o cadeado dos seus dados e faz joinha para o primeiro lançamento
 - Guardar dinheiro numa meta deixou de abrir a janelinha cinza do navegador: agora tudo acontece num painel na própria tela, com o botão "Confirmar" só liberando quando o valor está certo, e os avisos aparecendo ali dentro
 

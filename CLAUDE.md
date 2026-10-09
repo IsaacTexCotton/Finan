@@ -154,9 +154,16 @@ Só faça o commit quando todas as respostas forem "sim":
   continua como a pessoa deixou, aberto ou fechado, mesmo se o cartão sumir num redesenho). Com R$ 0, a linha diz
   "Hoje não sobra nada para gastar". Os baldes têm uma frase curta; o texto do método e a explicação do plano
   vão para "Como funciona", **menos quando o plano pede atenção (Ajustando, Crítico): aí a explicação fica à
-  vista**. Cada barra tem uma linha, com o valor, a parte da renda e o limite do plano em % e em R$. Nada é apagado. Fases seguintes (ainda não
-  feitas): reordenar (resumo, 1 aviso, baldes recolhidos) e lembretes calmos (um por vez, "Agora não").
-  Testes em `tests/e2e/painel-enxuto.spec.js`.
+  vista**. Cada barra tem uma linha, com o valor, a parte da renda e o limite do plano em % e em R$. Nada é apagado.
+  Testes em `tests/e2e/painel-enxuto.spec.js`. **Fase 2, parte 1** (plano aprovado pelo Isaac, 09/10/2026): o
+  "pode gastar" é a primeira coisa do Painel, numa **faixa verde-escura** (`--primary-strong`, texto branco, botão
+  branco, foco branco) que encosta no topo e vai de borda a borda no celular; com o onboarding na tela, ela vem
+  depois dele, como bloco comum. O **resumo do mês** (Receitas, Gastos, Guardado, Sobrou; classes `.card` mantidas)
+  é um bloco só: uma linha por número no celular (nome à esquerda, valor à direita) e os quatro lado a lado a partir
+  de 48rem. A faixa usa `position: relative` com os tokens de espaçamento para colar no topo, porque margem negativa
+  não passa em `tests/tokens.test.js`. Testes em `tests/e2e/painel-topo.spec.js`. Fases seguintes (ainda não
+  feitas): parte 2 (avisos mais calmos, baldes recolhidos; 1 ou 3 avisos à vista é decisão do Isaac) e lembretes
+  calmos (um por vez, "Agora não").
 - **Teto do balde** (decisão do Isaac, 30/09/2026). Cada balde tem um teto: a parte da renda do
   mês que o plano reserva para ele (`bucketCeilings`, em múltiplos de R$ 10, somando a renda
   arredondada). Os limites por categoria são **opcionais**: as categorias sem limite gastam do
