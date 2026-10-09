@@ -43,6 +43,9 @@
   dados); (3) rede, service worker, manifesto, publicação ou CI (`sw.js`, `.github/`, endereço
   externo, política de segurança do navegador); (4) dependências (`package.json`,
   `package-lock.json`); (5) segredos, credenciais ou dados pessoais. Na dúvida, trate como risco.
+  **Autorização vigente do Isaac (08/10/2026, "Pode sempre integrar e commitar no main")**: ele mandou integrar
+  direto no `main` também o que tem risco, depois do `npm run check`; mesmo assim a IA roda o `/security-review`
+  antes de empurrar o que mexe nessas áreas e relata o resultado.
 
 ## Antes de cada commit
 Só faça o commit quando todas as respostas forem "sim":
