@@ -92,6 +92,9 @@ test('sem limites (sem o "pode gastar"), o resumo fica no topo e não aparece fa
   await abrir(page, { ...dados(), budgets: {} });
   await expect(page.locator('#allowance')).toBeEmpty();
   await expect(linhas(page)).toHaveCount(4);
+  const topo = await page.locator('.topbar').boundingBox();
+  const resumo = await page.locator('#summary-cards').boundingBox();
+  expect(resumo.y - (topo.y + topo.height)).toBeLessThanOrEqual(17); // só o respiro de --space-4 do conteúdo
 });
 
 for (const largura of [320, 1280]) {
@@ -123,3 +126,68 @@ test('no computador (1280px), os 4 números do resumo ficam lado a lado, um ao l
     expect(caixas[i].x).toBeGreaterThan(caixas[i - 1].x + caixas[i - 1].width); // da esquerda para a direita
   }
 });
+
+// Revisão adversarial (09/10/2026): com letra maior ou valores grandes, o número não pode cobrir o nome nem
+// invadir a coluna vizinha, e a página não pode rolar para o lado. Mede a caixa do próprio texto (Range).
+const dadosGrandes = {
+  version: 1,
+  transactions: [
+    { id: 'r1', type: 'income', categoryId: 'salario', amount: 12345678, date: '2026-09-07', description: '' },
+    { id: 'g1', type: 'expense', categoryId: 'mercado', amount: 18765432, date: '2026-09-10', description: '' },
+  ],
+  budgets: { mercado: 60000 },
+};
+
+async function sobreposicoes(page) {
+  return page.evaluate(() => {
+    const caixaTexto = (el) => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect(); };
+    const problemas = [];
+    const cartoes = [...document.querySelectorAll('#summary-cards .card')];
+    cartoes.forEach((c, i) => {
+      const caixa = c.getBoundingClientRect();
+      const nome = caixaTexto(c.querySelector('.card-label'));
+      const valor = caixaTexto(c.querySelector('.card-value'));
+      const mesmaAltura = nome.top < valor.bottom && valor.top < nome.bottom;
+      if (mesmaAltura && nome.right > valor.left && valor.right > nome.left) problemas.push(`linha ${i + 1}: valor cobre o nome`);
+      if (valor.right > caixa.right + 0.5 || valor.left < caixa.left - 0.5) problemas.push(`linha ${i + 1}: valor sai do próprio bloco`);
+    });
+    if (document.documentElement.scrollWidth > window.innerWidth) problemas.push('a página rola para o lado');
+    return problemas;
+  });
+}
+
+for (const [largura, fonte] of [[320, '150%'], [360, '150%'], [360, '200%'], [768, '100%'], [800, '100%'], [960, '100%'], [1280, '150%']]) {
+  test(`em ${largura}px com letra em ${fonte} e valores grandes, nenhum número cobre o nome nem sai do seu bloco`, async ({ page }) => {
+    await abrir(page, dadosGrandes, largura);
+    await page.addStyleTag({ content: `html { font-size: ${fonte}; }` });
+    expect(await sobreposicoes(page)).toEqual([]);
+  });
+}
+
+for (const largura of [768, 800, 1280]) {
+  test(`a partir de 48rem (${largura}px), a faixa continua colada no topo e alinhada às bordas do resumo`, async ({ page }) => {
+    await abrir(page, dados(), largura);
+    const topo = await page.locator('.topbar').boundingBox();
+    const caixa = await faixa(page).boundingBox();
+    const resumo = await page.locator('#summary-cards').boundingBox();
+    expect(Math.abs(caixa.y - (topo.y + topo.height))).toBeLessThanOrEqual(1);
+    expect(Math.abs(caixa.x - resumo.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(caixa.width - resumo.width)).toBeLessThanOrEqual(1);
+  });
+}
+
+for (const largura of [360, 800, 1280]) {
+  test(`em ${largura}px, a explicação de cada número fica embaixo dele, inteira, dentro do bloco`, async ({ page }) => {
+    await abrir(page, dados(), largura);
+    for (const nome of ['Gastos', 'Guardado', 'Sobrou']) {
+      const linha = linhas(page).filter({ has: page.locator('.card-label', { hasText: nome }) });
+      const valor = await linha.locator('.card-value').boundingBox();
+      const dica = await linha.locator('.card-hint').boundingBox();
+      const caixa = await linha.boundingBox();
+      expect(dica.y, nome).toBeGreaterThanOrEqual(valor.y + valor.height - 1); // embaixo do valor
+      expect(dica.x + dica.width, nome).toBeLessThanOrEqual(caixa.x + caixa.width + 0.5); // não sai do bloco
+      const cortada = await linha.locator('.card-hint').evaluate((el) => el.scrollWidth > el.clientWidth);
+      expect(cortada, nome).toBe(false);
+    }
+  });
+}

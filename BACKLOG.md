@@ -320,6 +320,11 @@ Defeitos e confusões vistos
 - [ ] Painel enxuto, fase 2, parte 2: avisos sem a faixa grossa à esquerda e com texto mais calmo ("Desacelere" soa
       como bronca), baldes e categorias recolhidos ("Para onde foi o dinheiro"). Falta o Isaac decidir: 1 ou 3
       avisos à vista (a fase 2 fala em 1; a regra de hoje deixa 3)
+- [ ] Defeito antigo (achado em 09/10/2026): o teste "nenhuma violação do axe em nenhuma tela" (`acessibilidade.spec.js`)
+      falha às vezes (5 em 16 no código de antes da faixa verde) com "color-contrast: #toast". Causa: a mensagem de
+      confirmação entra e sai com um esmaecer de 0,2 s (`opacity`), e se o axe mede no meio dele o texto parece claro
+      demais. Pode derrubar a CI por acaso. Saídas (decisão do Isaac): a mensagem aparecer sem esmaecer (só deslizar),
+      ou o teste esperar a mensagem sumir antes de medir
 - [ ] Sugestão (revisão de design, 09/10/2026): linhas de números colados com "·" nos baldes e no Orçamento
       ("R$ 2.301,20 (44% da renda) · máx. 55% (R$ 2.860,00)") são difíceis de ler; o Orçamento e o Método estão longos
 - [ ] Painel enxuto, fase 3: lembretes calmos (um por vez, faixa fina, "Agora não" que guarda uma data: mexe

@@ -767,6 +767,15 @@ select:disabled {
   color: var(--on-primary);
 }
 
+/* A partir de 48rem o conteúdo ganha outro respiro dos lados e, no computador, vira uma coluna no meio da
+   tela: a faixa continua colada no topo, mas fica com a largura da coluna, alinhada aos blocos de baixo. */
+@media (min-width: 48rem) {
+  .allowance {
+    left: 0;
+    width: auto;
+  }
+}
+
 /* Com o onboarding na tela, a faixa vem depois dele, como um bloco comum: não sobe para o topo. */
 #onboarding:not(:empty) + #allowance .allowance {
   top: 0;
@@ -832,9 +841,10 @@ select:disabled {
 }
 
 .card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 0 var(--space-3);
   padding: var(--space-3) 0;
 }
@@ -849,42 +859,66 @@ select:disabled {
   font-weight: 600;
 }
 
+/* Com letra grande ou valor grande, o número desce para a linha de baixo (sempre à direita) e, se nem
+   assim couber, quebra: nunca cobre o nome nem sai do bloco. */
 .card-value {
+  margin-left: auto;
   font-size: var(--fs-number);
   font-weight: 800;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .card-hint {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
   color: var(--muted);
   font-size: var(--fs-small);
 }
 
-/* Em tela larga, uma linha de ponta a ponta afasta demais o nome do valor: os quatro ficam lado a lado,
-   cada um com o nome em cima e o valor embaixo, separados por um filete. */
+/* Em tela larga, uma linha de ponta a ponta afasta demais o nome do valor: os números viram quadros, com o
+   nome em cima e o valor embaixo, dois a dois e, onde cabe, os quatro lado a lado. O filete entre eles é o
+   fundo do bloco aparecendo no vão de 1px. */
 @media (min-width: 48rem) {
   .cards {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
     padding: 0;
+    overflow: hidden;
+    background: var(--border);
   }
 
   .card {
-    grid-template-columns: minmax(0, 1fr);
-    align-content: start;
+    flex-direction: column;
+    flex-wrap: nowrap; /* em coluna, quebrar faria a explicação pular para o lado do nome */
+    align-items: flex-start;
+    justify-content: flex-start;
     padding: var(--space-4);
+    background: var(--surface);
+  }
+
+  .card-hint {
+    flex-basis: auto;
   }
 
   .card + .card {
     border-top: 0;
-    border-left: 1px solid var(--border);
   }
 
   .card-value {
+    margin-left: 0;
     text-align: left;
+  }
+}
+
+@media (min-width: 60rem) {
+  .cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .card-value {
+    font-size: var(--fs-title);
   }
 }
 

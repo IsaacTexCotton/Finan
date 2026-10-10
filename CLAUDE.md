@@ -157,11 +157,13 @@ Só faça o commit quando todas as respostas forem "sim":
   vista**. Cada barra tem uma linha, com o valor, a parte da renda e o limite do plano em % e em R$. Nada é apagado.
   Testes em `tests/e2e/painel-enxuto.spec.js`. **Fase 2, parte 1** (plano aprovado pelo Isaac, 09/10/2026): o
   "pode gastar" é a primeira coisa do Painel, numa **faixa verde-escura** (`--primary-strong`, texto branco, botão
-  branco, foco branco) que encosta no topo e vai de borda a borda no celular; com o onboarding na tela, ela vem
-  depois dele, como bloco comum. O **resumo do mês** (Receitas, Gastos, Guardado, Sobrou; classes `.card` mantidas)
-  é um bloco só: uma linha por número no celular (nome à esquerda, valor à direita) e os quatro lado a lado a partir
-  de 48rem. A faixa usa `position: relative` com os tokens de espaçamento para colar no topo, porque margem negativa
-  não passa em `tests/tokens.test.js`. Testes em `tests/e2e/painel-topo.spec.js`. Fases seguintes (ainda não
+  branco, foco branco) que encosta no topo; no celular vai de borda a borda e, a partir de 48rem, fica com a largura
+  da coluna do conteúdo. Com o onboarding na tela, ela vem depois dele, como bloco comum. O **resumo do mês**
+  (Receitas, Gastos, Guardado, Sobrou; classes `.card` mantidas) é um bloco só: no celular, uma linha por número
+  (nome à esquerda, valor à direita; com letra grande o valor desce para baixo do nome, nunca o cobre); a partir de
+  48rem, quadros dois a dois e, a partir de 60rem, os quatro lado a lado. A faixa usa `position: relative` com os
+  tokens de espaçamento para colar no topo, porque margem negativa não passa em `tests/tokens.test.js`. Testes em
+  `tests/e2e/painel-topo.spec.js` (inclusive letra em 150% e 200% e valores grandes). Fases seguintes (ainda não
   feitas): parte 2 (avisos mais calmos, baldes recolhidos; 1 ou 3 avisos à vista é decisão do Isaac) e lembretes
   calmos (um por vez, "Agora não").
 - **Teto do balde** (decisão do Isaac, 30/09/2026). Cada balde tem um teto: a parte da renda do
